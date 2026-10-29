@@ -128,6 +128,9 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .bars span.on { background: var(--accent); color: var(--on-accent); }
 
 .rule-line { margin: 0; text-align: center; font-size: 1.05rem; }
+.guide-line { margin: 0; text-align: center; color: var(--muted); }
+.guide-line b { color: var(--fg); }
+.guide-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: var(--fg); vertical-align: -1px; margin-right: 4px; }
 .rule-line .tag { display: inline; margin-right: 8px; color: var(--accent); }
 
 /* gaveta de ajustes */

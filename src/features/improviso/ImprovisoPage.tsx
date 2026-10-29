@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { engine, STYLES } from '../../audio/engine'
+import { degreeName } from '../../core/fretboard-model'
+import { guideLine } from '../../core/guide'
 import { parseProgression, PROGRESSIONS, realize } from '../../core/progressions'
 import { boxPositions, boxRange, SCALES, scalePcs } from '../../core/scales'
 import { KEYS } from '../../core/theory'
-import { Fretboard, type LabelMode } from '../../ui/Fretboard'
+import { Fretboard, type LabelMode, type Mark } from '../../ui/Fretboard'
 import { Mixer } from '../../ui/Mixer'
 import { drawRestriction, RESTRICTIONS } from './restrictions'
 import { useImproviso } from './store'
@@ -54,6 +56,11 @@ export function ImprovisoPage() {
   const box = restriction.box ?? s.focusBox
   const win = useMemo<[number, number] | null>(() => (box ? boxRange(scale, keyPc, box) : null), [box, scale, keyPc])
   const only = useMemo(() => (restriction.box ? boxPositions(scale, keyPc, restriction.box) : null), [restriction.box, scale, keyPc])
+  // notas-guia: um alvo por compasso dentro da região visível, em linha suave
+  const guide = useMemo(
+    () => (s.guide ? guideLine(chords, win ? win[0] : 0, win ? win[1] : Math.min(12, s.maxFret)) : []),
+    [s.guide, chords, win, s.maxFret],
+  )
 
   // configuração lida pelo motor a cada compasso: mudanças entram no próximo compasso
   useEffect(() => {
@@ -108,6 +115,17 @@ export function ImprovisoPage() {
   const playing = s.status === 'playing'
   // brilho no próximo acorde no último tempo antes da troca
   const showNext = playing && !counting && lastBeat && next.symbol !== now.symbol
+  const target = guide[i]
+  const nextTarget = guide[(i + 1) % chords.length]
+  const marks = useMemo<Mark[]>(() => {
+    if (!target) return []
+    const m: Mark[] = [{ string: target.string, fret: target.fret, kind: 'current', label: degreeName(target.interval) }]
+    if (showNext && nextTarget && (nextTarget.string !== target.string || nextTarget.fret !== target.fret)) {
+      m.unshift({ string: nextTarget.string, fret: nextTarget.fret, kind: 'next' })
+    }
+    return m
+  }, [target, nextTarget, showNext])
+  const targetName = target ? now.notes[now.semitones.findIndex((x) => x % 12 === target.interval)] : ''
   const bpm = (d: number) => s.set({ bpm: Math.min(180, Math.max(50, s.bpm + d)) })
   const progName = custom ? 'Progressão digitada' : prog.name
 
@@ -144,7 +162,13 @@ export function ImprovisoPage() {
           only={only}
           strings={restriction.strings}
           window={win}
+          marks={marks}
         />
+        {target && (
+          <p className="guide-line">
+            <span className="guide-dot" /> Alvo: <b>{degreeName(target.interval) === '3' || degreeName(target.interval) === 'b3' ? '3ª' : '7ª'} de {now.symbol}</b> ({targetName}). Chegue nela no tempo 1.
+          </p>
+        )}
         <div className="board-bar">
           <div className="segmented small" role="group" aria-label="Região do braço">
             {BOX_OPTIONS.map((n) => (
@@ -159,6 +183,9 @@ export function ImprovisoPage() {
               </button>
             ))}
           </div>
+          <button type="button" className="chip" aria-pressed={s.guide} onClick={() => s.set({ guide: !s.guide })}>
+            Alvos sugeridos
+          </button>
           <div className="legend">
             <span><i style={{ background: 'var(--root)' }} />Fundamental</span>
             <span><i style={{ background: 'var(--accent)' }} />Acorde</span>

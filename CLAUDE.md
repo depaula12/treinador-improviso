@@ -119,7 +119,13 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   sinal sintético), audio/input.ts (getUserMedia sem eco/ganho automático, AudioContext criado no
   clique), medidor de nível com faixa ideal, ponteiro em cents e posições da nota no braço.
   Cube Baby confirmado no Windows como "Linha (USB-Audio)" (VID_301A), ruído ~−84 dB, picos ~−19 dB.
-  Falta validar com a guitarra real no navegador. Próximo: Fase 1b (Músicas).
+  Validado pelo usuário com a guitarra: notas OK; nota sumia rápido → corrigido com histerese
+  (clareza 0,9 para começar, 0,6 para continuar), gate −65 dB e NoteTracker segurando 0,8 s.
+- Modo acorde no Afinador (core/chroma.ts): espectro 16384 → chroma (picos, compressão 0,5) →
+  moldes dos 9 tipos × 12 tons; parâmetros por busca (113/113 sintético). Falta validar com guitarra real.
+- Improviso: "Alvos sugeridos" (core/guide.ts) = notas-guia 3ª/7ª, um alvo por compasso em linha
+  suave dentro do box; bolinha branca + anel do próximo alvo no tempo 4.
+- Próximo: validar modo acorde com a guitarra; depois Fase 1b (Músicas) e Jam livre.
 - Escalas guarda config/presets/quiz em localStorage (`escalas-v1`); migrar para Dexie com Progresso.
 - Progresso dos acordes está em localStorage; migrar para Dexie junto com a área Progresso.
 

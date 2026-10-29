@@ -15,6 +15,8 @@ interface ImprovisoState {
   onlyChord: boolean
   /** desenho em foco no braço (1–5); 0 = braço inteiro */
   focusBox: number
+  /** mostra a nota-alvo sugerida (3ª/7ª) de cada compasso */
+  guide: boolean
   bpm: number
   loop: boolean
   countIn: boolean
@@ -38,6 +40,7 @@ export const useImproviso = create<ImprovisoState>((set) => ({
   maxFret: 15,
   onlyChord: false,
   focusBox: 1,
+  guide: true,
   bpm: 90,
   loop: true,
   countIn: true,
