@@ -122,7 +122,8 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   Validado pelo usuário com a guitarra: notas OK; nota sumia rápido → corrigido com histerese
   (clareza 0,9 para começar, 0,6 para continuar), gate −65 dB e NoteTracker segurando 0,8 s.
 - Modo acorde no Afinador (core/chroma.ts): espectro 16384 → chroma (picos, compressão 0,5) →
-  moldes dos 9 tipos × 12 tons; parâmetros por busca (113/113 sintético). Falta validar com guitarra real.
+  moldes dos 9 tipos × 12 tons; parâmetros por busca (113/113 sintético). Validado pelo usuário com a
+  guitarra real: "funcionou até bem melhor do que eu imaginava".
 - Improviso: "Alvos sugeridos" (core/guide.ts) = notas-guia 3ª/7ª, um alvo por compasso em linha
   suave dentro do box; bolinha branca + anel do próximo alvo no tempo 4.
 - Próximo: validar modo acorde com a guitarra; depois Fase 1b (Músicas) e Jam livre.
