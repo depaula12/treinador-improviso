@@ -121,15 +121,36 @@ describe('detecção de acordes (sinal sintético)', () => {
 })
 
 describe('ChordTracker', () => {
-  const A = { root: 9, quality: 'maj', symbol: 'A', score: 0.9 }
-  const D = { root: 2, quality: 'maj', symbol: 'D', score: 0.9 }
+  const g = (symbol: string, score: number) => ({ root: 0, quality: 'maj', symbol, score })
+  const A = [g('A', 0.9), g('D', 0.5)]
+  const D = [g('D', 0.9), g('A', 0.5)]
+  // D ganha por pouco: o A atual deve ficar
+  const DbyLittle = [g('D', 0.82), g('A', 0.8)]
+
   it('só mostra depois de 3 leituras iguais e segura no silêncio', () => {
-    const t = new ChordTracker(3, 1500)
+    const t = new ChordTracker({ stable: 3, minHoldMs: 0, releaseMs: 1500 })
     expect(t.push(A, 0)).toBeNull()
     expect(t.push(A, 100)).toBeNull()
     expect(t.push(A, 200)?.symbol).toBe('A')
     expect(t.push(D, 300)?.symbol).toBe('A') // uma leitura de D ainda não troca
     expect(t.push(null, 1000)?.symbol).toBe('A')
     expect(t.push(null, 2000)).toBeNull()
+  })
+
+  it('tendência a ficar: vitória apertada não troca o acorde', () => {
+    const t = new ChordTracker({ stable: 2, stickiness: 0.05, minHoldMs: 0 })
+    t.push(A, 0)
+    t.push(A, 100)
+    for (let i = 0; i < 10; i++) expect(t.push(DbyLittle, 200 + i * 100)?.symbol).toBe('A')
+  })
+
+  it('tempo mínimo: mesmo com D claro, só troca depois de minHoldMs', () => {
+    const t = new ChordTracker({ stable: 2, stickiness: 0.05, minHoldMs: 1000 })
+    t.push(A, 0)
+    t.push(A, 100) // A aparece em 100
+    expect(t.push(D, 200)?.symbol).toBe('A')
+    expect(t.push(D, 300)?.symbol).toBe('A') // 2 leituras, mas só 200 ms
+    expect(t.push(D, 1000)?.symbol).toBe('A')
+    expect(t.push(D, 1150)?.symbol).toBe('D') // passou de 1 s
   })
 })

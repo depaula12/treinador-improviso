@@ -1,4 +1,12 @@
-import { ChordTracker, chromaFromSpectrum, matchChord, type ChordGuess, type Chroma } from '../core/chroma'
+import {
+  ChordTracker,
+  chromaFromSpectrum,
+  ChromaSmoother,
+  matchChord,
+  type ChordGuess,
+  type Chroma,
+  type TrackerOptions,
+} from '../core/chroma'
 import { GuitarPitch, levels, NoteTracker, type NoteReading } from '../core/pitch'
 
 export interface InputFrame {
@@ -44,6 +52,12 @@ export class AudioInput {
   private stream: MediaStream | null = null
   private source: MediaStreamAudioSourceNode | null = null
   private raf = 0
+  private chords = new ChordTracker()
+
+  /** Ajusta estabilidade e tempo mínimo entre trocas, mesmo com a entrada ligada. */
+  setChordOptions(opt: TrackerOptions) {
+    this.chords.opt = opt
+  }
 
   async start(deviceId: string | undefined, onFrame: (f: InputFrame) => void) {
     this.stop()
@@ -79,7 +93,8 @@ export class AudioInput {
     const db = new Float32Array(spec.frequencyBinCount)
     const mags = new Float32Array(spec.frequencyBinCount)
     const binHz = sr / CHORD_FFT
-    const chords = new ChordTracker()
+    const chords = this.chords
+    const smoother = new ChromaSmoother()
     let chord: ChordGuess | null = null
     let chroma: Chroma | null = null
     let guesses: ChordGuess[] = []
@@ -96,10 +111,12 @@ export class AudioInput {
           spec.getFloatFrequencyData(db)
           for (let i = 0; i < db.length; i++) mags[i] = 10 ** (db[i] / 20)
           const c = chromaFromSpectrum(mags, binHz)
-          chroma = c.chroma
-          guesses = matchChord(c.chroma, c.bass).slice(0, 3)
-          chord = chords.push(guesses[0], now)
+          chroma = smoother.push(c.chroma, chords.opt.smoothing)
+          const all = matchChord(chroma!, c.bass)
+          guesses = all.slice(0, 3)
+          chord = chords.push(all, now)
         } else {
+          smoother.push(null, 1)
           chord = chords.push(null, now)
         }
       }

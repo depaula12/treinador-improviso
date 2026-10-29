@@ -35,6 +35,18 @@ function candidates(c: ChordInfo, lo: number, hi: number): GuideTarget[] {
   return out
 }
 
+/** Nota-guia do acorde mais próxima (em altura) de `refMidi`, dentro das casas [lo, hi]. */
+export function nearestGuide(c: ChordInfo, refMidi: number, lo = 0, hi = 12): GuideTarget | null {
+  let best: GuideTarget | null = null
+  for (const t of candidates(c, lo, hi)) {
+    const isThird = t.interval === 3 || t.interval === 4
+    const cost = Math.abs(t.midi - refMidi) + (isThird ? 0 : 0.5)
+    const bestCost = best ? Math.abs(best.midi - refMidi) + (best.interval === 3 || best.interval === 4 ? 0 : 0.5) : Infinity
+    if (cost < bestCost) best = t
+  }
+  return best
+}
+
 /**
  * Linha de notas-guia: um alvo por compasso, sempre o mais próximo (em altura) do alvo anterior,
  * dentro da região do braço [lo, hi]. Em empate prefere a 3ª. Passa duas voltas pela progressão

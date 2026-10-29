@@ -126,7 +126,15 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   guitarra real: "funcionou até bem melhor do que eu imaginava".
 - Improviso: "Alvos sugeridos" (core/guide.ts) = notas-guia 3ª/7ª, um alvo por compasso em linha
   suave dentro do box; bolinha branca + anel do próximo alvo no tempo 4.
-- Próximo: validar modo acorde com a guitarra; depois Fase 1b (Músicas) e Jam livre.
+- Estabilidade da troca de acorde (pedido do usuário): ChordTracker com tendência a ficar no acorde
+  atual (margem de pontuação), tempo mínimo entre trocas e média móvel do chroma; presets
+  Rápida/Equilibrada/Estável + slider de tempo mínimo (0,2–3 s), salvos em `entrada-v1`.
+- Jam livre (versão pequena) feita: acorde detectado + grau no tom, tom estimado (Krumhansl-Kessler
+  + dica de tônica no 1º acorde/mais longo; empate mostra o rival para fixar), 3 sugestões de próximo
+  acorde (tabelas blues/maior/menor em core/next-chords.ts) com diagrama, alvo 3ª/7ª perto da última
+  nota tocada, histórico. Tela limitada a ~8 redesenhos/s. Falta validar com a guitarra.
+- Próximo: validar Jam livre; depois Fase 1b (Músicas), que vai alimentar as tabelas de sugestão.
+- Git: um `git push` travou sem erro uma vez; enviar com limite de tempo (job + Wait-Job 60 s).
 - Escalas guarda config/presets/quiz em localStorage (`escalas-v1`); migrar para Dexie com Progresso.
 - Progresso dos acordes está em localStorage; migrar para Dexie junto com a área Progresso.
 

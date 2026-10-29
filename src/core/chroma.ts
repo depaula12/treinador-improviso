@@ -98,28 +98,92 @@ export function matchChord(chroma: Chroma, bass: number | null, opt: MatchOption
   }).sort((a, b) => b.score - a.score)
 }
 
-/** Acorde só aparece depois de repetir por `stable` leituras; some `holdMs` depois do som acabar. */
+export interface TrackerOptions {
+  /** leituras seguidas que um acorde novo precisa vencer para aparecer */
+  stable: number
+  /** vantagem mínima de pontuação sobre o acorde atual para trocar (tendência a ficar no atual) */
+  stickiness: number
+  /** tempo mínimo (ms) que um acorde fica na tela antes de poder ser trocado */
+  minHoldMs: number
+  /** quanto tempo (ms) o acorde fica depois que o som acaba */
+  releaseMs: number
+  /** peso da leitura nova na média do chroma (1 = sem média; menor = mais suave) */
+  smoothing: number
+}
+
+export type Stability = 'rapida' | 'equilibrada' | 'estavel'
+export const STABILITY: Record<Stability, Omit<TrackerOptions, 'minHoldMs' | 'releaseMs'>> = {
+  rapida: { stable: 2, stickiness: 0.02, smoothing: 0.7 },
+  equilibrada: { stable: 3, stickiness: 0.05, smoothing: 0.45 },
+  estavel: { stable: 5, stickiness: 0.1, smoothing: 0.25 },
+}
+export const TRACKER_DEFAULTS: TrackerOptions = { ...STABILITY.equilibrada, minHoldMs: 800, releaseMs: 1500 }
+
+/**
+ * Estabiliza o acorde exibido:
+ * - um acorde novo só entra se vencer `stable` leituras seguidas, por uma margem `stickiness`
+ *   sobre a pontuação do acorde atual naquela mesma leitura;
+ * - e só depois de o atual ter ficado `minHoldMs` na tela.
+ * Recebe a lista completa de palpites (para saber quanto o acorde atual ainda pontua).
+ */
 export class ChordTracker {
   private candidate: string | null = null
   private count = 0
   private shown: ChordGuess | null = null
+  private shownAt = -Infinity
   private lastSeen = -Infinity
-  constructor(private stable = 3, private holdMs = 1500) {}
+  opt: TrackerOptions
 
-  push(guess: ChordGuess | null, now: number): ChordGuess | null {
-    if (!guess) {
-      if (now - this.lastSeen > this.holdMs) this.shown = null
+  constructor(opt: Partial<TrackerOptions> = {}) {
+    this.opt = { ...TRACKER_DEFAULTS, ...opt }
+  }
+
+  push(guesses: ChordGuess[] | null, now: number): ChordGuess | null {
+    if (!guesses?.length) {
+      if (now - this.lastSeen > this.opt.releaseMs) this.shown = null
       this.candidate = null
       this.count = 0
       return this.shown
     }
     this.lastSeen = now
-    if (guess.symbol === this.candidate) this.count++
+    const top = guesses[0]
+    if (this.shown) {
+      if (top.symbol === this.shown.symbol) {
+        this.shown = top
+        this.candidate = null
+        this.count = 0
+        return this.shown
+      }
+      // o atual ainda está perto do primeiro lugar: fica
+      const cur = guesses.find((g) => g.symbol === this.shown!.symbol)
+      if (cur && top.score - cur.score < this.opt.stickiness) {
+        this.candidate = null
+        this.count = 0
+        return this.shown
+      }
+    }
+    if (top.symbol === this.candidate) this.count++
     else {
-      this.candidate = guess.symbol
+      this.candidate = top.symbol
       this.count = 1
     }
-    if (this.count >= this.stable || this.shown?.symbol === guess.symbol) this.shown = guess
+    const held = now - this.shownAt >= this.opt.minHoldMs
+    if (this.count >= this.opt.stable && (held || !this.shown)) {
+      this.shown = top
+      this.shownAt = now
+      this.candidate = null
+      this.count = 0
+    }
     return this.shown
+  }
+}
+
+/** Média móvel do chroma: reduz o "pisca-pisca" entre leituras. */
+export class ChromaSmoother {
+  private avg: Chroma | null = null
+  push(c: Chroma | null, alpha: number): Chroma | null {
+    if (!c) return (this.avg = null)
+    this.avg = this.avg ? this.avg.map((v, i) => alpha * c[i] + (1 - alpha) * v) : [...c]
+    return this.avg
   }
 }

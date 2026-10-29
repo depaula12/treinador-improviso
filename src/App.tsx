@@ -3,12 +3,14 @@ import { AcordesPage } from './features/acordes/AcordesPage'
 import { AfinadorPage } from './features/afinador/AfinadorPage'
 import { EscalasPage } from './features/escalas/EscalasPage'
 import { ImprovisoPage } from './features/improviso/ImprovisoPage'
+import { JamPage } from './features/jam/JamPage'
 
-type Area = 'improviso' | 'acordes' | 'escalas' | 'afinador'
+type Area = 'improviso' | 'acordes' | 'escalas' | 'jam' | 'afinador'
 const AREAS: { id: Area; label: string }[] = [
   { id: 'improviso', label: 'Improviso' },
   { id: 'acordes', label: 'Acordes' },
   { id: 'escalas', label: 'Escalas' },
+  { id: 'jam', label: 'Jam livre' },
   { id: 'afinador', label: 'Afinador' },
 ]
 
@@ -50,6 +52,7 @@ export function App() {
       </div>
       {area === 'acordes' && <AcordesPage />}
       {area === 'escalas' && <EscalasPage />}
+      {area === 'jam' && <JamPage />}
       {area === 'afinador' && <AfinadorPage />}
     </div>
   )
