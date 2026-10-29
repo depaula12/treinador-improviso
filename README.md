@@ -52,6 +52,18 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
   para fazer com a guitarra na mão.
 - **Repetição espaçada (Leitner)**: o que você erra ou demora aparece mais vezes.
 
+### Escalas
+
+![Exercícios de escala](docs/screenshots/escalas-desktop.png)
+
+- Pentatônica menor e maior, blues, maior e menor natural, nos **desenhos 1–5**, em qualquer tom.
+- Exercícios no metrônomo, com a nota da vez acesa no braço (e a próxima marcada): **subir e descer**,
+  **grupos de 3 e de 4**, **terças** e **percorrer os boxes** (sobe um, desce o seguinte, atravessando o braço).
+- Ritmo em semínimas, colcheias, tercinas ou semicolcheias; opção de ouvir cada nota no violão.
+- Exibição para memorizar: tudo, **só as tônicas** ou **esconder e revelar**.
+- **Onde está a nota?**: quiz clicando no braço ("onde está o Lá na 3ª corda?"), com repetição espaçada.
+- **Treinos salvos**: combinações favoritas viram o plano da semana.
+
 ### No celular
 
 <p align="center"><img src="docs/screenshots/mobile.png" alt="Telas no celular" width="620"></p>
@@ -104,6 +116,7 @@ flowchart LR
   subgraph features["features/"]
     imp["improviso"]
     ac["acordes<br/>quiz + Leitner"]
+    es["escalas<br/>exercícios + quiz"]
   end
   subgraph ui["ui/"]
     fb["Fretboard"]
@@ -132,7 +145,7 @@ do quiz de acordes e de cifra rolando no tempo.
 | Áudio | Tone.js (Transport, Sampler, efeitos) |
 | Teoria musical | tonal |
 | Estado | Zustand (com persistência local) |
-| Testes | Vitest (297 testes) + GitHub Actions |
+| Testes | Vitest (316 testes) + GitHub Actions |
 | Dados | Tudo local no navegador; sem backend |
 
 ## Rodar localmente
@@ -152,7 +165,7 @@ npm run build      # versão final (depois: npm run preview)
 - [x] Motor de áudio com 4 estilos, mixer e humanização
 - [x] Improviso: braço com foco por desenho, próxima troca, restrições, progressão digitada
 - [x] Acordes: banco, decodificador, quizzes e repetição espaçada
-- [ ] **Escalas**: montador de treino (desenhos, sequências, conexão entre boxes) e predefinições
+- [x] **Escalas**: desenhos 1–5, exercícios no metrônomo, quiz "onde está a nota" e treinos salvos
 - [ ] **Músicas**: colar uma cifra e virar base de treino, com grade de compassos editável
 - [ ] **Treino do dia + progresso**: sessão montada automaticamente e histórico de acertos
 - [ ] **Entrada de áudio** (guitarra via interface USB): afinador, detecção de nota, validação do quiz

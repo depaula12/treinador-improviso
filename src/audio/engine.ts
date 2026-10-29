@@ -2,7 +2,7 @@ import * as Tone from 'tone'
 import type { ChordInfo } from '../core/theory'
 import { DrumKit } from './drums'
 import { setHumanize, strumGap, timing, velocity } from './humanize'
-import { createSamplers } from './samplers'
+import { createSampler, createSamplers } from './samplers'
 import { ballad } from './styles/ballad'
 import { rock } from './styles/rock'
 import { shuffle } from './styles/shuffle'
@@ -39,6 +39,22 @@ export interface Position {
 
 export const STYLES: Style[] = [shuffle, rock, slow128, ballad]
 
+export interface ExerciseConfig {
+  bpm: number
+  /** notas por tempo: 1 semínima, 2 colcheias, 3 tercinas, 4 semicolcheias */
+  perBeat: 1 | 2 | 3 | 4
+  notes: number[]
+  /** toca cada nota com o violão (senão só o metrônomo) */
+  sound: boolean
+  countIn: boolean
+}
+
+/** Posição do exercício: índice da nota, ou -1 durante a contagem (com o tempo 1–4). */
+export interface StepPos {
+  index: number
+  count?: number
+}
+
 // Desvio de tempo por instrumento (ms): [espalhamento, atraso fixo]
 const FEEL: Record<Instrument | DrumPiece, [number, number]> = {
   drums: [6, 0],
@@ -69,8 +85,15 @@ class Engine {
   private barCounter = 0
   private lastVoicing: number[] | null = null
 
+  /** exercícios de escala: metrônomo e violão num canal próprio, fora do mixer do Improviso */
+  private click!: Tone.Synth
+  private exSampler!: Tone.Sampler
+
+  /** o que está tocando agora */
+  mode: 'base' | 'exercise' | null = null
   config: SongConfig | null = null
   onPosition: ((p: Position | null) => void) | null = null
+  onStep: ((p: StepPos | null) => void) | null = null
 
   /**
    * Monta o grafo e começa a baixar os samples. Pode rodar antes do primeiro clique
@@ -103,6 +126,14 @@ class Engine {
       this.samplers = s
       this.kit = new DrumKit(this.channels.drums, `${base}/drums/`)
 
+      const ex = new Tone.Channel({ volume: 0 }).connect(bus)
+      this.click = new Tone.Synth({
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 },
+        volume: -8,
+      }).connect(ex)
+      this.exSampler = createSampler('guitar', base).connect(ex)
+
       await Promise.all([Tone.loaded(), reverb.ready])
     })()
     return this.ready
@@ -130,11 +161,61 @@ class Engine {
     setHumanize(on)
   }
 
+  /** Metrônomo + nota da vez, em loop. Interrompe a base do Improviso, se estiver tocando. */
+  playExercise(o: ExerciseConfig) {
+    if (!o.notes.length) return
+    // avisa só o Improviso (a base parou); o exercício está só recomeçando
+    const wasBase = this.mode === 'base'
+    this.halt()
+    if (wasBase) this.onPosition?.(null)
+    this.mode = 'exercise'
+    const tr = Tone.getTransport()
+    tr.position = 0
+    tr.timeSignature = 4
+    tr.bpm.value = o.bpm
+    const draw = Tone.getDraw()
+    const raw = Tone.getContext().rawContext as AudioContext
+    const outLat = raw.outputLatency || raw.baseLatency || 0
+    const countSteps = o.countIn ? 4 * o.perBeat : 0
+    let k = 0
+    this.repeatId = tr.scheduleRepeat(
+      (time) => {
+        const step = k++
+        const spb = 60 / tr.bpm.value
+        if (step % o.perBeat === 0) {
+          const beat = Math.floor(step / o.perBeat)
+          this.click.triggerAttackRelease(beat % 4 === 0 ? 'E6' : 'A5', 0.03, time, beat % 4 === 0 ? 1 : 0.6)
+        }
+        if (step < countSteps) {
+          if (step % o.perBeat === 0) {
+            const count = step / o.perBeat + 1
+            draw.schedule(() => this.onStep?.({ index: -1, count }), time + outLat)
+          }
+          return
+        }
+        const index = (step - countSteps) % o.notes.length
+        if (o.sound) {
+          this.exSampler.triggerAttackRelease(Tone.Frequency(o.notes[index], 'midi').toNote(), (spb / o.perBeat) * 0.95, time, 0.75)
+        }
+        draw.schedule(() => this.onStep?.({ index }), time + outLat)
+      },
+      `${tr.PPQ / o.perBeat}i`,
+      0,
+    )
+    const now = Tone.now()
+    this.gate.gain.cancelScheduledValues(now)
+    this.gate.gain.setValueAtTime(1, now)
+    tr.start('+0.05')
+  }
+
   play() {
     if (!this.config) return
+    // pode estar rodando um exercício de escala: para e avisa a tela de Escalas
+    const wasExercise = this.mode === 'exercise'
+    this.halt()
+    if (wasExercise) this.onStep?.(null)
+    this.mode = 'base'
     const tr = Tone.getTransport()
-    tr.cancel()
-    tr.stop()
     tr.position = 0
     tr.timeSignature = 4
     tr.bpm.value = this.config.bpm
@@ -156,7 +237,16 @@ class Engine {
     tr.start('+0.05')
   }
 
+  /** Para tudo e avisa as telas. */
   stop() {
+    this.halt()
+    this.mode = null
+    this.onPosition?.(null)
+    this.onStep?.(null)
+  }
+
+  /** Para o transporte e corta o som, sem avisar ninguém. */
+  private halt() {
     const tr = Tone.getTransport()
     if (this.repeatId !== null) tr.clear(this.repeatId)
     this.repeatId = null
@@ -169,7 +259,6 @@ class Engine {
       this.gate.gain.rampTo(0, 0.03, now)
       this.kit.stopAll(now + 0.04)
     }
-    this.onPosition?.(null)
   }
 
   /**

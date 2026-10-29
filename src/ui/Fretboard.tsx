@@ -20,6 +20,17 @@ interface Props {
   strings?: number[] | null
   /** janela de foco [primeira, última casa]: casas largas e iguais, só a região do desenho */
   window?: [number, number] | null
+  /** marcações por cima das notas (exercício e quiz) */
+  marks?: Mark[]
+  /** torna as casas clicáveis */
+  onPick?: (string: number, fret: number) => void
+}
+
+export interface Mark {
+  string: number
+  fret: number
+  kind: 'current' | 'next' | 'right' | 'wrong'
+  label?: string
 }
 
 const noteName = (chord: ChordInfo, pc: number) => {
@@ -32,7 +43,7 @@ const noteName = (chord: ChordInfo, pc: number) => {
  * Hierarquia: notas do acorde grandes e coloridas; escala em pontos pequenos e discretos.
  */
 // memo: só redesenha quando as props mudam (troca de acorde, brilho no tempo 4)
-export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, onlyChord, labels = 'graus', only, strings, window: win }: Props) {
+export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, onlyChord, labels = 'graus', only, strings, window: win, marks, onPick }: Props) {
   const focus = !!win
   const a = win ? win[0] : 0
   const b = win ? win[1] : maxFret
@@ -123,12 +134,44 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
     )
   }
 
+  const markEls = (marks ?? [])
+    .filter((m) => m.fret >= a && m.fret <= b)
+    .map((m) => {
+      const cx = mid(m.fret)
+      const cy = y(m.string)
+      const k = `m${m.string}-${m.fret}-${m.kind}`
+      if (m.kind === 'next') return <circle key={k} cx={cx} cy={cy} r={big + 5} fill="none" stroke="var(--next)" strokeWidth={3} />
+      const fill = m.kind === 'current' ? 'var(--fg)' : m.kind === 'right' ? 'var(--good)' : 'var(--root)'
+      return (
+        <g key={k}>
+          <circle cx={cx} cy={cy} r={big + 2} fill={fill} />
+          {m.label && <text x={cx} y={cy + (focus ? 5 : 4)} textAnchor="middle" className={focus ? 'fb-lab big inv' : 'fb-lab inv'}>{m.label}</text>}
+        </g>
+      )
+    })
+
+  // áreas clicáveis: uma por corda × casa
+  const hits: ReactNode[] = []
+  if (onPick) {
+    for (let s = 0; s < 6; s++) {
+      for (let f = a; f <= b; f++) {
+        const x0c = f === 0 ? padL - 10 : wire(f - 1)
+        const x1c = f === 0 ? x0 : wire(f)
+        hits.push(
+          <rect key={`h${s}-${f}`} x={x0c} y={y(s) - step / 2} width={x1c - x0c} height={step} fill="transparent" className="fb-hit" onClick={() => onPick(s, f)} />,
+        )
+      }
+    }
+  }
+
   return (
     <div className={focus ? 'board-wrap' : 'board-wrap full'}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Braço da guitarra">
         {els}
         {scaleEls}
         {chordEls}
+        {markEls}
+        {hits}
       </svg>
     </div>
   )

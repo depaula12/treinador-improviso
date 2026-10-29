@@ -40,6 +40,29 @@ export function boxPositions(scale: ScaleDef, root: number, box: number): Set<st
   return out
 }
 
+export interface ScaleNote {
+  /** 0 = corda 1 (Mi agudo) */
+  string: number
+  fret: number
+  midi: number
+  /** semitons a partir da tônica (0–11) */
+  degree: number
+}
+
+/**
+ * Notas do desenho em ordem de altura (do grave ao agudo), uma por altura:
+ * quando a mesma nota cai em duas cordas, fica a da corda mais grossa.
+ */
+export function boxNotes(scale: ScaleDef, root: number, box: number): ScaleNote[] {
+  const byMidi = new Map<number, ScaleNote>()
+  // boxBase vem da 6ª para a 1ª corda: a primeira ocorrência é a da corda mais grossa
+  for (const [s, f] of boxBase(scale, root, box)) {
+    const midi = TUNING[s] + f
+    if (!byMidi.has(midi)) byMidi.set(midi, { string: s, fret: f, midi, degree: (midi - root + 120) % 12 })
+  }
+  return [...byMidi.values()].sort((a, b) => a.midi - b.midi)
+}
+
 /** Faixa de casas [primeira, última] do desenho, na oitava mais grave. */
 export function boxRange(scale: ScaleDef, root: number, box: number): [number, number] {
   const frets = boxBase(scale, root, box).map(([, f]) => f)

@@ -198,6 +198,21 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .grade.bad { border-color: var(--root); color: var(--root); }
 .grade.good { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
+/* ---------- Escalas ---------- */
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+.row-wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: flex-end; }
+.checks.end { align-self: end; padding-bottom: 8px; }
+.hint { margin: 0; font-size: .88rem; }
+.center { text-align: center; }
+.inline-check { display: flex; align-items: center; gap: 8px; font: 400 .9rem var(--f-body); text-transform: none; letter-spacing: 0; color: var(--fg); }
+.preset { display: inline-flex; align-items: center; }
+.preset .chip { border-radius: 999px 0 0 999px; }
+.preset-del { border: 1px solid var(--line); border-left: 0; background: var(--panel-2); color: var(--muted); border-radius: 0 999px 999px 0; min-height: 36px; padding: 0 10px; cursor: pointer; }
+.preset-del:hover { color: var(--root); }
+.fb-hit { cursor: pointer; }
+.fb-hit:hover { fill: rgb(255 255 255 / .06); }
+.fb-lab.inv { fill: var(--bg); }
+
 @media (max-width: 520px) {
   .grid-2 { grid-template-columns: 1fr; }
   .strip { grid-template-columns: 90px 1fr 56px; }

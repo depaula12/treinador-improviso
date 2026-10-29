@@ -110,7 +110,11 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
 - Visual (etapa 1): tema escuro único; Improviso em "palco" (acorde grande, braço em foco no box,
   próxima troca) + gaveta de Ajustes (<dialog>); braço com hierarquia (acorde grande, escala em pontos).
 - Revisão visual completa (Tailwind + Radix/shadcn) fica para depois da Fase 1b.
-- Pendente: Escalas.
+- Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
+  acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),
+  treinos salvos. Motor tem `mode` ('base' | 'exercise'): um para o outro sem avisar errado a tela.
+- **Fase 1a concluída.** Próximo: deploy no Cloudflare Pages, depois Fase 1b (Músicas).
+- Escalas guarda config/presets/quiz em localStorage (`escalas-v1`); migrar para Dexie com Progresso.
 - Progresso dos acordes está em localStorage; migrar para Dexie junto com a área Progresso.
 
 ## Depois (não fazer agora)
