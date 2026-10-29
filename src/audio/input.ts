@@ -1,3 +1,4 @@
+import { ChordTracker, chromaFromSpectrum, matchChord, type ChordGuess, type Chroma } from '../core/chroma'
 import { GuitarPitch, levels, NoteTracker, type NoteReading } from '../core/pitch'
 
 export interface InputFrame {
@@ -6,9 +7,19 @@ export interface InputFrame {
   peak: number
   /** nota estabilizada (mediana), ou null se não há nota clara */
   note: NoteReading | null
+  /** acorde estabilizado (precisa repetir algumas leituras), ou null */
+  chord: ChordGuess | null
+  /** energia das 12 notas na última leitura de acorde */
+  chroma: Chroma | null
+  /** os 3 melhores palpites da última leitura (para mostrar alternativas) */
+  guesses: ChordGuess[]
 }
 
 const SIZE = 4096 // ~85 ms a 48 kHz: cabe vários períodos do Mi grave (82 Hz)
+// acordes: janela longa (~340 ms) para separar notas vizinhas no grave (Mi e Fá a 82/87 Hz)
+const CHORD_FFT = 16384
+// abaixo disso não tenta ler acorde (só ruído/fim da nota)
+const CHORD_MIN_DB = -50
 
 /** Lista as entradas de áudio. Os nomes só aparecem depois da primeira permissão. */
 export async function listInputs(): Promise<MediaDeviceInfo[]> {
@@ -61,11 +72,38 @@ export class AudioInput {
     const track = new NoteTracker()
     const sr = ctx.sampleRate
 
+    const spec = ctx.createAnalyser()
+    spec.fftSize = CHORD_FFT
+    spec.smoothingTimeConstant = 0.3
+    src.connect(spec)
+    const db = new Float32Array(spec.frequencyBinCount)
+    const mags = new Float32Array(spec.frequencyBinCount)
+    const binHz = sr / CHORD_FFT
+    const chords = new ChordTracker()
+    let chord: ChordGuess | null = null
+    let chroma: Chroma | null = null
+    let guesses: ChordGuess[] = []
+    let frame = 0
+
     const tick = () => {
+      const now = performance.now()
       analyser.getFloatTimeDomainData(buf)
       const lv = levels(buf)
-      const note: NoteReading | null = track.push(det.detect(buf, sr, track.midi), performance.now())
-      onFrame({ ...lv, note })
+      const note: NoteReading | null = track.push(det.detect(buf, sr, track.midi), now)
+      // acorde a ~15 leituras/s (a FFT grande é mais cara que a detecção de nota)
+      if (frame++ % 4 === 0) {
+        if (lv.rms > CHORD_MIN_DB) {
+          spec.getFloatFrequencyData(db)
+          for (let i = 0; i < db.length; i++) mags[i] = 10 ** (db[i] / 20)
+          const c = chromaFromSpectrum(mags, binHz)
+          chroma = c.chroma
+          guesses = matchChord(c.chroma, c.bass).slice(0, 3)
+          chord = chords.push(guesses[0], now)
+        } else {
+          chord = chords.push(null, now)
+        }
+      }
+      onFrame({ ...lv, note, chord, chroma, guesses })
       this.raf = requestAnimationFrame(tick)
     }
     tick()

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AudioInput, guessGuitarInput, listInputs, type InputFrame } from '../../audio/input'
+import type { ChordGuess, Chroma } from '../../core/chroma'
 import { positionsOf } from '../../core/pitch'
-import type { ChordInfo } from '../../core/theory'
+import { KEYS, parseChord, type ChordInfo } from '../../core/theory'
 import { Fretboard, type Mark } from '../../ui/Fretboard'
 
 const EMPTY: ChordInfo = { symbol: '', tonic: 'C', root: 0, semitones: [], notes: [], minor: false }
@@ -58,7 +59,47 @@ function Needle({ cents }: { cents: number | null }) {
   )
 }
 
+/** Barras com a energia das 12 notas; as notas do acorde detectado ficam em destaque. */
+function ChromaBars({ chroma, chord }: { chroma: Chroma | null; chord: ChordGuess | null }) {
+  const tones = chord ? (parseChord(chord.symbol)?.semitones ?? []).map((s) => (chord.root + s) % 12) : []
+  return (
+    <div className="chroma" aria-label="Energia de cada nota">
+      {KEYS.map((k, pc) => (
+        <div key={k} className="chroma-col">
+          <div className="chroma-bar">
+            <div className={`chroma-fill${tones.includes(pc) ? (pc === chord?.root ? ' root' : ' tone') : ''}`} style={{ height: `${(chroma?.[pc] ?? 0) * 100}%` }} />
+          </div>
+          <span className="mono">{k}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ChordView({ frame }: { frame: InputFrame | null }) {
+  const chord = frame?.chord ?? null
+  const info = chord ? parseChord(chord.symbol) : null
+  const alts = (frame?.guesses ?? []).filter((g) => g.symbol !== chord?.symbol).slice(0, 2)
+  return (
+    <>
+      <section className="panel tuner">
+        <div className="tuner-note">{chord ? chord.symbol : <span className="muted">—</span>}</div>
+        <div className="mono muted center">
+          {info ? info.notes.join('  ') : frame ? 'Toque um acorde e deixe soar' : 'Entrada desligada'}
+        </div>
+        {alts.length > 0 && chord && <div className="muted hint center">Também pode ser: {alts.map((a) => a.symbol).join(' ou ')}</div>}
+        <ChromaBars chroma={frame?.chroma ?? null} chord={chord} />
+      </section>
+      <section>
+        <div className="tag">Notas do acorde no braço</div>
+        <Fretboard maxFret={12} scale={NO_SCALE} chord={info ?? EMPTY} onlyChord labels="graus" />
+      </section>
+    </>
+  )
+}
+
 export function AfinadorPage() {
+  const [mode, setMode] = useState<'nota' | 'acorde'>('nota')
   const input = useRef<AudioInput | null>(null)
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([])
   const [deviceId, setDeviceId] = useState<string>('')
@@ -137,6 +178,15 @@ export function AfinadorPage() {
         <LevelMeter peak={frame?.peak ?? -Infinity} />
       </section>
 
+      <div className="segmented" role="tablist">
+        <button type="button" role="tab" aria-selected={mode === 'nota'} onClick={() => setMode('nota')}>Nota (afinador)</button>
+        <button type="button" role="tab" aria-selected={mode === 'acorde'} onClick={() => setMode('acorde')}>Acorde</button>
+      </div>
+
+      {mode === 'acorde' ? (
+        <ChordView frame={frame} />
+      ) : (
+      <>
       <section className="panel tuner">
         <div className="tuner-note">
           {note ? (
@@ -156,6 +206,8 @@ export function AfinadorPage() {
         <div className="tag">Onde essa nota está no braço</div>
         <Fretboard maxFret={15} scale={NO_SCALE} chord={EMPTY} labels="nenhum" marks={marks} />
       </section>
+      </>
+      )}
     </div>
   )
 }
