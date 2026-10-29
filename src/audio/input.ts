@@ -1,4 +1,4 @@
-import { GuitarPitch, levels, NoteSmoother, type NoteReading } from '../core/pitch'
+import { GuitarPitch, levels, NoteTracker, type NoteReading } from '../core/pitch'
 
 export interface InputFrame {
   /** dBFS do bloco atual */
@@ -58,19 +58,14 @@ export class AudioInput {
 
     const buf = new Float32Array(SIZE)
     const det = new GuitarPitch(SIZE)
-    const smooth = new NoteSmoother(5)
+    const track = new NoteTracker()
     const sr = ctx.sampleRate
-    let last: NoteReading | null = null
 
     const tick = () => {
       analyser.getFloatTimeDomainData(buf)
       const lv = levels(buf)
-      const reading = det.detect(buf, sr)
-      const midi = smooth.push(reading?.midi ?? null)
-      // mantém os cents da leitura atual quando ela bate com a nota estabilizada
-      if (midi === null) last = null
-      else if (reading && reading.midi === midi) last = reading
-      onFrame({ ...lv, note: last && last.midi === midi ? last : null })
+      const note: NoteReading | null = track.push(det.detect(buf, sr, track.midi), performance.now())
+      onFrame({ ...lv, note })
       this.raf = requestAnimationFrame(tick)
     }
     tick()

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { freqToNote, GuitarPitch, levels, NoteSmoother, positionsOf } from './pitch'
+import { freqToNote, GuitarPitch, levels, NoteTracker, positionsOf } from './pitch'
 
 const SR = 48000
 const SIZE = 4096
@@ -45,6 +45,11 @@ describe('detector com sinal sintético de guitarra', () => {
     expect(Math.abs(r!.cents)).toBeLessThanOrEqual(3)
   })
 
+  it('nota fraca no fim da ressonância (~−60 dB) ainda é detectada', () => {
+    const r = det.detect(pluck(midiToFreq(45), 0.0015), SR, 45)
+    expect(r?.midi).toBe(45)
+  })
+
   it('silêncio e ruído baixo não viram nota', () => {
     expect(det.detect(new Float32Array(SIZE), SR)).toBeNull()
     const noise = new Float32Array(SIZE).map(() => (Math.random() - 0.5) * 0.001)
@@ -67,10 +72,30 @@ describe('auxiliares', () => {
     expect(rms).toBeCloseTo(-9.03, 1)
   })
 
-  it('mediana ignora um salto de oitava isolado', () => {
-    const s = new NoteSmoother(5)
-    ;[45, 45, 57, 45, 45].forEach((m) => s.push(m))
-    expect(s.push(45)).toBe(45)
-    expect(s.push(null)).toBeNull()
+  const A2 = freqToNote(110)
+  const A3 = freqToNote(220)
+  const C3 = freqToNote(130.81)
+
+  it('salto de oitava isolado não troca a nota', () => {
+    const t = new NoteTracker(5, 800)
+    let out = null
+    ;[A2, A2, A3, A2, A2].forEach((r, i) => (out = t.push(r, i * 16)))
+    expect(out!.midi).toBe(45)
+  })
+
+  it('segura a nota quando as leituras falham por menos de 0,8 s e solta depois', () => {
+    const t = new NoteTracker(5, 800)
+    t.push(A2, 0)
+    t.push(A2, 16)
+    expect(t.push(null, 500)?.midi).toBe(45) // ainda ressoando
+    expect(t.push(null, 900)).toBeNull() // passou do tempo
+  })
+
+  it('nota nova troca a exibida assim que vira maioria', () => {
+    const t = new NoteTracker(5, 800)
+    ;[A2, A2, A2].forEach((r, i) => t.push(r, i * 16))
+    let out = null
+    ;[C3, C3, C3, C3].forEach((r, i) => (out = t.push(r, 100 + i * 16)))
+    expect(out!.midi).toBe(48)
   })
 })
