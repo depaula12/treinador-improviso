@@ -19,7 +19,8 @@ progressões e "acorde atual/próximo", mas reescreva o áudio do zero.
 - Zustand (estado)
 - Dexie/IndexedDB (músicas e progresso; tudo local na v1)
 - pitchy (detecção de nota; só na v2)
-- Deploy: Cloudflare Pages
+- Deploy: Vercel (o usuário já tem conta lá), ligado ao repositório do GitHub: cada push em main
+  publica sozinho. Configuração em `vercel.json` (cache dos samples e dos assets).
 - Funcionar bem em desktop E celular (braço legível em tela estreita)
 
 ## Estrutura
@@ -113,7 +114,7 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),
   treinos salvos. Motor tem `mode` ('base' | 'exercise'): um para o outro sem avisar errado a tela.
-- **Fase 1a concluída.** Próximo: deploy no Cloudflare Pages, depois Fase 1b (Músicas).
+- **Fase 1a concluída.** Próximo: deploy na Vercel, depois Fase 1b (Músicas).
 - Escalas guarda config/presets/quiz em localStorage (`escalas-v1`); migrar para Dexie com Progresso.
 - Progresso dos acordes está em localStorage; migrar para Dexie junto com a área Progresso.
 
