@@ -125,3 +125,6 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
 - O usuário quer rapidez e objetividade. Construir em incrementos que rodem.
 - Ser honesto quando algo for exagero; cortar o supérfluo.
 - Idioma da UI e das conversas: português.
+- Git: repositório privado github.com/depaula12/treinador-improviso (branch main). Ao fim de cada
+  etapa que roda, fazer commit com mensagem em português descrevendo a etapa e `git push`, para o
+  histórico mostrar a evolução do projeto. Autor usa o e-mail noreply do GitHub.
