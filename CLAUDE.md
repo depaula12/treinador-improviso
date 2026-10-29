@@ -114,7 +114,12 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),
   treinos salvos. Motor tem `mode` ('base' | 'exercise'): um para o outro sem avisar errado a tela.
-- **Fase 1a concluída.** Próximo: deploy na Vercel, depois Fase 1b (Músicas).
+- **Fase 1a concluída.** Deploy na Vercel adiado: o usuário testa local até ficar bom.
+- Entrada de áudio (passo 2 da ordem) feita: aba Afinador com pitchy (core/pitch.ts, testado com
+  sinal sintético), audio/input.ts (getUserMedia sem eco/ganho automático, AudioContext criado no
+  clique), medidor de nível com faixa ideal, ponteiro em cents e posições da nota no braço.
+  Cube Baby confirmado no Windows como "Linha (USB-Audio)" (VID_301A), ruído ~−84 dB, picos ~−19 dB.
+  Falta validar com a guitarra real no navegador. Próximo: Fase 1b (Músicas).
 - Escalas guarda config/presets/quiz em localStorage (`escalas-v1`); migrar para Dexie com Progresso.
 - Progresso dos acordes está em localStorage; migrar para Dexie junto com a área Progresso.
 

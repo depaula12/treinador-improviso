@@ -213,6 +213,31 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .fb-hit:hover { fill: rgb(255 255 255 / .06); }
 .fb-lab.inv { fill: var(--bg); }
 
+/* ---------- Afinador ---------- */
+.meter { display: grid; gap: 6px; }
+.meter-bar { position: relative; height: 14px; border-radius: 7px; background: var(--panel-2); overflow: hidden; }
+.meter-zone { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--good) 22%, transparent); }
+.meter-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 7px; transition: width 60ms linear; }
+.meter-fill.good { background: var(--good); }
+.meter-fill.low { background: var(--muted); }
+.meter-fill.hot { background: var(--root); }
+.meter-msg { font-size: .88rem; }
+.meter-msg.good { color: var(--good); }
+.meter-msg.hot { color: var(--root); }
+.meter-msg.low, .meter-msg.off { color: var(--muted); }
+
+.tuner { display: grid; gap: 10px; justify-items: center; }
+.tuner-note { font: 700 clamp(5rem, 18vw, 8rem) / 1 var(--f-display); color: var(--accent); }
+.tuner-note small { font-size: .35em; color: var(--muted); margin-left: 4px; }
+.needle { width: min(520px, 100%); display: grid; gap: 6px; }
+.needle-scale { display: flex; justify-content: space-between; font: 500 .75rem var(--f-mono); color: var(--muted); }
+.needle-track { position: relative; height: 24px; border-radius: 12px; background: var(--panel-2); }
+.needle-center { position: absolute; left: 50%; top: 3px; bottom: 3px; width: 2px; margin-left: -1px; background: var(--muted); }
+.needle-dot { position: absolute; top: 2px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: var(--accent); transition: left 80ms linear; }
+.needle-dot.ok { background: var(--good); }
+.needle-msg { text-align: center; font-size: .95rem; color: var(--muted); }
+.needle-msg.ok { color: var(--good); font-weight: 600; }
+
 @media (max-width: 520px) {
   .grid-2 { grid-template-columns: 1fr; }
   .strip { grid-template-columns: 90px 1fr 56px; }

@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { AcordesPage } from './features/acordes/AcordesPage'
+import { AfinadorPage } from './features/afinador/AfinadorPage'
 import { EscalasPage } from './features/escalas/EscalasPage'
 import { ImprovisoPage } from './features/improviso/ImprovisoPage'
 
-type Area = 'improviso' | 'acordes' | 'escalas'
+type Area = 'improviso' | 'acordes' | 'escalas' | 'afinador'
 const AREAS: { id: Area; label: string }[] = [
   { id: 'improviso', label: 'Improviso' },
   { id: 'acordes', label: 'Acordes' },
   { id: 'escalas', label: 'Escalas' },
+  { id: 'afinador', label: 'Afinador' },
 ]
 
 export function App() {
@@ -48,6 +50,7 @@ export function App() {
       </div>
       {area === 'acordes' && <AcordesPage />}
       {area === 'escalas' && <EscalasPage />}
+      {area === 'afinador' && <AfinadorPage />}
     </div>
   )
 }
