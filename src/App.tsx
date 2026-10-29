@@ -54,6 +54,13 @@ export function App() {
       {area === 'escalas' && <EscalasPage />}
       {area === 'jam' && <JamPage />}
       {area === 'afinador' && <AfinadorPage />}
+
+      {/* atribuição exigida pelas licenças CC BY dos samples (ver public/samples/LICENSES.md) */}
+      <footer className="credits">
+        Samples: Salamander Grand Piano (Alexander Holm, CC BY 3.0) · FluidR3_GM (Frank Wen, CC BY 3.0) ·
+        MuldjordKit (Lars Muldjord / FreePats, CC BY 4.0).{' '}
+        <a href="/samples/LICENSES.md" target="_blank" rel="noreferrer">Licenças</a>
+      </footer>
     </div>
   )
 }

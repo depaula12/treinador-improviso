@@ -241,6 +241,9 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .needle-msg { text-align: center; font-size: .95rem; color: var(--muted); }
 .needle-msg.ok { color: var(--good); font-weight: 600; }
 
+.credits { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: .78rem; text-align: center; }
+.credits a { color: var(--muted); }
+
 /* ---------- Jam livre ---------- */
 .jam-now { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px; }
 .jam-now .tag { margin: 0; }
