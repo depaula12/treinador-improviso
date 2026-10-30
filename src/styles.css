@@ -387,7 +387,13 @@ button { font-family: inherit; }
   display: grid; justify-items: center; gap: 2px; padding: 10px 8px 6px; cursor: pointer;
   border: 2px solid var(--line); border-radius: 14px; background: var(--panel-2); color: var(--fg);
 }
+.suggestions { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important; }
 .suggestion:first-child { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }
+.sg-kind { font: 600 11px var(--f-display); letter-spacing: .1em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; background: var(--panel-3); color: var(--muted); }
+.sg-kind.segura { color: var(--accent); }
+.sg-kind.casa { color: var(--good); }
+.sg-kind.surpresa { color: var(--next); }
+.sg-why { font-size: 12px; line-height: 1.3; color: var(--muted); text-align: center; margin-top: 2px; }
 .suggestion[aria-pressed="true"] { border-color: var(--next); }
 .suggestion .chord-diagram { width: min(112px, 100%); }
 .sg-name { font: 700 34px / 1 var(--f-display); color: var(--accent); }

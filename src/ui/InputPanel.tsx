@@ -135,18 +135,18 @@ export function InputPanel({ io, peak, children }: PanelProps) {
       </button>
       <LevelMeter peak={peak} />
       <div className="extra">{children}</div>
-      {(io.error || !io.active) && (
-        <div className="msgs">
-          {io.error ? (
-            <p className="error">{io.error}</p>
-          ) : (
-            <p className="muted hint">
-              Ligue a guitarra no Cube Baby e o Cube Baby no PC pelo cabo USB. Ao ativar, o navegador pede acesso ao "microfone": é o Cube Baby.
-              Use o som limpo, sem distorção.
-            </p>
-          )}
-        </div>
-      )}
+      <div className="msgs">
+        {io.error ? (
+          <p className="error">{io.error}</p>
+        ) : io.active ? (
+          <p className="muted hint">Ouvindo: {io.active}</p>
+        ) : (
+          <p className="muted hint">
+            Ligue a guitarra no Cube Baby e o Cube Baby no PC pelo cabo USB. Ao ativar, o navegador pede acesso ao "microfone": é o Cube Baby.
+            Use o som limpo, sem distorção.
+          </p>
+        )}
+      </div>
     </section>
   )
 }
