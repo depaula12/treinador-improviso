@@ -13,12 +13,38 @@ export interface ChordInfo {
   bass?: number
 }
 
-// Cifras brasileiras -> notação que o tonal entende
+// Cifras brasileiras (como no Cifra Club) -> notação que o tonal entende.
+// A ordem importa: as formas com parênteses saem antes da regra geral que tira os parênteses.
+const BR_SUFFIX: [RegExp, string][] = [
+  [/^m7M\((9)\)$/, 'mMaj9'],
+  [/^m7M$|^m\(7M\)$/, 'mMaj7'],
+  [/^7M\(9\)$/, 'maj9'],
+  [/^7M\(#11\)$/, 'maj7#11'],
+  [/^7M$/, 'maj7'],
+  [/^7\(9\)$|^7\/9$/, '9'],
+  [/^7\(13\)$|^7\/13$/, '13'],
+  [/^7\(4\)$|^7\/4$|^74$/, '7sus4'],
+  [/^7\(4\/9\)$|^7\(9\/4\)$/, '9sus4'],
+  [/^m7\(9\)$|^m7\/9$/, 'm9'],
+  [/^m7\(11\)$|^m7\/11$/, 'm11'],
+  [/^m7\(b5\)$|^m7b5$|^ø$/, 'm7b5'],
+  [/^m\(9\)$|^m\(add9\)$|^madd9$/, 'madd9'],
+  [/^\(9\)$|^\(add9\)$|^9\)$/, 'add9'],
+  [/^6\(9\)$|^6\/9$/, '69'],
+  [/^4$/, 'sus4'],
+  [/^2$/, 'sus2'],
+  [/^[°º]7$/, 'dim7'],
+  [/^[°º]$/, 'dim'],
+  [/^\+$|^5\+$|^\(#5\)$/, 'aug'],
+]
+
 function normalize(symbol: string): string {
-  return symbol
-    .trim()
-    .replace(/7M/g, 'maj7')
-    .replace(/\(([^)]*)\)/g, '$1')
+  const s = symbol.trim()
+  const m = s.match(/^([A-G][#b]?)(.*)$/)
+  if (!m) return s
+  const [, root, suffix] = m
+  for (const [re, to] of BR_SUFFIX) if (re.test(suffix)) return root + to
+  return root + suffix.replace(/7M/g, 'maj7').replace(/\(([^)]*)\)/g, '$1')
 }
 
 export function parseChord(symbol: string): ChordInfo | null {

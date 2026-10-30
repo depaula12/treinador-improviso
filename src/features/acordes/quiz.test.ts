@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest'
 import { QUALITIES } from '../../core/voicings'
 import { drawWeighted, grade } from './leitner'
-import { buildCards, makeQuestion } from './quiz-model'
+import { buildCards, makeQuestion, songCards } from './quiz-model'
+
+describe('songCards', () => {
+  it('só os acordes da música, com a fundamental fixa', () => {
+    const { cards, skipped } = songCards('cifra-desenho', ['Bm', 'G', 'D/F#', 'Em', 'F#m7b5'], ['6', 'aberto'])
+    expect(skipped).toEqual(['F#m7b5'])
+    expect(cards.every((c) => c.root !== null)).toBe(true)
+    // D/F# conta como D; G e Em têm forma aberta
+    expect(cards.map((c) => c.key)).toEqual(expect.arrayContaining(['cifra-desenho:maj|aberto|7', 'cifra-desenho:m|aberto|4', 'cifra-desenho:maj|6|2', 'cifra-desenho:m|6|11']))
+    for (const c of cards) {
+      const q = makeQuestion('cifra-desenho', c)
+      expect(q.root).toBe(c.root)
+      expect(q.options).toHaveLength(4)
+    }
+  })
+  it('cifra → notas: um cartão por acorde', () => {
+    expect(songCards('cifra-notas', ['A7', 'D7', 'A7', 'E7'], []).cards).toHaveLength(3)
+  })
+})
 import type { QuizMode } from './store'
 
 const all = QUALITIES.map((q) => q.id)

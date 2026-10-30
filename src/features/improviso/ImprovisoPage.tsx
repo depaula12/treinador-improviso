@@ -5,11 +5,11 @@ import { degreeName } from '../../core/fretboard-model'
 import { guideLine } from '../../core/guide'
 import { parseProgression, PROGRESSIONS, realize } from '../../core/progressions'
 import { boxPositions, boxRange, SCALES, scalePcs } from '../../core/scales'
-import { KEYS } from '../../core/theory'
+import { KEYS, parseChord, type ChordInfo } from '../../core/theory'
 import { Fretboard, type LabelMode, type Mark } from '../../ui/Fretboard'
 import { Mixer } from '../../ui/Mixer'
 import { drawRestriction, RESTRICTIONS } from './restrictions'
-import { useImproviso } from './store'
+import { togglePlay, useImproviso } from './store'
 
 // Componentes pequenos que acompanham o tempo: só eles re-renderizam a cada batida.
 function BeatDots() {
@@ -38,6 +38,13 @@ export function ImprovisoPage() {
   const settings = useRef<HTMLDialogElement>(null)
 
   const custom = s.progId === 'custom'
+  const songMode = s.progId === 'song' && !!s.song
+  // só a música (compassos 2+2) precisa saber da metade do compasso: 1 = tempo 2, 2 = tempos 3–4
+  const phase = useImproviso((st) => {
+    if (!songMode) return 0
+    const b = st.pos?.beat ?? -1
+    return b >= 2 ? 2 : b === 1 ? 1 : 0
+  })
   const prog = PROGRESSIONS.find((p) => p.id === s.progId) ?? PROGRESSIONS[0]
   const style = STYLES.find((x) => x.id === s.styleId) ?? STYLES[0]
   const scale = SCALES.find((x) => x.id === s.scaleId) ?? SCALES[0]
@@ -45,10 +52,17 @@ export function ImprovisoPage() {
   const typed = useMemo(() => parseProgression(s.customText), [s.customText])
   const typedOk = typed.chords.length > 0
   // digitada vazia: mantém a de 12 compassos no braço, mas o play fica desabilitado
+  // música: 1º acorde de cada compasso; o 2º (compasso 2+2) entra no tempo 3
+  const songBars = useMemo(() => {
+    if (!songMode) return null
+    const bars = s.song!.bars.map((b) => b.map((c) => parseChord(c)).filter((c): c is ChordInfo => !!c)).filter((b) => b.length)
+    return bars.length ? bars : null
+  }, [songMode, s.song])
   const chords = useMemo(
-    () => (custom && typedOk ? typed.chords : realize(prog, s.key)),
-    [custom, typedOk, typed, prog, s.key],
+    () => (songBars ? songBars.map((b) => b[0]) : custom && typedOk ? typed.chords : realize(prog, s.key)),
+    [songBars, custom, typedOk, typed, prog, s.key],
   )
+  const halves = useMemo(() => (songBars ? songBars.map((b) => b[1] ?? null) : undefined), [songBars])
   const keyPc = KEYS.indexOf(s.key)
   const pcs = useMemo(() => scalePcs(scale, keyPc), [scale, keyPc])
 
@@ -64,8 +78,8 @@ export function ImprovisoPage() {
 
   // configuração lida pelo motor a cada compasso: mudanças entram no próximo compasso
   useEffect(() => {
-    engine.config = { chords, style, bpm: s.bpm, loop: s.loop, countIn: s.countIn, fillEvery: s.fillEvery }
-  }, [chords, style, s.bpm, s.loop, s.countIn, s.fillEvery])
+    engine.config = { chords, halves, style, bpm: s.bpm, loop: s.loop, countIn: s.countIn, fillEvery: s.fillEvery }
+  }, [chords, halves, style, s.bpm, s.loop, s.countIn, s.fillEvery])
   useEffect(() => engine.setBpm(s.bpm), [s.bpm])
   useEffect(() => engine.setMix(s.mix), [s.mix])
   useEffect(() => engine.setHumanize(s.humanize), [s.humanize])
@@ -78,25 +92,15 @@ export function ImprovisoPage() {
     return () => engine.stop()
   }, [])
 
-  async function toggle() {
-    if (s.status === 'playing') {
-      engine.stop()
-      s.set({ status: 'idle', pos: null })
-      return
-    }
-    s.set({ status: 'loading' })
-    await engine.start(s.mix)
-    engine.setMix(useImproviso.getState().mix)
-    engine.setHumanize(s.humanize)
-    engine.play()
-    s.set({ status: 'playing' })
-  }
-
   function chooseProg(id: string) {
     if (id === 'custom') {
       // tom da escala = fundamental do primeiro acorde digitado
       const first = typed.chords[0]
       s.set({ progId: id, ...(first ? { key: KEYS[first.root] } : {}) })
+      return
+    }
+    if (id === 'song') {
+      s.set({ progId: id })
       return
     }
     const p = PROGRESSIONS.find((x) => x.id === id)!
@@ -105,16 +109,19 @@ export function ImprovisoPage() {
 
   // % : ao trocar para uma progressão mais curta no meio, o motor ainda manda o compasso antigo
   const i = Math.max(0, bar) % chords.length
-  const now = chords[i]
-  const next = chords[(i + 1) % chords.length]
+  const half = halves?.[i] ?? null
+  const secondHalf = phase === 2
+  const now = half && secondHalf ? half : chords[i]
+  const next = half && !secondHalf ? half : chords[(i + 1) % chords.length]
   // próxima troca de fato: o primeiro acorde diferente do atual e quantos compassos faltam
   let ahead = 1
   while (ahead < chords.length && chords[(i + ahead) % chords.length].symbol === now.symbol) ahead++
-  const change = chords[(i + ahead) % chords.length]
+  const change = next.symbol !== now.symbol ? next : chords[(i + ahead) % chords.length]
+  if (next.symbol !== now.symbol) ahead = 1
   const counting = s.status === 'playing' && bar < 0
   const playing = s.status === 'playing'
   // brilho no próximo acorde no último tempo antes da troca
-  const showNext = playing && !counting && lastBeat && next.symbol !== now.symbol
+  const showNext = playing && !counting && (lastBeat || (half !== null && phase === 1)) && next.symbol !== now.symbol
   const target = guide[i]
   const nextTarget = guide[(i + 1) % chords.length]
   const marks = useMemo<Mark[]>(() => {
@@ -127,7 +134,7 @@ export function ImprovisoPage() {
   }, [target, nextTarget, showNext])
   const targetName = target ? now.notes[now.semitones.findIndex((x) => x % 12 === target.interval)] : ''
   const bpm = (d: number) => s.set({ bpm: Math.min(180, Math.max(50, s.bpm + d)) })
-  const progName = custom ? 'Progressão digitada' : prog.name
+  const progName = songMode ? s.song!.title : custom ? 'Progressão digitada' : prog.name
 
   return (
     <div className="stage">
@@ -145,7 +152,7 @@ export function ImprovisoPage() {
           <div className="tag">Próxima troca</div>
           <div className="next-chord">{counting ? now.symbol : change.symbol}</div>
           {!counting && change.symbol !== now.symbol && (
-            <div className="next-when">{ahead === 1 ? 'no próximo compasso' : `em ${ahead} compassos`}</div>
+            <div className="next-when">{half && !secondHalf ? 'no tempo 3' : ahead === 1 ? 'no próximo compasso' : `em ${ahead} compassos`}</div>
           )}
         </div>
         <BeatDots />
@@ -206,7 +213,7 @@ export function ImprovisoPage() {
           type="button"
           aria-pressed={playing}
           disabled={s.status === 'loading' || (custom && !typedOk && !playing)}
-          onClick={toggle}
+          onClick={togglePlay}
         >
           {s.status === 'loading' ? 'Carregando…' : playing ? 'Parar' : 'Tocar'}
         </button>
@@ -214,7 +221,7 @@ export function ImprovisoPage() {
 
       <div className="bars" role="list" aria-label="Compassos">
         {chords.map((c, idx) => (
-          <span key={idx} role="listitem" className={idx === bar ? 'on' : ''}>{c.symbol}</span>
+          <span key={idx} role="listitem" className={idx === bar ? 'on' : ''}>{c.symbol}{halves?.[idx] ? ` ${halves[idx]!.symbol}` : ''}</span>
         ))}
       </div>
 
@@ -240,6 +247,7 @@ export function ImprovisoPage() {
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
                 <option value="custom">Digitar progressão…</option>
+                {s.song && <option value="song">Música: {s.song.title}</option>}
               </select>
             </label>
             {custom && (

@@ -137,7 +137,15 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   busca em janelas de 4 casas, até 4 dedos (pestana e pestaninha do anelar contam 1), baixo =
   fundamental ou o baixo da barra (parseChord agora separa `bass`), 5ª/9ª podem sair em acordes
   grandes; "principais" = melhores por região do braço.
-- Próximo: validar Jam livre; depois seguir `docs/plano.md` (v0.2 Músicas → v0.3 Treino do dia
+- **v0.2 Músicas feita**: core/cifra.ts (lê cifra colada do Cifra Club: linhas de acorde × letra,
+  seções, (2x), %, tablatura pulada, capotraste, cifra brasileira normalizada em theory.ts),
+  core/song.ts (modelo, transposição, edição pura da grade 2+2), Dexie em features/musicas/db.ts
+  (banco 'treinador', tabela songs). Motor aceita compasso 2+2 (`SongConfig.halves`). Improviso
+  ganhou progId 'song'; `togglePlay` saiu para improviso/store.ts (usado pela cifra rolando).
+  Quiz de Acordes filtra por música (`songCards`, chave por fundamental). O Cifra Club devolve 403
+  para acesso automático: as cifras reais vêm coladas pelo usuário; testes usam letra fictícia.
+- Próximo: validar Músicas com as cifras do repertório (Iris, From the Start, Put Your Records On,
+  You Know I'm No Good, I Want You Back) e a Jam livre; depois seguir `docs/plano.md` (v0.2 Músicas → v0.3 Treino do dia
   + Progresso → v0.4 quiz pelo áudio → v0.5 placar de notas-alvo).
 - Git: um `git push` travou sem erro uma vez; enviar com limite de tempo (job + Wait-Job 60 s).
 - Publicado na Vercel: https://treinador-improviso.vercel.app (conta depaula12, projeto

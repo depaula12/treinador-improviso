@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { songChords } from '../../core/song'
 import { FORM_LABEL, QUALITIES, type FormKind } from '../../core/voicings'
+import { useSongs } from '../musicas/store'
+import { songCards } from './quiz-model'
 import { Decoder } from './Decoder'
 import { Quiz } from './Quiz'
 import { useAcordes, type QuizMode } from './store'
@@ -15,7 +18,12 @@ const toggle = <T,>(xs: T[], x: T) => (xs.includes(x) ? xs.filter((y) => y !== x
 
 export function AcordesPage() {
   const [view, setView] = useState<'consultar' | 'treinar'>('treinar')
-  const { mode, qualities, forms, set, resetStats } = useAcordes()
+  const { mode, qualities, forms, songId, set, resetStats } = useAcordes()
+  const { songs, load } = useSongs()
+  useEffect(() => void load(), [load])
+  const song = songs.find((s) => s.id === songId) ?? null
+  const chords = useMemo(() => (song ? songChords(song) : null), [song])
+  const skipped = useMemo(() => (chords ? songCards(mode, chords, forms).skipped : []), [chords, mode, forms])
 
   return (
     <div className="stack">
@@ -37,16 +45,34 @@ export function AcordesPage() {
                 ))}
               </select>
             </label>
-            <div>
-              <div className="tag">Tipos de acorde</div>
-              <div className="chips">
-                {QUALITIES.map((q) => (
-                  <button key={q.id} type="button" className="chip" aria-pressed={qualities.includes(q.id)} onClick={() => set({ qualities: toggle(qualities, q.id) })}>
-                    {q.suffix || 'maior'}
-                  </button>
-                ))}
+            {songs.length > 0 && (
+              <label>
+                Acordes
+                <select value={song ? song.id : ''} onChange={(e) => set({ songId: e.target.value || null })}>
+                  <option value="">Por tipo (escolha abaixo)</option>
+                  {songs.map((s) => (
+                    <option key={s.id} value={s.id}>Só os da música: {s.title}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {song ? (
+              <p className="hint">
+                <span className="mono">{chords!.join('  ')}</span>
+                {skipped.length > 0 && <span className="muted"> · fora do quiz (sem desenho no banco): {skipped.join(', ')}. Veja em Consultar.</span>}
+              </p>
+            ) : (
+              <div>
+                <div className="tag">Tipos de acorde</div>
+                <div className="chips">
+                  {QUALITIES.map((q) => (
+                    <button key={q.id} type="button" className="chip" aria-pressed={qualities.includes(q.id)} onClick={() => set({ qualities: toggle(qualities, q.id) })}>
+                      {q.suffix || 'maior'}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             {mode !== 'cifra-notas' && (
               <div>
                 <div className="tag">Formas</div>
@@ -60,7 +86,7 @@ export function AcordesPage() {
               </div>
             )}
           </section>
-          <Quiz />
+          <Quiz songChords={chords} />
           <p className="foot">
             O que você erra ou demora aparece mais vezes. O progresso fica salvo neste aparelho.{' '}
             <button type="button" className="link" onClick={() => confirm('Zerar o progresso dos acordes?') && resetStats()}>Zerar progresso</button>

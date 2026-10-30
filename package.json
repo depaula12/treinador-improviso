@@ -1,7 +1,7 @@
 {
   "name": "treinador-improviso",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,6 +12,7 @@
     "e2e": "node scripts/e2e-jam.mjs"
   },
   "dependencies": {
+    "dexie": "^4.4.7",
     "pitchy": "^4.1.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

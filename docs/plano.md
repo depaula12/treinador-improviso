@@ -6,7 +6,12 @@ rodando, testes verdes, commit em português e `git push` (a Vercel publica sozi
 Feito antes do plano: **consulta de acordes gerando todas as formas tocáveis** de qualquer cifra
 (`core/chord-shapes.ts`), inclusive m7b5, dim, 9, 13, 6 e baixo invertido (D/F#).
 
-## v0.2 Músicas (1ª prioridade)
+## v0.2 Músicas (1ª prioridade) — feita
+Entregue: itens 1–5 abaixo. Decisões: arrastar para reordenar ficou de fora (repetir/apagar
+compasso e seção resolvem); o tom é o "Tom:" da cifra ou estimado, ajustável por transposição.
+Falta validar com as cifras reais do repertório (o Cifra Club bloqueia acesso automático:
+o usuário cola).
+
 Objetivo: treinar improviso e acordes nas músicas da banda.
 
 1. **Colar a cifra.** Fica em `core/cifra.ts`, com testes: separa as linhas de acordes das de letra

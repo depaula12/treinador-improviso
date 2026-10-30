@@ -1,11 +1,19 @@
 import { create } from 'zustand'
-import type { Instrument, MixState, Position } from '../../audio/engine'
+import { engine, type Instrument, type MixState, type Position } from '../../audio/engine'
 import type { LabelMode } from '../../ui/Fretboard'
+
+/** música da área Músicas carregada como base (progId === 'song'), já transposta */
+export interface LoadedSong {
+  id: string
+  title: string
+  bars: string[][]
+}
 
 interface ImprovisoState {
   progId: string
   /** progressão digitada (progId === 'custom') */
   customText: string
+  song: LoadedSong | null
   key: string
   styleId: string
   scaleId: string
@@ -32,6 +40,7 @@ interface ImprovisoState {
 export const useImproviso = create<ImprovisoState>((set) => ({
   progId: 'blues12',
   customText: 'Am*2 G F E7',
+  song: null,
   key: 'A',
   styleId: 'shuffle',
   scaleId: 'pentMin',
@@ -57,3 +66,20 @@ export const useImproviso = create<ImprovisoState>((set) => ({
   set: (patch) => set(patch),
   setChannel: (inst, patch) => set((s) => ({ mix: { ...s.mix, [inst]: { ...s.mix[inst], ...patch } } })),
 }))
+
+/** Tocar/Parar da base, usado pelo Improviso e pela cifra rolando da área Músicas. */
+export async function togglePlay() {
+  const s = useImproviso.getState()
+  if (s.status === 'playing') {
+    engine.stop()
+    s.set({ status: 'idle', pos: null })
+    return
+  }
+  if (s.status === 'loading') return
+  s.set({ status: 'loading' })
+  await engine.start(s.mix)
+  engine.setMix(useImproviso.getState().mix)
+  engine.setHumanize(useImproviso.getState().humanize)
+  engine.play()
+  useImproviso.getState().set({ status: 'playing' })
+}

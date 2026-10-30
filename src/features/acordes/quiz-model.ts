@@ -1,5 +1,5 @@
 import { parseChord } from '../../core/theory'
-import { openRoots, QUALITIES, qualityById, symbolOf, voicingFor, type FormKind, type Voicing } from '../../core/voicings'
+import { matchQuality, openRoots, QUALITIES, qualityById, symbolOf, voicingFor, type FormKind, type Voicing } from '../../core/voicings'
 import type { QuizMode } from './store'
 
 /** Um "cartão": o que se quer decorar. Formas móveis sorteiam a fundamental a cada vez. */
@@ -28,6 +28,40 @@ export function buildCards(mode: QuizMode, qualities: string[], forms: FormKind[
     }
   }
   return cards
+}
+
+/**
+ * Cartões só com os acordes de uma música (fundamental fixa). Acordes fora do banco
+ * (ex.: m7b5, 9) ficam de fora e voltam em `skipped`.
+ */
+export function songCards(mode: QuizMode, chords: string[], forms: FormKind[]): { cards: Card[]; skipped: string[] } {
+  const cards: Card[] = []
+  const skipped: string[] = []
+  const seen = new Set<string>()
+  const push = (c: Card) => {
+    if (!seen.has(c.key)) cards.push(c)
+    seen.add(c.key)
+  }
+  for (const sym of chords) {
+    const c = parseChord(sym)
+    const q = c ? matchQuality(c) : null
+    if (!c || !q) {
+      skipped.push(sym)
+      continue
+    }
+    const root = c.root
+    if (mode === 'cifra-notas') {
+      push({ key: `notas:${q.id}|${root}`, quality: q.id, form: '6', root })
+      continue
+    }
+    for (const form of forms) {
+      if (form === 'aberto' ? openRoots(q.id).includes(root) : voicingFor(q.id, root, form)) {
+        // mesma chave do treino geral nas formas abertas: o progresso é um só
+        push({ key: form === 'aberto' ? `${mode}:${q.id}|aberto|${root}` : `${mode}:${q.id}|${form}|${root}`, quality: q.id, form, root })
+      }
+    }
+  }
+  return { cards, skipped }
 }
 
 export interface Question {

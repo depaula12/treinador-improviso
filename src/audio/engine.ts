@@ -23,6 +23,8 @@ export type MixState = Record<Instrument, ChannelState>
 
 export interface SongConfig {
   chords: ChordInfo[]
+  /** acorde da 2ª metade do compasso (compasso 2+2), por índice; null = compasso inteiro */
+  halves?: (ChordInfo | null)[]
   style: Style
   bpm: number
   loop: boolean
@@ -303,6 +305,7 @@ class Engine {
 
     const chordAt = (i: number) => cfg.chords[((i % n) + n) % n]
     const chord = chordAt(bar)
+    const half = cfg.halves?.[((bar % n) + n) % n] ?? null
     const phrase = Math.floor(bar / cfg.fillEvery)
     const pianoVoicing = voiceLead(chord, this.lastVoicing)
     this.lastVoicing = pianoVoicing
@@ -311,13 +314,27 @@ class Engine {
       index: bar,
       chord,
       prev: chordAt(bar - 1),
-      next: chordAt(bar + 1),
+      next: half ?? chordAt(bar + 1),
       variation: phrase % 2 === 0 ? 'A' : 'B',
       isFill: bar % cfg.fillEvery === cfg.fillEvery - 1,
       isPhraseStart: bar % cfg.fillEvery === 0,
       pianoVoicing,
       guitarVoicing: guitarVoicing(chord),
     }
+    // compasso 2+2: o estilo gera o compasso para cada acorde e cada um fica com a sua metade
+    let second: BarContext | null = null
+    if (half) {
+      const v2 = voiceLead(half, pianoVoicing)
+      this.lastVoicing = v2
+      second = { ...ctx, chord: half, prev: chord, next: chordAt(bar + 1), pianoVoicing: v2, guitarVoicing: guitarVoicing(half) }
+    }
+    const pitched = (inst: Pitched): PitchedNote[] =>
+      second
+        ? [
+            ...cfg.style[inst](ctx).filter((x) => x.beat < 2).map((x) => ({ ...x, dur: Math.min(x.dur, 2 - x.beat) })),
+            ...cfg.style[inst](second).filter((x) => x.beat >= 2),
+          ]
+        : cfg.style[inst](ctx)
 
     // tempo humanizado de um evento; nunca no passado
     const human = (t: number, feel: [number, number]) => Math.max(Tone.now(), t + timing(...feel))
@@ -326,7 +343,7 @@ class Engine {
       at(h.beat, (t) => this.kit.hit(h.piece, human(t, FEEL[h.piece]), velocity(h.vel, 0.06)))
     }
     for (const inst of ['bass', 'piano', 'guitar'] as const) {
-      for (const note of cfg.style[inst](ctx)) {
+      for (const note of pitched(inst)) {
         at(note.beat, (t) => this.playNote(inst, note, human(t, FEEL[inst])))
       }
     }

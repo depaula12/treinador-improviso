@@ -50,6 +50,21 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
   "só cordas 1 e 2"…
 - Mixer (bateria, baixo, piano, violão), contagem de entrada, loop, virada a cada 4 ou 8 compassos.
 
+### Músicas (repertório)
+
+![Cifra rolando no tempo](docs/screenshots/musicas.png)
+
+- **Cole a cifra** (formato do Cifra Club, com letra e tablatura): o app separa acordes, letra e
+  seções ([Intro], [Refrão]…), entende cifra brasileira (A7(9), Dm7(b5), G7M, E4, Bº), repete
+  linhas marcadas com (2x) e pula tablatura. Capotraste vira transposição, para a base soar no tom real.
+- **Grade de compassos editável**: um acorde por compasso; clique para juntar dois no mesmo
+  compasso (2+2), separar, repetir, apagar ou trocar o acorde. Seções podem ser repetidas.
+- Transpor, andamento e estilo por música, salvos no aparelho (IndexedDB).
+- **Cifra rolando**: a base toca a música e a grade acompanha o compasso atual, com "agora/depois".
+- **Integração**: "Improvisar sobre ela" carrega a música no Improviso (tom e escala certos) e
+  "Treinar os acordes dela" filtra o quiz de Acordes.
+- Nenhuma cifra vem embutida no app: o repertório é seu e fica só no seu aparelho.
+
 ### Acordes
 
 ![Quiz de acordes](docs/screenshots/acordes-desktop.png)
@@ -236,7 +251,7 @@ npm run e2e        # com o preview rodando: Jam livre num navegador headless com
 - [x] **Escalas**: desenhos 1–5, exercícios no metrônomo, quiz "onde está a nota" e treinos salvos
 - [x] **Entrada de áudio** (interface USB ou microfone): afinador, detecção de nota e de acorde
 - [x] **Jam livre** (primeira versão): acorde e tom detectados, próximos acordes e notas-alvo em tempo real
-- [ ] **Músicas**: colar uma cifra e virar base de treino, com grade de compassos editável
+- [x] **Músicas** (v0.2): colar uma cifra e virar base de treino, grade editável, cifra rolando
 - [ ] **Treino do dia + progresso**: sessão montada automaticamente e histórico de acertos
 - [ ] Jam livre aprendendo as transições com as músicas do seu repertório
 - [ ] Quiz cronometrado conferido pelo áudio (o app ouve se você tocou o acorde pedido)
