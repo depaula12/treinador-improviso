@@ -287,6 +287,28 @@ button { font-family: inherit; }
 .tap-result span { display: grid; justify-items: center; min-width: 52px; padding: 4px 8px; border-radius: 6px; background: var(--panel-2); font: 700 1rem var(--f-display); }
 .tap-result small { font: 500 .75rem var(--f-mono); color: var(--muted); }
 
+/* ===================== Compor ===================== */
+.compose { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); gap: 14px; align-items: start; }
+.compose > * { min-width: 0; }
+.compose > aside { position: sticky; top: 0; }
+.compose-sec { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; }
+.compose-sec.cur { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--panel-2)); }
+.compose-cell { cursor: default; }
+.inline-label { display: flex; align-items: center; gap: 8px; }
+.inline-label select { width: auto; }
+.moves { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.move { display: grid; gap: 4px; align-content: start; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); }
+.move-label { font: 700 17px var(--f-display); letter-spacing: .04em; text-transform: uppercase; }
+.move-feel { font-size: 13px; color: var(--muted); }
+.move-chords { font: 700 24px/1.1 var(--f-display); color: var(--accent); }
+.move-chords small { font-size: 12px; color: var(--muted); font-weight: 500; }
+.move-why { font-size: 12.5px; line-height: 1.35; color: var(--muted); }
+.mood-tensao .move-label, .mood-suspense .move-label { color: var(--next); }
+.mood-energia .move-label, .mood-fim-epico .move-label { color: var(--accent); }
+.mood-melancolia .move-label { color: #b9a6e6; }
+.mood-repousar .move-label, .mood-fim-sobrio .move-label, .mood-fim-forte .move-label { color: var(--good); }
+.mood-surpresa .move-label { color: var(--root); }
+
 /* ===================== Acordes ===================== */
 .three { display: grid; grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(200px, 240px); gap: 14px; align-items: start; }
 .cfg { display: grid; gap: 14px; }
@@ -446,7 +468,8 @@ button { font-family: inherit; }
   .stage .lane-card { grid-column: 1 / -1; grid-row: 2; }
   .now-chord { font-size: 60px; }
   .next-chord { font-size: 40px; }
-  .imp-bottom, .two-pane, .three, .dec-top, .jam-top, .tuner-split, .ex-top { grid-template-columns: minmax(0, 1fr); }
+  .imp-bottom, .two-pane, .three, .dec-top, .jam-top, .tuner-split, .ex-top, .compose { grid-template-columns: minmax(0, 1fr); }
+  .compose > aside { position: static; order: -1; }
   .base-grid, .cfg-row, .editor-head { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cells { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .options.diagrams { grid-template-columns: repeat(2, minmax(0, 1fr)); }

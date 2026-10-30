@@ -1,13 +1,14 @@
 import { useState, type ReactNode } from 'react'
 import { AcordesPage } from './features/acordes/AcordesPage'
 import { AfinadorPage } from './features/afinador/AfinadorPage'
+import { ComporPage } from './features/compor/ComporPage'
 import { EscalasPage } from './features/escalas/EscalasPage'
 import { ImprovisoPage } from './features/improviso/ImprovisoPage'
 import { JamPage } from './features/jam/JamPage'
 import { MusicasPage } from './features/musicas/MusicasPage'
 import { Player } from './ui/Player'
 
-type Area = 'improviso' | 'musicas' | 'acordes' | 'escalas' | 'jam' | 'afinador'
+type Area = 'improviso' | 'musicas' | 'compor' | 'acordes' | 'escalas' | 'jam' | 'afinador'
 
 const icon = (d: ReactNode) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{d}</svg>
@@ -15,6 +16,7 @@ const icon = (d: ReactNode) => (
 const AREAS: { id: Area; label: string; icon: ReactNode }[] = [
   { id: 'improviso', label: 'Improviso', icon: icon(<><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></>) },
   { id: 'musicas', label: 'Músicas', icon: icon(<path d="M4 6h16M4 12h16M4 18h10" />) },
+  { id: 'compor', label: 'Compor', icon: icon(<><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>) },
   { id: 'acordes', label: 'Acordes', icon: icon(<><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 3v18M14 3v18M5 9h14M5 14h14" /></>) },
   { id: 'escalas', label: 'Escalas', icon: icon(<path d="M3 18l5-5 4 3 9-10" />) },
   { id: 'jam', label: 'Jam livre', icon: icon(<path d="M12 3v18M7 8v8M17 6v12M3 11v2M21 10v4" />) },
@@ -66,6 +68,7 @@ export function App() {
           <ImprovisoPage />
         </div>
         {area === 'musicas' && <MusicasPage go={go} />}
+        {area === 'compor' && <ComporPage go={go} />}
         {area === 'acordes' && <AcordesPage />}
         {area === 'escalas' && <EscalasPage />}
         {area === 'jam' && <JamPage />}

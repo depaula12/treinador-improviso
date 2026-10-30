@@ -166,6 +166,29 @@ class Engine {
     setHumanize(on)
   }
 
+  /**
+   * Prévia curta: toca os acordes com o violão, um a cada `secEach` segundos, fora do Transport
+   * (não mexe na configuração da base). Para a base ou o exercício que estiver tocando.
+   * Devolve a duração em segundos.
+   */
+  async previewChords(chords: ChordInfo[], mix: MixState, secEach = 1.1): Promise<number> {
+    await this.start(mix)
+    if (this.mode) this.stop()
+    this.exSampler.releaseAll()
+    const now = Tone.now() + 0.08
+    this.gate.gain.cancelScheduledValues(now)
+    this.gate.gain.setValueAtTime(1, now)
+    chords.forEach((c, i) => {
+      const t = now + i * secEach
+      // batida para baixo, uma corda por vez (como no estilo)
+      guitarVoicing(c).sort((a, b) => a - b).forEach((m, j) => {
+        const off = j * 0.018
+        this.exSampler.triggerAttackRelease(Tone.Frequency(m, 'midi').toNote(), secEach * 0.95 - off, t + off, 0.7 - j * 0.04)
+      })
+    })
+    return chords.length * secEach
+  }
+
   /** Metrônomo + nota da vez, em loop. Interrompe a base do Improviso, se estiver tocando. */
   playExercise(o: ExerciseConfig) {
     if (!o.notes.length) return
