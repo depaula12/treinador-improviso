@@ -123,6 +123,21 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   Numa progressão pronta, trocar o modo troca a base pela equivalente (`progressionFor`: Blues de 12
   ↔ Blues menor, I–V–vi–IV ↔ i–bVI–bIII–bVII, I–bVII–IV ↔ i–bVII–bVI) e a escala acompanha.
   Progressões menores novas: blues menor de 12, i–iv–v, i–bVI–bIII–bVII, andaluza i–bVII–bVI–V.
+- **Rodada de melhorias de aprendizado** (pedida pelo usuário; Progresso/Treino do dia ficou para depois):
+  - Jam pelo contexto (`core/context-chords.ts`): últimos até 6 acordes procurados num banco
+    (progressões + músicas do repertório, peso 2×), backoff do trecho longo ao curto, tabela antiga de
+    reserva; até 6 opções em "mais comum / volta pra casa / surpresa" com o motivo.
+  - Área **Compor** (`core/compose.ts`, `features/compor`): opções por efeito (tensão, energia,
+    melancolia, conclusões…) em maior e menor, com graus e o porquê; prévia com violão fora do
+    Transport (`engine.previewChords`); salvar como música; rascunho em localStorage `compor-v1`.
+  - Feedback pelo áudio (`core/feedback.ts`): placar de notas-alvo no Improviso (tempo 1 de cada
+    compasso), cronometrado de Acordes conferido pelo áudio, "Onde está a nota" tocando.
+    `npm run e2e:placar` testa o placar com microfone falso (Edge headless mudo).
+  - Escalas: dórico, mixolídio, menor harmônica, blues maior, arpejos (os boxes agora só mostram notas
+    da escala); Improviso com escala "acompanha o acorde" (`chordScale`).
+  - Acordes no banco: 6, 9, 7(#9), m7(b5), º7. A detecção de áudio usa só os 9 tipos antigos
+    (`DETECT_QUALITIES` em chroma.ts): C6 = Am7 em notas, não pode entrar sem nova validação.
+- Prints com Edge headless: sempre `--mute-audio` e fechar o headless no fim (ele toca nas caixas do usuário).
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),
   treinos salvos. Motor tem `mode` ('base' | 'exercise'): um para o outro sem avisar errado a tela.

@@ -47,8 +47,9 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
 
 ### Improviso
 - Faixa da progressão andando até a linha "agora" (estilo Yousician), com a próxima troca e quanto falta.
-- Progressões prontas (blues de 12 normal e *quick change*, I–V–vi–IV, I–bVII–IV, i–bVII–bVI)
-  ou digitadas (`Am*2 G F E7`).
+- Progressões prontas em tom maior (blues de 12 normal e *quick change*, I–V–vi–IV, I–bVII–IV) e
+  menor (blues menor, i–iv–v, i–bVI–bIII–bVII, i–bVII–bVI, andaluza), ou digitadas (`Am*2 G F E7`).
+  O seletor de tom tem os 24 tons; num tom menor a base vira a versão menor da progressão.
 - Quatro estilos: **shuffle de blues**, **rock reto**, **slow blues 12/8** e **pop rock/balada**.
 - O braço mostra o desenho (box 1–5) em foco: a **fundamental** em vermelho, as **notas do acorde**
   em destaque com o grau (3, b7…) e a escala em pontos discretos. No tempo 4, brilham as notas do
@@ -58,7 +59,22 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
   até a b7 de D7). Improvise livre e pouse no alvo no tempo 1.
 - Restrições sorteáveis para treino deliberado: "só box 2", "termine frases na 3ª",
   "só cordas 1 e 2"…
+- Escala no braço à escolha (inclusive modos e arpejos) ou **acompanhando o acorde**: mixolídio no 7,
+  dórico no m7, menor natural na tônica menor.
+- **Placar de notas-alvo**: com a guitarra ligada, o app confere o tempo 1 de cada compasso (no alvo,
+  outra nota do acorde ou fora).
 - Mixer (bateria, baixo, piano, violão), contagem de entrada, loop, virada a cada 4 ou 8 compassos.
+
+### Compor
+
+![Compor: progressão por efeito](docs/screenshots/compor.png)
+
+- Escolha o tom e o primeiro acorde; a cada passo o app oferece opções pelo **efeito**: repousar,
+  criar tensão, subir a energia, melancolia, surpresa, conclusão sóbria / forte / épica, suspense.
+- Cada opção mostra os acordes, os graus e **por que soa assim**, e tem **▶ ouvir** (o último acorde
+  + a opção, no violão) antes de usar; "outra opção" troca a sugestão.
+- Seções (verso, refrão, ponte…) com começos sugeridos, desenhos dos acordes usados,
+  **tocar com a base**, **improvisar sobre ela** e **salvar como música** do repertório.
 
 ### Músicas (repertório)
 
@@ -84,8 +100,8 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
 
 ![Quiz de acordes](docs/screenshots/acordes-desktop.png)
 
-- Banco com ~30 formas móveis e abertas (power, maior, menor, 7, m7, 7M, sus2, sus4, add9),
-  com fundamental na 6ª e na 5ª corda.
+- Banco com formas móveis e abertas de 14 tipos (power, maior, menor, 7, m7, 7M, sus2, sus4, add9,
+  6, 9, 7(#9), m7(b5) e º7), com fundamental na 6ª e na 5ª corda.
 - **Consulta**: digite qualquer cifra (inclusive Am7b5, E9, C13, D/F#) e veja fórmula, notas e
   **todas as formas tocáveis no braço**, geradas por busca (até 4 dedos, contando pestana) e
   ordenadas da casa 1 à 15. As principais aparecem primeiro; clicar num desenho mostra onde
@@ -93,19 +109,21 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
 
 ![Consulta de acordes com todas as formas](docs/screenshots/acordes-consulta.png)
 - **Quatro quizzes**: cifra → desenho, desenho → cifra, cifra → notas e um modo **cronometrado**
-  para fazer com a guitarra na mão.
+  para fazer com a guitarra na mão, que pode ser **conferido pelo áudio** (o relógio para quando o
+  acorde pedido soa). Teclas 1–4 e Enter para responder.
 - **Repetição espaçada (Leitner)**: o que você erra ou demora aparece mais vezes.
 
 ### Escalas
 
 ![Exercícios de escala](docs/screenshots/escalas-desktop.png)
 
-- Pentatônica menor e maior, blues, maior e menor natural, nos **desenhos 1–5**, em qualquer tom.
+- Pentatônica menor e maior, blues e blues maior, maior, menor natural, **dórico, mixolídio, menor
+  harmônica** e **arpejos** (maior, menor, 7, m7, 7M), nos **desenhos 1–5**, em qualquer tom.
 - Exercícios no metrônomo, com a nota da vez acesa no braço (e a próxima marcada): **subir e descer**,
   **grupos de 3 e de 4**, **terças** e **percorrer os boxes** (sobe um, desce o seguinte, atravessando o braço).
 - Ritmo em semínimas, colcheias, tercinas ou semicolcheias; opção de ouvir cada nota no violão.
 - Exibição para memorizar: tudo, **só as tônicas** ou **esconder e revelar**.
-- **Onde está a nota?**: quiz clicando no braço ("onde está o Lá na 3ª corda?"), com repetição espaçada.
+- **Onde está a nota?**: quiz clicando no braço ou **tocando a nota** ("onde está o Lá na 3ª corda?"), com repetição espaçada.
 - **Treinos salvos**: combinações favoritas viram o plano da semana.
 
 ### Jam livre
@@ -115,7 +133,9 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
 Você toca livre; o app escuta e acompanha:
 - **acorde que você está tocando** e a função dele no tom ("IV7 em Lá maior");
 - **tom estimado** a partir do que foi tocado; quando é ambíguo (ex.: Em–D–C–D), mostra o rival para você fixar;
-- **3 próximos acordes** que soam bem, com o desenho de cada um (clique para ver as notas no braço antes de trocar);
+- **até 6 próximos acordes pelo contexto**: o app reconhece os últimos até 6 acordes (ex.: I–V–vi) num
+  banco de progressões **e das músicas do seu repertório**, e separa as opções em *mais comum*,
+  *volta pra casa* e *surpresa*, cada uma com o motivo em uma linha e o desenho;
 - **alvo para improvisar** (3ª/7ª do acorde) perto da última nota que você tocou, e o anel de aonde ir se trocar;
 - histórico do que você tocou.
 
@@ -268,8 +288,10 @@ npm run e2e        # com o preview rodando: Jam livre num navegador headless com
 - [x] **Jam livre** (primeira versão): acorde e tom detectados, próximos acordes e notas-alvo em tempo real
 - [x] **Músicas** (v0.2): colar uma cifra e virar base de treino, grade editável, cifra rolando
 - [ ] **Treino do dia + progresso**: sessão montada automaticamente e histórico de acertos
-- [ ] Jam livre aprendendo as transições com as músicas do seu repertório
-- [ ] Quiz cronometrado conferido pelo áudio (o app ouve se você tocou o acorde pedido)
+- [x] Jam livre pelo contexto, aprendendo com as músicas do repertório
+- [x] **Compor**: progressões pelo efeito, com teoria, prévia e salvar como música
+- [x] O app confere o que você toca: placar de notas-alvo, quiz de acordes e de notas pelo áudio
+- [x] Tons menores, modos, arpejos e acordes 6, 9, 7(#9), m7(b5) e º7
 
 O planejamento detalhado e as decisões de projeto estão em [`CLAUDE.md`](CLAUDE.md), e o plano
 das próximas versões em [`docs/plano.md`](docs/plano.md).

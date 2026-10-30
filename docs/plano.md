@@ -30,7 +30,19 @@ Objetivo: treinar improviso e acordes nas músicas da banda.
 Riscos: o formato de cifra colada varia (tabs, acordes com parênteses). Mitigação: tela de
 revisão antes de salvar, onde dá para corrigir o que veio errado.
 
-## v0.3 Treino do dia + Progresso
+## Feito fora da ordem (pedido do usuário, a partir do relatório de melhorias)
+- Layout novo (menu lateral, player fixo, braço de ponta a ponta) e nome solonely.
+- Tons menores e progressões menores no Improviso.
+- Jam livre pelo contexto dos últimos 6 acordes, aprendendo com o repertório.
+- Área Compor (progressões pelo efeito, com teoria e prévia).
+- v0.4 e v0.5 (quiz pelo áudio e placar de notas-alvo) adiantadas.
+- Escalas novas (modos, arpejos, escala por acorde) e acordes 6, 9, 7(#9), m7(b5), º7.
+
+Ainda do relatório, para depois: pergunta e resposta, licks por estilo, treino de ouvido, loop de
+trecho e "mais devagar e acelerando" nas Músicas, tríades nas cordas agudas, exportar/importar as
+músicas entre aparelhos (junto com a v0.3).
+
+## v0.3 Treino do dia + Progresso (próxima, quando o usuário pedir)
 1. Migrar `acordes-v1`, `escalas-v1` e `entrada-v1` do localStorage para Dexie, sem perder dados.
 2. Registrar sessões (área, minutos, acertos, BPM máximo alcançado).
 3. **Treino do dia:** monta a sessão de 2 h a partir dos blocos do guia (aquecimento, escalas,
