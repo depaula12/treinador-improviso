@@ -62,7 +62,12 @@ export interface ChordGuess {
   score: number
 }
 
-const TEMPLATES = QUALITIES.flatMap((q) =>
+// Tipos que a detecção reconhece: os 9 validados com a guitarra. Os tipos novos do banco
+// (6, º7, 9…) ficam de fora de propósito: C6 tem as mesmas notas de Am7, e o detector passaria
+// a trocar um pelo outro.
+export const DETECT_QUALITIES = ['5', 'maj', 'm', '7', 'm7', '7M', 'sus2', 'sus4', 'add9']
+
+const TEMPLATES = QUALITIES.filter((q) => DETECT_QUALITIES.includes(q.id)).flatMap((q) =>
   Array.from({ length: 12 }, (_, root) => {
     const pcs = q.pcs.map((s) => (root + s) % 12)
     return { root, quality: q.id, symbol: KEYS[root] + q.suffix, pcs }

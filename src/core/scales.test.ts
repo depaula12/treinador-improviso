@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { TUNING } from './fretboard-model'
 import { keyLabel, keyShort, parseProgression, progressionFor, PROGRESSIONS, realize } from './progressions'
-import { boxPositions, boxRange, SCALES } from './scales'
+import { boxPositions, boxRange, chordScale, SCALES, scalePcs } from './scales'
+import { parseChord } from './theory'
 
 const pentMin = SCALES.find((s) => s.id === 'pentMin')!
 const blues = SCALES.find((s) => s.id === 'blues')!
@@ -39,6 +40,42 @@ describe('desenhos (boxes)', () => {
       expect(lo).toBeGreaterThanOrEqual(0)
       expect(hi - lo).toBeLessThanOrEqual(6)
     }
+  })
+})
+
+describe('escalas novas', () => {
+  const pcAt = (k: string) => {
+    const [s, f] = k.split(':').map(Number)
+    return (TUNING[s] + f) % 12
+  }
+  const sc = (id: string) => SCALES.find((s) => s.id === id)!
+
+  it('arpejos: os 5 desenhos só têm notas do acorde', () => {
+    for (const [id, pcs] of [['arpMaj', [9, 1, 4]], ['arpM7', [9, 0, 4, 7]], ['arp7', [9, 1, 4, 7]]] as const) {
+      for (let box = 1; box <= 5; box++) {
+        const ks = [...boxPositions(sc(id), 9, box)]
+        expect(ks.length, `${id} box ${box}`).toBeGreaterThan(5)
+        for (const k of ks) expect(pcs as readonly number[], `${id} box ${box} ${k}`).toContain(pcAt(k))
+      }
+    }
+  })
+
+  it('dórico tem a 6ª maior e o mixolídio a b7', () => {
+    expect(scalePcs(sc('dorian'), 9)).toContain(6) // F# em Lá dórico
+    expect(scalePcs(sc('mixo'), 9)).toContain(7) // G em Lá mixolídio
+    expect(scalePcs(sc('harmMin'), 9)).toContain(8) // G# na menor harmônica de Lá
+  })
+
+  it('escala por acorde', () => {
+    const c = (s: string) => parseChord(s)!
+    const Amaj = { root: 9, minor: false }
+    const Amin = { root: 9, minor: true }
+    expect(chordScale(c('A7'), Amaj).id).toBe('mixo')
+    expect(chordScale(c('Bm7'), Amaj).id).toBe('dorian')
+    expect(chordScale(c('Am'), Amin).id).toBe('minor')
+    expect(chordScale(c('Dm'), Amin).id).toBe('dorian')
+    expect(chordScale(c('D'), Amaj).id).toBe('major')
+    expect(chordScale(c('A5'), Amaj).id).toBe('pentMin')
   })
 })
 

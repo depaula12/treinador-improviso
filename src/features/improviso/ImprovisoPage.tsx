@@ -4,7 +4,7 @@ import { engine, STYLES } from '../../audio/engine'
 import { degreeName } from '../../core/fretboard-model'
 import { guideLine } from '../../core/guide'
 import { keyLabel, keyShort, parseProgression, progressionFor, PROGRESSIONS, realize } from '../../core/progressions'
-import { boxPositions, boxRange, SCALES, scalePcs } from '../../core/scales'
+import { AUTO_SCALE, boxPositions, boxRange, chordScale, SCALES, scalePcs } from '../../core/scales'
 import { KEYS, parseChord, type ChordInfo } from '../../core/theory'
 import { Fretboard, type LabelMode, type Mark } from '../../ui/Fretboard'
 import { drawRestriction, RESTRICTIONS } from './restrictions'
@@ -117,7 +117,11 @@ export function ImprovisoPage() {
   const songBeat = useImproviso((st) => (songMode ? Math.max(0, st.pos?.beat ?? 0) : 0))
   const prog = PROGRESSIONS.find((p) => p.id === s.progId) ?? PROGRESSIONS[0]
   const style = STYLES.find((x) => x.id === s.styleId) ?? STYLES[0]
-  const scale = SCALES.find((x) => x.id === s.scaleId) ?? SCALES[0]
+  // "acompanha o acorde": os desenhos (boxes) seguem a pentatônica do tom; as notas mostradas são
+  // as do modo de cada acorde (calculado mais abaixo, quando o acorde da vez é conhecido)
+  const autoScale = s.scaleId === AUTO_SCALE
+  const boxPent = s.keyMinor || s.progId.startsWith('blues') ? 'pentMin' : 'pentMaj'
+  const scale = SCALES.find((x) => x.id === (autoScale ? boxPent : s.scaleId)) ?? SCALES[0]
   const restriction = RESTRICTIONS.find((r) => r.id === s.restrictionId) ?? RESTRICTIONS[0]
   const typed = useMemo(() => parseProgression(s.customText), [s.customText])
   const typedOk = typed.chords.length > 0
@@ -237,6 +241,16 @@ export function ImprovisoPage() {
     [chords, changes],
   )
   const midBarChange = coming && coming.chord.symbol !== now.symbol ? coming : null
+  // escala mostrada: a escolhida, ou o modo do acorde da vez ("acompanha o acorde")
+  const shownScale = autoScale ? chordScale(now, { root: keyPc, minor: s.keyMinor }) : scale
+  const shownPcs = useMemo(() => (autoScale ? scalePcs(shownScale, now.root) : pcs), [autoScale, shownScale, now.root, pcs])
+  const shownOnly = useMemo(() => {
+    if (!autoScale || !box) return only
+    // as notas do modo do acorde, dentro do mesmo desenho (box) da pentatônica do tom
+    const rel = shownPcs.map((p) => (p - keyPc + 12) % 12)
+    return boxPositions({ id: 'acorde', name: '', semitones: rel, pent: scale.pent }, keyPc, box)
+  }, [autoScale, box, only, shownPcs, keyPc, scale.pent])
+  const scaleLabel = autoScale ? `${shownScale.name.split(' (')[0]} de ${now.tonic} (acompanha o acorde)` : `${scale.name} de ${s.key}`
   // o player (em qualquer área) mostra o acorde da vez
   useEffect(() => {
     if (useImproviso.getState().now !== now.symbol) useImproviso.getState().set({ now: now.symbol })
@@ -285,16 +299,16 @@ export function ImprovisoPage() {
               </button>
             ))}
           </div>
-          <span className="muted mono hide-phone" style={{ marginLeft: 'auto', fontSize: 13 }}>{scale.name} de {s.key} · tom {keyShort(s.key, s.keyMinor)}</span>
+          <span className="muted mono hide-phone" style={{ marginLeft: 'auto', fontSize: 13 }}>{scaleLabel} · tom {keyShort(s.key, s.keyMinor)}</span>
         </div>
         <Fretboard
           maxFret={s.maxFret}
-          scale={pcs}
+          scale={shownPcs}
           chord={now}
           next={showNext ? next : null}
           onlyChord={s.onlyChord || restriction.onlyChord}
           labels={s.labels}
-          only={only}
+          only={shownOnly}
           strings={restriction.strings}
           band={range}
           marks={marks}
@@ -371,9 +385,17 @@ export function ImprovisoPage() {
             <label className="wide">
               Escala no braço
               <select value={s.scaleId} onChange={(e) => s.set({ scaleId: e.target.value })}>
-                {SCALES.map((x) => (
-                  <option key={x.id} value={x.id}>{x.name}</option>
-                ))}
+                <option value={AUTO_SCALE}>Acompanha o acorde (mixolídio no 7, dórico no m7…)</option>
+                <optgroup label="Escalas">
+                  {SCALES.filter((x) => !x.id.startsWith('arp')).map((x) => (
+                    <option key={x.id} value={x.id}>{x.name}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Arpejos">
+                  {SCALES.filter((x) => x.id.startsWith('arp')).map((x) => (
+                    <option key={x.id} value={x.id}>{x.name}</option>
+                  ))}
+                </optgroup>
               </select>
             </label>
             <label>

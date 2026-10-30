@@ -20,6 +20,12 @@ export const QUALITIES: QualityDef[] = [
   { id: 'sus2', suffix: 'sus2', name: 'Suspenso 2 (sus2)', pcs: [0, 2, 7] },
   { id: 'sus4', suffix: 'sus4', name: 'Suspenso 4 (sus4)', pcs: [0, 5, 7] },
   { id: 'add9', suffix: 'add9', name: 'Com nona (add9)', pcs: [0, 2, 4, 7] },
+  // usados em blues, jazz e MPB
+  { id: '6', suffix: '6', name: 'Com sexta (6)', pcs: [0, 4, 7, 9] },
+  { id: '9', suffix: '9', name: 'Dominante com nona (9)', pcs: [0, 2, 4, 7, 10] },
+  { id: '7#9', suffix: '7(#9)', name: '7 com nona aumentada (7#9, "acorde do Hendrix")', pcs: [0, 3, 4, 7, 10] },
+  { id: 'm7b5', suffix: 'm7(b5)', name: 'Meio-diminuto (m7b5)', pcs: [0, 3, 6, 10] },
+  { id: 'dim7', suffix: 'º7', name: 'Diminuto (º7)', pcs: [0, 3, 6, 9] },
 ]
 
 export type FormKind = '6' | '5' | 'aberto'
@@ -43,6 +49,12 @@ const MOVABLE: Record<string, Partial<Record<'6' | '5', F[]>>> = {
   sus2: { '6': [0, 2, 4, 4, 0, 0], '5': [x, 0, 2, 2, 0, 0] },
   sus4: { '6': [0, 2, 2, 2, 0, 0], '5': [x, 0, 2, 2, 3, 0] },
   add9: { '6': [0, 2, 4, 1, 0, 0], '5': [x, 0, 2, 4, 2, 0] },
+  // as formas de pegada (as que se tocam de verdade), não o acorde "completo"
+  '6': { '6': [0, x, -1, 1, 0, x], '5': [x, 0, 2, 2, 2, 2] },
+  '9': { '6': [0, x, 0, 1, 0, 2], '5': [x, 0, -1, 0, 0, 0] },
+  '7#9': { '5': [x, 0, -1, 0, 1, x] },
+  m7b5: { '6': [0, x, 0, 0, -1, x], '5': [x, 0, 1, 0, 1, x] },
+  dim7: { '6': [0, x, -1, 0, -1, x], '5': [x, 0, 1, -1, 1, x] },
 }
 
 /** Formas abertas: [tônica, casas absolutas da 6ª para a 1ª]. */
@@ -56,6 +68,8 @@ const OPEN: Record<string, [string, F[]][]> = {
   sus2: [['A', [x, 0, 2, 2, 0, 0]], ['D', [x, x, 0, 2, 3, 0]]],
   sus4: [['E', [0, 2, 2, 2, 0, 0]], ['A', [x, 0, 2, 2, 3, 0]], ['D', [x, x, 0, 2, 3, 3]]],
   add9: [['C', [x, 3, 2, 0, 3, 0]], ['G', [3, x, 0, 2, 0, 3]], ['E', [0, 2, 2, 1, 0, 2]]],
+  '6': [['C', [x, 3, 2, 2, 1, 0]], ['A', [x, 0, 2, 2, 2, 2]], ['D', [x, x, 0, 2, 0, 2]], ['E', [0, 2, 2, 1, 2, 0]], ['G', [3, 2, 0, 0, 0, 0]]],
+  '9': [['E', [0, 2, 0, 1, 0, 2]]],
 }
 
 export interface Voicing {
@@ -120,8 +134,12 @@ const BASE = ['1', 'b2', '2', 'b3', '3', '4', 'b5', '5', '#5', '6', 'b7', '7']
 /** Nome do intervalo na fórmula (14 -> 9, 10 -> b7…). */
 export function formulaName(semitones: number, quality?: string): string {
   if (EXT[semitones]) return EXT[semitones]
-  // add9 e sus2 compartilham o 2: no add9 ele é a 9ª
-  if (semitones === 2 && quality === 'add9') return '9'
+  // add9 e sus2 compartilham o 2: no add9 (e no 9) ele é a 9ª
+  if (semitones === 2 && (quality === 'add9' || quality === '9')) return '9'
+  // no 7(#9), a "b3" é a 9ª aumentada (soa junto com a 3ª maior)
+  if (semitones === 3 && quality === '7#9') return '#9'
+  // no º7, a 6ª é a 7ª diminuta
+  if (semitones === 9 && quality === 'dim7') return 'bb7'
   if (semitones === 8) return 'b6'
   return BASE[semitones % 12]
 }

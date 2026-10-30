@@ -5,8 +5,8 @@ import { buildCards, makeQuestion, songCards } from './quiz-model'
 
 describe('songCards', () => {
   it('só os acordes da música, com a fundamental fixa', () => {
-    const { cards, skipped } = songCards('cifra-desenho', ['Bm', 'G', 'D/F#', 'Em', 'F#m7b5'], ['6', 'aberto'])
-    expect(skipped).toEqual(['F#m7b5'])
+    const { cards, skipped } = songCards('cifra-desenho', ['Bm', 'G', 'D/F#', 'Em', 'E13'], ['6', 'aberto'])
+    expect(skipped).toEqual(['E13'])
     expect(cards.every((c) => c.root !== null)).toBe(true)
     // D/F# conta como D; G e Em têm forma aberta
     expect(cards.map((c) => c.key)).toEqual(expect.arrayContaining(['cifra-desenho:maj|aberto|7', 'cifra-desenho:m|aberto|4', 'cifra-desenho:maj|6|2', 'cifra-desenho:m|6|11']))

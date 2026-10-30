@@ -66,7 +66,7 @@ export function Player() {
         {slot ? <span className="art">{slot.art}</span> : <ArtChord fallback={s.key} />}
         <div className="now-loaded-txt">
           <div className="t">{slot ? slot.title : title}</div>
-          <div className="s">{slot ? slot.sub : `${style.name} · ${scale.name}`}</div>
+          <div className="s">{slot ? slot.sub : `${style.name} · ${s.scaleId === 'auto' ? 'escala acompanha o acorde' : scale.name}`}</div>
         </div>
       </div>
 

@@ -14,7 +14,35 @@ export const SCALES: ScaleDef[] = [
   { id: 'blues', name: 'Blues', semitones: [0, 3, 5, 6, 7, 10], pent: 'minor' },
   { id: 'major', name: 'Maior', semitones: [0, 2, 4, 5, 7, 9, 11], pent: 'major' },
   { id: 'minor', name: 'Menor natural', semitones: [0, 2, 3, 5, 7, 8, 10], pent: 'minor' },
+  // modos e escalas do blues/rock: pentatônica + as notas que dão a cor
+  { id: 'dorian', name: 'Dórico (menor com 6ª maior)', semitones: [0, 2, 3, 5, 7, 9, 10], pent: 'minor' },
+  { id: 'mixo', name: 'Mixolídio (maior com b7)', semitones: [0, 2, 4, 5, 7, 9, 10], pent: 'major' },
+  { id: 'harmMin', name: 'Menor harmônica', semitones: [0, 2, 3, 5, 7, 8, 11], pent: 'minor' },
+  { id: 'bluesMaj', name: 'Blues maior', semitones: [0, 2, 3, 4, 7, 9], pent: 'major' },
+  // arpejos: só as notas do acorde, no mesmo desenho da pentatônica
+  { id: 'arpMaj', name: 'Arpejo maior (1 3 5)', semitones: [0, 4, 7], pent: 'major' },
+  { id: 'arpMin', name: 'Arpejo menor (1 b3 5)', semitones: [0, 3, 7], pent: 'minor' },
+  { id: 'arp7', name: 'Arpejo 7 (1 3 5 b7)', semitones: [0, 4, 7, 10], pent: 'major' },
+  { id: 'arpM7', name: 'Arpejo m7 (1 b3 5 b7)', semitones: [0, 3, 7, 10], pent: 'minor' },
+  { id: 'arp7M', name: 'Arpejo 7M (1 3 5 7)', semitones: [0, 4, 7, 11], pent: 'major' },
 ]
+
+/** Escala "acompanha o acorde": o modo que combina com cada acorde (mixolídio no 7, dórico no m7…). */
+export const AUTO_SCALE = 'auto'
+
+/**
+ * Escala que soa bem sobre o acorde, a partir da fundamental dele. No tom menor, o acorde da
+ * tônica usa a menor natural; os outros menores, o dórico.
+ */
+export function chordScale(chord: { root: number; semitones: number[]; minor: boolean }, key: { root: number; minor: boolean }): ScaleDef {
+  const has = (s: number) => chord.semitones.some((x) => x % 12 === s)
+  const id = has(4) && has(10)
+    ? 'mixo'
+    : chord.minor
+      ? has(6) ? 'minor' : key.minor && chord.root === key.root ? 'minor' : 'dorian'
+      : has(4) ? 'major' : 'pentMin'
+  return SCALES.find((s) => s.id === id)!
+}
 
 const PENT = { minor: [0, 3, 5, 7, 10], major: [0, 2, 4, 7, 9] }
 
@@ -93,8 +121,9 @@ function boxBase(scale: ScaleDef, root: number, box: number): [number, number][]
     const hi = Math.max(...frets) + 1
     for (let f = Math.max(0, lo); f <= hi; f++) {
       const pc = (TUNING[s] + f) % 12
-      // pentatônica do desenho + notas extras da escala na mesma região
-      if (frets.includes(f) || (pcs.has(pc) && !pentSet.has(pc))) found.push([s, f])
+      // o desenho da pentatônica, só com as notas da escala (arpejos e a menor harmônica não usam
+      // todas), + as notas extras da escala na mesma região
+      if (pcs.has(pc) && (frets.includes(f) || !pentSet.has(pc))) found.push([s, f])
     }
   })
   return found

@@ -121,9 +121,16 @@ export function Exercises() {
           <label>
             Escala
             <select value={s.scaleId} onChange={(e) => s.set({ scaleId: e.target.value })}>
-              {SCALES.map((x) => (
-                <option key={x.id} value={x.id}>{x.name}</option>
-              ))}
+              <optgroup label="Escalas">
+                {SCALES.filter((x) => !x.id.startsWith('arp')).map((x) => (
+                  <option key={x.id} value={x.id}>{x.name}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Arpejos (notas do acorde)">
+                {SCALES.filter((x) => x.id.startsWith('arp')).map((x) => (
+                  <option key={x.id} value={x.id}>{x.name}</option>
+                ))}
+              </optgroup>
             </select>
           </label>
           <label>
