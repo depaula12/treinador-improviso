@@ -119,6 +119,10 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   pergunta | progresso), atalhos 1–4/Enter; entrada de áudio em faixa compacta (InputPanel).
   O plano antigo de Tailwind/Radix foi abandonado: CSS próprio em `styles.css`.
 - Mudança visual grande: fazer em branch, mostrar prints e só juntar na main com aprovação.
+- Tons menores no Improviso: `keyMinor` no store; o seletor de Tom tem os 24 tons ("Am (Lá menor)").
+  Numa progressão pronta, trocar o modo troca a base pela equivalente (`progressionFor`: Blues de 12
+  ↔ Blues menor, I–V–vi–IV ↔ i–bVI–bIII–bVII, I–bVII–IV ↔ i–bVII–bVI) e a escala acompanha.
+  Progressões menores novas: blues menor de 12, i–iv–v, i–bVI–bIII–bVII, andaluza i–bVII–bVI–V.
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),
   treinos salvos. Motor tem `mode` ('base' | 'exercise'): um para o outro sem avisar errado a tela.

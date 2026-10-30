@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { STYLES } from '../audio/engine'
-import { parseProgression, PROGRESSIONS } from '../core/progressions'
+import { keyShort, parseProgression, PROGRESSIONS } from '../core/progressions'
 import { SCALES } from '../core/scales'
 import { togglePlay, useImproviso } from '../features/improviso/store'
 import { Mixer } from './Mixer'
@@ -37,7 +37,7 @@ export function Player() {
   const prog = PROGRESSIONS.find((p) => p.id === s.progId)
   const style = STYLES.find((x) => x.id === s.styleId) ?? STYLES[0]
   const scale = SCALES.find((x) => x.id === s.scaleId) ?? SCALES[0]
-  const title = s.progId === 'song' && s.song ? s.song.title : custom ? 'Progressão digitada' : `${prog?.name ?? ''} em ${s.key}`
+  const title = s.progId === 'song' && s.song ? s.song.title : custom ? 'Progressão digitada' : `${prog?.name ?? ''} em ${keyShort(s.key, s.keyMinor)}`
   const playing = s.status === 'playing'
 
   const toggle = slot ? slot.onToggle : () => void togglePlay()

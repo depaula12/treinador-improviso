@@ -3,7 +3,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { engine, STYLES } from '../../audio/engine'
 import { degreeName } from '../../core/fretboard-model'
 import { guideLine } from '../../core/guide'
-import { parseProgression, PROGRESSIONS, realize } from '../../core/progressions'
+import { keyLabel, keyShort, parseProgression, progressionFor, PROGRESSIONS, realize } from '../../core/progressions'
 import { boxPositions, boxRange, SCALES, scalePcs } from '../../core/scales'
 import { KEYS, parseChord, type ChordInfo } from '../../core/theory'
 import { Fretboard, type LabelMode, type Mark } from '../../ui/Fretboard'
@@ -170,9 +170,9 @@ export function ImprovisoPage() {
 
   function chooseProg(id: string) {
     if (id === 'custom') {
-      // tom da escala = fundamental do primeiro acorde digitado
+      // tom da escala = fundamental do primeiro acorde digitado (menor se ele for menor)
       const first = typed.chords[0]
-      s.set({ progId: id, ...(first ? { key: KEYS[first.root] } : {}) })
+      s.set({ progId: id, ...(first ? { key: KEYS[first.root], keyMinor: first.minor } : {}) })
       return
     }
     if (id === 'song') {
@@ -180,7 +180,22 @@ export function ImprovisoPage() {
       return
     }
     const p = PROGRESSIONS.find((x) => x.id === id)!
-    s.set({ progId: id, key: p.defaultKey, styleId: p.defaultStyle, scaleId: p.defaultScale })
+    s.set({ progId: id, key: p.defaultKey, keyMinor: !!p.minor, styleId: p.defaultStyle, scaleId: p.defaultScale })
+  }
+
+  /**
+   * Tom maior ou menor. Numa progressão pronta, troca a base para a versão do outro modo
+   * (Blues de 12 ↔ Blues menor); a escala do braço acompanha quando não combina mais.
+   */
+  function chooseKey(key: string, minor: boolean) {
+    const patch: Parameters<typeof s.set>[0] = { key, keyMinor: minor }
+    if (!custom && !songMode) {
+      const p = progressionFor(s.progId, minor)
+      if (p.id !== s.progId) patch.progId = p.id
+    }
+    if (minor && (s.scaleId === 'pentMaj' || s.scaleId === 'major')) patch.scaleId = 'pentMin'
+    if (!minor && s.scaleId === 'minor') patch.scaleId = 'pentMaj'
+    s.set(patch)
   }
 
   // % : ao trocar para uma progressão mais curta no meio, o motor ainda manda o compasso antigo
@@ -239,7 +254,7 @@ export function ImprovisoPage() {
         <div className="card lane-card">
           <div className="lane-head">
             <span className="tag">{progName}</span>
-            <span className="tag">{s.key} · {style.name}</span>
+            <span className="tag">{keyShort(s.key, s.keyMinor)} · {style.name}</span>
           </div>
           <Lane labels={laneLabels} playing={playing} />
         </div>
@@ -270,7 +285,7 @@ export function ImprovisoPage() {
               </button>
             ))}
           </div>
-          <span className="muted mono hide-phone" style={{ marginLeft: 'auto', fontSize: 13 }}>{scale.name} de {s.key}</span>
+          <span className="muted mono hide-phone" style={{ marginLeft: 'auto', fontSize: 13 }}>{scale.name} de {s.key} · tom {keyShort(s.key, s.keyMinor)}</span>
         </div>
         <Fretboard
           maxFret={s.maxFret}
@@ -318,10 +333,23 @@ export function ImprovisoPage() {
             </label>
             <label>
               {custom || songMode ? 'Tom da escala' : 'Tom'}
-              <select value={s.key} onChange={(e) => s.set({ key: e.target.value })}>
-                {KEYS.map((k) => (
-                  <option key={k}>{k}</option>
-                ))}
+              <select
+                value={`${s.key}${s.keyMinor ? 'm' : ''}`}
+                onChange={(e) => {
+                  const minor = e.target.value.endsWith('m')
+                  chooseKey(minor ? e.target.value.slice(0, -1) : e.target.value, minor)
+                }}
+              >
+                <optgroup label="Maiores">
+                  {KEYS.map((k) => (
+                    <option key={k} value={k}>{keyLabel(k, false)}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Menores">
+                  {KEYS.map((k) => (
+                    <option key={`${k}m`} value={`${k}m`}>{keyLabel(k, true)}</option>
+                  ))}
+                </optgroup>
               </select>
             </label>
             <label>

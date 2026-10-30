@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { TUNING } from './fretboard-model'
-import { parseProgression, PROGRESSIONS, realize } from './progressions'
+import { keyLabel, keyShort, parseProgression, progressionFor, PROGRESSIONS, realize } from './progressions'
 import { boxPositions, boxRange, SCALES } from './scales'
 
 const pentMin = SCALES.find((s) => s.id === 'pentMin')!
@@ -45,6 +45,35 @@ describe('desenhos (boxes)', () => {
 describe('progressões', () => {
   it('blues de 12 em Lá', () => {
     expect(realize(PROGRESSIONS[0], 'A').map((c) => c.symbol)).toEqual(['A7', 'A7', 'A7', 'A7', 'D7', 'D7', 'A7', 'A7', 'E7', 'D7', 'A7', 'E7'])
+  })
+
+  it('progressões menores em Lá menor', () => {
+    const sym = (id: string) => realize(PROGRESSIONS.find((p) => p.id === id)!, 'A').map((c) => c.symbol)
+    expect(sym('bluesMinor')).toEqual(['Am7', 'Am7', 'Am7', 'Am7', 'Dm7', 'Dm7', 'Am7', 'Am7', 'F7', 'E7', 'Am7', 'E7'])
+    expect(sym('minorIivv')).toEqual(['Am', 'Dm', 'Em', 'Am'])
+    expect(sym('minorPop')).toEqual(['Am', 'F', 'C', 'G'])
+    expect(sym('andalusian')).toEqual(['Am', 'G', 'F', 'E7'])
+    // todas as menores começam num acorde menor (a base soa menor)
+    for (const p of PROGRESSIONS.filter((x) => x.minor)) expect(realize(p, 'E')[0].minor, p.id).toBe(true)
+    for (const p of PROGRESSIONS.filter((x) => !x.minor)) expect(realize(p, 'E')[0].minor, p.id).toBe(false)
+  })
+
+  it('trocar o modo do tom troca a progressão pela equivalente', () => {
+    expect(progressionFor('blues12', true).id).toBe('bluesMinor')
+    expect(progressionFor('bluesMinor', false).id).toBe('blues12')
+    expect(progressionFor('pop', true).id).toBe('minorPop')
+    expect(progressionFor('rock', true).id).toBe('minorRock')
+    // já está no modo pedido: fica a mesma
+    expect(progressionFor('andalusian', true).id).toBe('andalusian')
+    expect(progressionFor('blues12quick', false).id).toBe('blues12quick')
+    // toda progressão tem par no outro modo
+    for (const p of PROGRESSIONS) expect(!!progressionFor(p.id, !p.minor).minor, p.id).toBe(!p.minor)
+  })
+
+  it('nome do tom', () => {
+    expect(keyLabel('A', true)).toBe('Am (Lá menor)')
+    expect(keyLabel('F#', false)).toBe('F# (Fá# maior)')
+    expect(keyShort('Bb', true)).toBe('Bbm')
   })
 
   it('progressão digitada: repetição, separadores e cifras inválidas', () => {

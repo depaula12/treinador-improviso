@@ -59,6 +59,7 @@ export function loadIntoImproviso(song: Song) {
     progId: 'song',
     song: { id: song.id, title: song.title, bars: toPlayBars(timedChords(song)) },
     key: KEYS[keyPc(key)],
+    keyMinor: minor,
     scaleId: minor ? 'pentMin' : 'pentMaj',
     bpm: song.bpm,
     styleId: song.styleId,

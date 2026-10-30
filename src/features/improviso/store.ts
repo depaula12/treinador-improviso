@@ -19,6 +19,8 @@ interface ImprovisoState {
   /** acorde da vez (o player mostra na "capa") */
   now: string
   key: string
+  /** tom menor (Am em vez de A): muda o rótulo, a escala e, nas progressões prontas, a base */
+  keyMinor: boolean
   styleId: string
   scaleId: string
   restrictionId: string
@@ -47,6 +49,7 @@ export const useImproviso = create<ImprovisoState>((set) => ({
   song: null,
   now: '',
   key: 'A',
+  keyMinor: false,
   styleId: 'shuffle',
   scaleId: 'pentMin',
   restrictionId: 'nenhuma',
