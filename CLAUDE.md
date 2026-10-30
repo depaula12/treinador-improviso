@@ -137,6 +137,15 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
     da escala); Improviso com escala "acompanha o acorde" (`chordScale`).
   - Acordes no banco: 6, 9, 7(#9), m7(b5), º7. A detecção de áudio usa só os 9 tipos antigos
     (`DETECT_QUALITIES` em chroma.ts): C6 = Am7 em notas, não pode entrar sem nova validação.
+- **Rodada melhorias-2** (branch, aguardando aprovação do usuário): fonte Fraunces no app inteiro;
+  quiz de Acordes novo (`core/chord-bank.ts` com abertas, pestanas, formas móveis do gerador e
+  tríades; `features/acordes/quiz-model.ts` com 7 tipos de pergunta, níveis 1–4, misturado, ouvir a
+  resposta via `engine.playShapes`); Compor reescrito sobre `core/compose-doc.ts` (acorde com
+  `beats` 2/4/8 e `frets` opcional; seção com `strum`), `core/shape-choice.ts` (opções de desenho
+  por facilidade, `closeShapes` = menos movimento da mão), linguagens em `core/compose.ts`
+  (`Lang`: pop/blues/jazz, `colorize`), base do Compor = progId 'song' com id 'compor'
+  (`LoadedSong.strums`, `Segment.midi` → `PlayChord.guitar` no motor); `audio/styles/bossa.ts` e
+  `audio/styles/strums.ts` (8 levadas, `SongConfig.strums` troca só o violão).
 - Prints com Edge headless: sempre `--mute-audio` e fechar o headless no fim (ele toca nas caixas do usuário).
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),

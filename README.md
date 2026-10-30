@@ -50,7 +50,7 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
 - Progressões prontas em tom maior (blues de 12 normal e *quick change*, I–V–vi–IV, I–bVII–IV) e
   menor (blues menor, i–iv–v, i–bVI–bIII–bVII, i–bVII–bVI, andaluza), ou digitadas (`Am*2 G F E7`).
   O seletor de tom tem os 24 tons; num tom menor a base vira a versão menor da progressão.
-- Quatro estilos: **shuffle de blues**, **rock reto**, **slow blues 12/8** e **pop rock/balada**.
+- Cinco estilos: **shuffle de blues**, **rock reto**, **slow blues 12/8**, **pop rock/balada** e **bossa nova**.
 - O braço mostra o desenho (box 1–5) em foco: a **fundamental** em vermelho, as **notas do acorde**
   em destaque com o grau (3, b7…) e a escala em pontos discretos. No tempo 4, brilham as notas do
   **próximo acorde**.
@@ -67,14 +67,24 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
 
 ### Compor
 
-![Compor: progressão por efeito](docs/screenshots/compor.png)
+![Compor: progressão por efeito, com desenhos e levadas](docs/screenshots/compor.png)
 
 - Escolha o tom e o primeiro acorde; a cada passo o app oferece opções pelo **efeito**: repousar,
   criar tensão, subir a energia, melancolia, surpresa, conclusão sóbria / forte / épica, suspense.
-- Cada opção mostra os acordes, os graus e **por que soa assim**, e tem **▶ ouvir** (o último acorde
-  + a opção, no violão) antes de usar; "outra opção" troca a sugestão.
-- Seções (verso, refrão, ponte…) com começos sugeridos, desenhos dos acordes usados,
-  **tocar com a base**, **improvisar sobre ela** e **salvar como música** do repertório.
+- Três **linguagens**: **Pop/Rock** (tríades), **Blues** (tudo com sétima, quick change, #IVº7 de
+  passagem, turnaround) e **Bossa/Jazz** (7M, m7, 6/9, 7(13), ii–V–I, dominantes secundários,
+  substituto trítono como Dm7 → Db7 → C7M(9), I7M → II7, ivm6).
+- Cada opção mostra os acordes, os graus e **por que soa assim**, e tem **▶ ouvir** antes de usar.
+- **Edição livre**: clique num acorde para mudar a duração (½, 1 ou 2 compassos), trocar, mover,
+  duplicar ou apagar; arraste para reordenar; digite qualquer cifra; as sugestões valem para o
+  acorde selecionado. **colorir** enriquece o acorde (C → C7M → C7M(9) → C6/9).
+- **Escolha o desenho** de cada acorde no braço (o mais simples, os outros na ordem do braço, e o
+  mais perto do acorde anterior marcado) ou **aproxime os desenhos** de uma vez: o app escolhe a
+  combinação com menos movimento da mão. A base toca o desenho escolhido.
+- **Levada do violão por seção**: pop baixo-cima, balada dedilhada, rock em colcheias, reggae, funk em
+  semicolcheias, shuffle, bossa nova ou uma batida por compasso. Tom (transpõe tudo), BPM e estilo.
+- **Tocar com a base** em loop (o que você muda entra no próximo compasso), **improvisar sobre ela**
+  e **salvar como música** do repertório, com as durações.
 
 ### Músicas (repertório)
 
@@ -108,9 +118,15 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
   ele fica no braço.
 
 ![Consulta de acordes com todas as formas](docs/screenshots/acordes-consulta.png)
-- **Quatro quizzes**: cifra → desenho, desenho → cifra, cifra → notas e um modo **cronometrado**
-  para fazer com a guitarra na mão, que pode ser **conferido pelo áudio** (o relógio para quando o
-  acorde pedido soa). Teclas 1–4 e Enter para responder.
+- **Quiz com centenas de perguntas** (446 no nível 4): cifra → desenho, desenho → cifra, **graus no
+  desenho** (clique na bolinha da 3ª, da b7…), **nota de cada grau**, **o que muda** de um acorde para
+  outro (C → Cm: a 3ª desce meio tom), cifra → notas e um modo **cronometrado** com a guitarra na mão,
+  **conferido pelo áudio**. Modo misturado, **níveis 1–4** e filtros por tipo de acorde e de forma
+  (aberta, pestana, móvel, tríade nas cordas agudas).
+- Desenhos de verdade: abertos, pestanas e formas móveis que funcionam em quase todas as fundamentais
+  (as do CAGED), além de tríades em 3 grupos de cordas × 3 inversões.
+- **▶ Ouvir a resposta** (arpejado e depois junto) e a que você escolheu; sessões de 10, 20 ou 50
+  com resultado e o que revisar. Teclas 1–4, Enter e O.
 - **Repetição espaçada (Leitner)**: o que você erra ou demora aparece mais vezes.
 
 ### Escalas
@@ -164,7 +180,7 @@ um teclado de brinquedo. O motor novo foi escrito do zero sobre o Tone.js:
 | Humanização | Desvio de tempo por instrumento (o baixo toca levemente atrás), variação de intensidade, *ghost notes* na caixa |
 | Arranjo | Variações A/B por frase, viradas, prato na entrada da frase, baixo idiomático por estilo (desenho de shuffle, aproximação cromática antes da troca) |
 | Piano | **Voice leading**: escolhe a inversão com menor movimento em relação ao acorde anterior |
-| Violão | *Strum* real, com 10–25 ms entre as cordas e batida para cima e para baixo |
+| Violão | *Strum* real, com 10–25 ms entre as cordas e batida para cima e para baixo; 8 levadas (dedilhado, reggae, funk com abafados, bossa com polegar no baixo…) |
 
 **Agendamento preciso e Parar instantâneo.** Cada nota vira um evento do `Tone.Transport` e só é
 entregue ao Web Audio ~50 ms antes de soar. O Parar descarta a fila e fecha um *gate* em 30 ms.
@@ -210,11 +226,11 @@ flowchart LR
     scales["scales<br/>desenhos 1–5"]
     voicings["voicings<br/>banco de acordes"]
     ear["pitch · chroma · key<br/>ouvido"]
-    sug["guide · next-chords<br/>sugestões"]
+    sug["guide · next-chords · compose<br/>sugestões"]
   end
   subgraph audio["audio/"]
     engine["engine<br/>Transport, mixer, agendamento"]
-    styles["styles/<br/>shuffle · rock · 12/8 · balada"]
+    styles["styles/<br/>shuffle · rock · 12/8 · balada · bossa<br/>+ levadas de violão"]
     human["humanize"]
     drums["drums<br/>camadas + round robin"]
     input["input<br/>captura da guitarra"]
@@ -261,7 +277,7 @@ do quiz de acordes e de cifra rolando no tempo.
 | Teoria musical | tonal |
 | Detecção de nota | pitchy (McLeod) + Web Audio `AnalyserNode` |
 | Estado | Zustand (com persistência local) |
-| Testes | Vitest (374 testes) + GitHub Actions |
+| Testes | Vitest (660 testes) + GitHub Actions |
 | Dados | Tudo local no navegador; sem backend |
 | Deploy | Vercel (publica a cada push em `main`) |
 
@@ -280,16 +296,16 @@ npm run e2e        # com o preview rodando: Jam livre num navegador headless com
 
 ## Roadmap
 
-- [x] Motor de áudio com 4 estilos, mixer e humanização
+- [x] Motor de áudio com 5 estilos (inclui bossa nova), levadas de violão, mixer e humanização
 - [x] Improviso: braço com foco por desenho, próxima troca, alvos sugeridos, restrições, progressão digitada
-- [x] Acordes: banco, decodificador, quizzes e repetição espaçada
+- [x] Acordes: banco, consulta com todas as formas, quiz com 7 tipos de pergunta e níveis, repetição espaçada
 - [x] **Escalas**: desenhos 1–5, exercícios no metrônomo, quiz "onde está a nota" e treinos salvos
 - [x] **Entrada de áudio** (interface USB ou microfone): afinador, detecção de nota e de acorde
 - [x] **Jam livre** (primeira versão): acorde e tom detectados, próximos acordes e notas-alvo em tempo real
 - [x] **Músicas** (v0.2): colar uma cifra e virar base de treino, grade editável, cifra rolando
 - [ ] **Treino do dia + progresso**: sessão montada automaticamente e histórico de acertos
 - [x] Jam livre pelo contexto, aprendendo com as músicas do repertório
-- [x] **Compor**: progressões pelo efeito, com teoria, prévia e salvar como música
+- [x] **Compor**: progressões pelo efeito em Pop/Rock, Blues ou Bossa/Jazz, edição livre, desenho de cada acorde e levada por seção
 - [x] O app confere o que você toca: placar de notas-alvo, quiz de acordes e de notas pelo áudio
 - [x] Tons menores, modos, arpejos e acordes 6, 9, 7(#9), m7(b5) e º7
 

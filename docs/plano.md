@@ -37,10 +37,15 @@ revisão antes de salvar, onde dá para corrigir o que veio errado.
 - Área Compor (progressões pelo efeito, com teoria e prévia).
 - v0.4 e v0.5 (quiz pelo áudio e placar de notas-alvo) adiantadas.
 - Escalas novas (modos, arpejos, escala por acorde) e acordes 6, 9, 7(#9), m7(b5), º7.
+- Branch `melhorias-2`: fonte Fraunces; quiz de acordes com centenas de perguntas (graus no
+  desenho, nota do grau, o que muda, níveis 1–4, tríades, ouvir a resposta); Compor com edição livre
+  (duração ½/1/2, mover, digitar, transpor), desenho de cada acorde + "aproximar os desenhos",
+  linguagens Pop/Rock | Blues | Bossa/Jazz, "colorir", levada do violão por seção e estilo Bossa nova.
 
 Ainda do relatório, para depois: pergunta e resposta, licks por estilo, treino de ouvido, loop de
-trecho e "mais devagar e acelerando" nas Músicas, tríades nas cordas agudas, exportar/importar as
-músicas entre aparelhos (junto com a v0.3).
+trecho e "mais devagar e acelerando" nas Músicas, exportar/importar as músicas entre aparelhos
+(junto com a v0.3). Fora do escopo por ora: compasso 3/4 (o motor só toca 4/4); a música salva
+a partir do Compor não guarda o desenho escolhido nem a levada por seção (o modelo Song não tem).
 
 ## v0.3 Treino do dia + Progresso (próxima, quando o usuário pedir)
 1. Migrar `acordes-v1`, `escalas-v1` e `entrada-v1` do localStorage para Dexie, sem perder dados.
