@@ -431,9 +431,10 @@ th { font: 700 9pt 'Fraunces', Georgia, serif; letter-spacing: .06em; text-trans
     <li><b>Braço</b> de ponta a ponta: vermelho = fundamental, laranja = notas do acorde, cinza = escala, <b>branco = alvo sugerido</b>, anel azul = notas do próximo acorde no tempo 4. <span class="ui">Box 1–5 / Todo</span> destaca a região do desenho escolhido.</li>
     <li><b>Base</b> (abaixo do braço, tudo à vista): progressão (pronta, digitada, música ou composição), tom com os 24 tons, estilo, escala (inclusive <span class="ui">acompanha o acorde</span>), virada e andamento.</li>
     <li><b>Restrição</b> e a lista de compassos da progressão, com o compasso da vez aceso.</li>
-    <li><b>Placar</b>: com a guitarra ligada, o app confere o tempo 1 de cada compasso: no alvo, outra nota do acorde ou fora.</li>
+    <li><b>Placar</b> (<span class="ui">Placar: ouvir minha guitarra</span>): o app ouve <b>cada nota</b> que você toca. Ela pulsa no braço com a cor do veredito, entra na trilha das últimas notas e conta na % de notas dentro da escala ou do acorde. Ele também confere se você pousou no alvo no tempo 1 de cada compasso.</li>
     <li><b>Player</b> no rodapé: tocar (ou espaço), bpm, contagem, loop e mixer.</li>
   </ol>
+  <div class="box"><div class="t">Cores: o que o app mostra × o que você toca</div>As <b>bolinhas cheias</b> são o mapa: vermelho = fundamental, laranja = nota do acorde, cinza = escala, <b>branco = alvo sugerido</b> (3ª ou 7ª do acorde, para pousar no tempo 1), anel azul = notas do próximo acorde. As notas que <b>você toca</b> aparecem como <b>anéis coloridos com o nome da nota</b>, que pulsam e somem em ~1,5 s: <b style="color:#2f9e63">verde</b> = no alvo · <b style="color:#b8860b">amarelo</b> = nota do acorde · <b style="color:#3f6fd1">azul</b> = da escala · <b style="color:#d23a52">rosa</b> = fora. Como o captador não diz a corda, a nota acende dentro do box em foco (ou perto da última que você tocou).</div>
   <div class="two">
     <div class="box tip"><div class="t">Configuração para começar</div>Blues de 12 · Lá · Shuffle · Pentatônica menor · 70–80 bpm · Box 1 · Alvos sugeridos ligado.</div>
     <div class="box"><div class="t">Mixer</div>Deixe bateria e baixo ligados. Piano e violão preenchem; desligue se ficar embolado com a sua guitarra.</div>
@@ -513,6 +514,7 @@ th { font: 700 9pt 'Fraunces', Georgia, serif; letter-spacing: .06em; text-trans
     <li><b>Ritmo</b>: semínimas → colcheias → tercinas → semicolcheias. <b>Tocar as notas</b>: ouvir cada nota junto do clique.</li>
     <li><b>Mostrar</b>: <span class="ui">Tudo</span> para aprender · <span class="ui">Só tônicas</span> para completar de cabeça · <span class="ui">Esconder</span> para tocar de memória (e <span class="ui">Revelar</span> para conferir).</li>
     <li><b>Treinos salvos</b>: guarde combinações ("Seg: box 1–2, grupos de 3, 80 bpm"). Um conjunto delas é o seu plano da semana.</li>
+    <li><b>Conferir o que eu toco</b> (guitarra ligada): <span class="ui">No metrônomo</span>, cada nota da sequência fica <b>verde</b> (certa), <b>amarela</b> (fora do tempo ou outra oitava) ou <b>vermelha</b> (errada ou faltou); no fim da volta aparece a % de acerto e se você está adiantado ou atrasado. <span class="ui">Espera por você</span>: sem metrônomo, a próxima nota só acende quando você acerta a atual. <span class="ui">Subir o bpm sozinho</span>: volta com 90% ou mais sobe 5 bpm; abaixo de 70%, desce.</li>
     <li><b>Onde está a nota?</b>: decorar o braço clicando nas casas ou tocando a nota na guitarra (o app ouve).</li>
   </ul>
   <div class="box warn"><div class="t">Devagar e limpo vence rápido e sujo</div>Comece num andamento em que você <b>não erra</b>. Velocidade é consequência de repetição limpa. Suba de 5 em 5 bpm.</div>
@@ -546,11 +548,11 @@ th { font: 700 9pt 'Fraunces', Georgia, serif; letter-spacing: .06em; text-trans
   <ul>
     <li><b>Acordes:</b> E, A, D, G, C, Em, Am, Dm, A7, D7, E7 abertos (quiz <b>nível 1</b>, <span class="ui">Misturado</span> + <span class="ui">Cronometrado</span>).</li>
     <li><b>Teoria:</b> Partes 2 a 4 com os exercícios (uma parte por semana, 10 min por dia).</li>
-    <li><b>Escalas:</b> pentatônica menor de Lá, <b>box 1</b>: <span class="ui">Subir e descer</span>, depois <span class="ui">Grupos de 3</span>.</li>
+    <li><b>Escalas:</b> pentatônica menor de Lá, <b>box 1</b>: primeiro <span class="ui">Espera por você</span> até decorar, depois <span class="ui">Subir e descer</span> e <span class="ui">Grupos de 3</span> <span class="ui">No metrônomo</span>, conferido pelo áudio.</li>
     <li><b>Braço:</b> notas da 6ª e 5ª corda (<span class="ui">Onde está a nota?</span>).</li>
-    <li><b>Improviso:</b> blues em Lá, shuffle, 70 bpm, Box 1, restrição <span class="ui">Só 3 notas da escala</span>.</li>
+    <li><b>Improviso:</b> blues em Lá, shuffle, 70 bpm, Box 1, restrição <span class="ui">Só 3 notas da escala</span>, com o placar ligado (meta: 90% das notas dentro).</li>
   </ul>
-  <ul class="check"><li>Troca A7 → D7 → E7 no tempo, sem parar a mão direita.</li><li>Box 1 subindo e descendo a 90 bpm em colcheias, sem erro.</li><li>Diz o nome de qualquer nota da 6ª e 5ª corda em menos de 3 s.</li></ul>
+  <ul class="check"><li>Troca A7 → D7 → E7 no tempo, sem parar a mão direita.</li><li>Box 1 subindo e descendo a 90 bpm em colcheias com 90% ou mais na conferência das Escalas.</li><li>Diz o nome de qualquer nota da 6ª e 5ª corda em menos de 3 s.</li></ul>
 
   <h3>Fase 2 · Mirar nos alvos (semanas 4–6)</h3>
   <ul>
@@ -588,7 +590,7 @@ th { font: 700 9pt 'Fraunces', Georgia, serif; letter-spacing: .06em; text-trans
     <tr><th style="width:18mm">Tempo</th><th style="width:38mm">Onde</th><th>O quê</th></tr>
     <tr><td>10 min</td><td>Afinador + aquecimento</td><td>Afinar. Cromático lento (1-2-3-4 em cada corda) para soltar os dedos.</td></tr>
     <tr><td>20 min</td><td>Acordes</td><td>10 min de quiz (o app puxa o que você erra) + 10 min de <b>cronometrado</b> com a guitarra.</td></tr>
-    <tr><td>30 min</td><td>Escalas</td><td>Exercício do treino salvo do dia (comece devagar, suba 5 bpm a cada 3 acertos) + 5 min de <i>Onde está a nota?</i></td></tr>
+    <tr><td>30 min</td><td>Escalas</td><td>Exercício do treino salvo do dia, conferido pelo áudio, com <i>Subir o bpm sozinho</i> ligado + 5 min de <i>Onde está a nota?</i></td></tr>
     <tr><td>40 min</td><td>Improviso</td><td>Uma restrição por volta. Alvos sugeridos ligados. Grave no celular 2 minutos no fim e escute.</td></tr>
     <tr><td>15 min</td><td>Músicas / Compor / Jam</td><td>Músicas da banda (cifra rolando e frases sobre elas) ou uma ideia nova no Compor. 2–3 exercícios do guia da semana.</td></tr>
     <tr><td>5 min</td><td>Anotar</td><td>O que travou hoje? Isso vira o foco de amanhã.</td></tr>
@@ -691,6 +693,7 @@ th { font: 700 9pt 'Fraunces', Georgia, serif; letter-spacing: .06em; text-trans
     <li><b>Compor</b>: progressões pelo efeito em Pop/Rock, Blues e Bossa/Jazz, edição livre, desenhos e levadas.</li>
     <li>Tons menores, modos, arpejos, acordes 6, 9, 7(#9), m7(b5), º7 e o quiz com 7 tipos de pergunta.</li>
     <li>Estilo <b>bossa nova</b> e levadas de violão (reggae, funk, dedilhado…).</li>
+    <li><b>O app ouve cada nota</b>: notas acesas no braço, placar por nota, Escalas conferidas, modo "espera por você" e speed trainer.</li>
   </ul>
   <h3>O que vem depois</h3>
   <p><span class="prio p1">ALTA</span> impacto direto na sua evolução; <span class="prio p2">MÉDIA</span> deixa tudo mais redondo; <span class="prio p3">PRODUTO</span> necessário só se virar plataforma.</p>
@@ -702,7 +705,7 @@ th { font: 700 9pt 'Fraunces', Georgia, serif; letter-spacing: .06em; text-trans
     <tr><td><b>Treino de ouvido</b></td><td>Reconhecer intervalos, acordes maior/menor/7 e graus de ouvido (a mesma teoria das Partes 3 a 7).</td><td><span class="prio p2">MÉDIA</span></td></tr>
     <tr><td><b>Pergunta e resposta</b></td><td>O app toca uma frase curta e você responde; treina ouvido e vocabulário.</td><td><span class="prio p2">MÉDIA</span></td></tr>
     <tr><td><b>Licks por estilo</b></td><td>Frases prontas de blues, rock e bossa para aprender e levar para outros tons.</td><td><span class="prio p2">MÉDIA</span></td></tr>
-    <tr><td><b>Speed trainer</b></td><td>Metrônomo que sobe o bpm sozinho a cada volta sem erro (o app ouve).</td><td><span class="prio p2">MÉDIA</span></td></tr>
+
     <tr><td><b>Gravar e ouvir</b></td><td>Gravar a guitarra sobre a base e escutar depois; mapa de calor das notas usadas.</td><td><span class="prio p2">MÉDIA</span></td></tr>
     <tr><td><b>Compasso 3/4 e mais estilos</b></td><td>Valsa e baladas em 3/4; funk, reggae e metal como estilos completos de base.</td><td><span class="prio p2">MÉDIA</span></td></tr>
     <tr><td><b>Loops próprios</b></td><td>Trocar a bateria por loops gravados no FL Studio.</td><td><span class="prio p2">MÉDIA</span></td></tr>
