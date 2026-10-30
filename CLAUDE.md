@@ -157,6 +157,9 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
 - Git: repositório privado github.com/depaula12/treinador-improviso (branch main). Ao fim de cada
   etapa que roda, fazer commit com mensagem em português descrevendo a etapa e `git push`, para o
   histórico mostrar a evolução do projeto. Autor usa o e-mail noreply do GitHub.
+- Teste ponta a ponta da Jam: `npm run e2e` (com `npm run preview` rodando, ou passando a URL de
+  produção). Gera áudio sintético, usa microfone falso do Chrome/Edge headless via DevTools Protocol.
+  Não roda no CI (precisa de navegador); rodar ao mexer em audio/input, core/chroma ou na Jam.
 - Antes de cada commit: `npm run typecheck` e `npm test` (Vitest, arquivos `*.test.ts` ao lado do
   código). O CI no GitHub Actions roda os dois + build a cada push. Lógica nova em core/, audio/styles
   ou quiz ganha teste. Ao mudar a UI, atualizar os prints em `docs/screenshots/` usados no README.

@@ -161,7 +161,7 @@ export function JamPage() {
             <div className="tag">O que você tocou</div>
             <button type="button" className="link" onClick={() => { setHistory([]); setLocked('auto') }}>limpar</button>
           </div>
-          <div className="bars">
+          <div className="bars jam-history">
             {history.slice(-16).map((h, i) => {
               const c = parseChord(h.symbol)
               return (
