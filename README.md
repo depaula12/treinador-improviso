@@ -1,6 +1,4 @@
-# solonely.
-
-*(antes: Treinador de Improviso)*
+# Treinador de Improviso
 
 [![CI](https://github.com/depaula12/treinador-improviso/actions/workflows/ci.yml/badge.svg)](https://github.com/depaula12/treinador-improviso/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)

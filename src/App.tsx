@@ -39,7 +39,7 @@ export function App() {
   return (
     <div className="wrap">
       <header>
-        <h1>solonely<span className="dot">.</span></h1>
+        <h1>Treinador de Improviso</h1>
         <nav className="tabs">
           {AREAS.map((a) => (
             <button key={a.id} type="button" aria-current={area === a.id ? 'page' : undefined} onClick={() => go(a.id)}>

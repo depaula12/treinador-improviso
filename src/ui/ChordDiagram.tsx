@@ -80,7 +80,7 @@ export const ChordDiagram = memo(function ChordDiagram({ voicing, labels = 'grau
           const y = top + (f - base + 0.5) * fh
           return (
             <g key={s}>
-              <circle cx={x} cy={y} r={10} fill={isRoot ? 'var(--root)' : 'var(--tone)'} />
+              <circle cx={x} cy={y} r={10} fill={isRoot ? 'var(--root)' : 'var(--accent)'} />
               {lab && <text x={x} y={y + 4} textAnchor="middle" className="cd-lab">{lab}</text>}
             </g>
           )

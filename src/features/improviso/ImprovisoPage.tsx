@@ -12,30 +12,13 @@ import { drawRestriction, RESTRICTIONS } from './restrictions'
 import { togglePlay, useImproviso } from './store'
 
 // Componentes pequenos que acompanham o tempo: só eles re-renderizam a cada batida.
-// arco de `a` a `b` graus (0 = topo, sentido horário) num círculo de raio r centrado em (c, c)
-function arc(c: number, r: number, a: number, b: number) {
-  const p = (deg: number) => {
-    const t = ((deg - 90) * Math.PI) / 180
-    return `${c + r * Math.cos(t)} ${c + r * Math.sin(t)}`
-  }
-  return `M ${p(a)} A ${r} ${r} 0 0 1 ${p(b)}`
-}
-
-/** Anel com os 4 tempos do compasso em volta do acorde: o tempo atual acende em limão. */
-function BeatRing({ children, playing }: { children: React.ReactNode; playing: boolean }) {
+function BeatDots() {
   const beat = useImproviso((st) => st.pos?.beat ?? -1)
   return (
-    <div className="beat-ring">
-      <svg viewBox="0 0 200 200" aria-hidden>
-        {[0, 1, 2, 3].map((b) => (
-          <path
-            key={b}
-            d={arc(100, 92, b * 90 + 4, b * 90 + 86)}
-            className={!playing || beat < 0 ? '' : b === beat ? 'now' : b < beat ? 'past' : ''}
-          />
-        ))}
-      </svg>
-      <div className="beat-ring-in">{children}</div>
+    <div className="beats" aria-hidden>
+      {[0, 1, 2, 3].map((b) => (
+        <span key={b} className={beat === b ? 'on' : ''} />
+      ))}
     </div>
   )
 }
@@ -165,10 +148,10 @@ export function ImprovisoPage() {
       </button>
 
       <section className="now-next" aria-live="polite">
-        <BeatRing playing={playing}>
+        <div>
           <div className="tag">{counting ? 'Contagem' : 'Agora'}</div>
-          {counting ? <CountIn /> : <div className={`now-chord${now.symbol.length > 4 ? ' long' : ''}`}>{now.symbol}</div>}
-        </BeatRing>
+          {counting ? <CountIn /> : <div className="now-chord">{now.symbol}</div>}
+        </div>
         <div className="next">
           <div className="tag">Próxima troca</div>
           <div className="next-chord">{counting ? now.symbol : change.symbol}</div>
@@ -176,6 +159,7 @@ export function ImprovisoPage() {
             <div className="next-when">{coming ? `no tempo ${coming.beat + 1}` : ahead === 1 ? 'no próximo compasso' : `em ${ahead} compassos`}</div>
           )}
         </div>
+        <BeatDots />
       </section>
 
       <section className="board">
@@ -215,7 +199,7 @@ export function ImprovisoPage() {
           </button>
           <div className="legend">
             <span><i style={{ background: 'var(--root)' }} />Fundamental</span>
-            <span><i style={{ background: 'var(--tone)' }} />Acorde</span>
+            <span><i style={{ background: 'var(--accent)' }} />Acorde</span>
             <span><i className="dot" />Escala</span>
             <span><i className="ring" />Próximo</span>
           </div>

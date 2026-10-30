@@ -128,7 +128,7 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
     const lab = labels === 'graus' ? degreeName(chord.semitones[ci]) : labels === 'notas' ? noteName(chord, p.pc) : ''
     chordEls.push(
       <g key={`d${k}`}>
-        <circle cx={cx} cy={cy} r={big} fill={isRoot ? 'var(--root)' : 'var(--tone)'} />
+        <circle cx={cx} cy={cy} r={big} fill={isRoot ? 'var(--root)' : 'var(--accent)'} />
         {lab && <text x={cx} y={cy + (focus ? 5 : 4)} textAnchor="middle" className={focus ? 'fb-lab big' : 'fb-lab'}>{lab}</text>}
       </g>,
     )
@@ -141,7 +141,7 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
       const cy = y(m.string)
       const k = `m${m.string}-${m.fret}-${m.kind}`
       if (m.kind === 'next') return <circle key={k} cx={cx} cy={cy} r={big + 5} fill="none" stroke="var(--next)" strokeWidth={3} />
-      const fill = m.kind === 'current' ? 'var(--target)' : m.kind === 'right' ? 'var(--good)' : 'var(--bad)'
+      const fill = m.kind === 'current' ? 'var(--fg)' : m.kind === 'right' ? 'var(--good)' : 'var(--root)'
       return (
         <g key={k}>
           <circle cx={cx} cy={cy} r={big + 2} fill={fill} />
