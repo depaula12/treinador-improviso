@@ -56,7 +56,12 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
 
 - Banco com ~30 formas móveis e abertas (power, maior, menor, 7, m7, 7M, sus2, sus4, add9),
   com fundamental na 6ª e na 5ª corda.
-- **Decodificador**: digite qualquer cifra e veja fórmula, notas, desenhos e o acorde no braço.
+- **Consulta**: digite qualquer cifra (inclusive Am7b5, E9, C13, D/F#) e veja fórmula, notas e
+  **todas as formas tocáveis no braço**, geradas por busca (até 4 dedos, contando pestana) e
+  ordenadas da casa 1 à 15. As principais aparecem primeiro; clicar num desenho mostra onde
+  ele fica no braço.
+
+![Consulta de acordes com todas as formas](docs/screenshots/acordes-consulta.png)
 - **Quatro quizzes**: cifra → desenho, desenho → cifra, cifra → notas e um modo **cronometrado**
   para fazer com a guitarra na mão.
 - **Repetição espaçada (Leitner)**: o que você erra ou demora aparece mais vezes.
@@ -236,7 +241,8 @@ npm run e2e        # com o preview rodando: Jam livre num navegador headless com
 - [ ] Jam livre aprendendo as transições com as músicas do seu repertório
 - [ ] Quiz cronometrado conferido pelo áudio (o app ouve se você tocou o acorde pedido)
 
-O planejamento detalhado e as decisões de projeto estão em [`CLAUDE.md`](CLAUDE.md).
+O planejamento detalhado e as decisões de projeto estão em [`CLAUDE.md`](CLAUDE.md), e o plano
+das próximas versões em [`docs/plano.md`](docs/plano.md).
 
 ## Créditos
 

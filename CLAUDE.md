@@ -133,7 +133,12 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   + dica de tônica no 1º acorde/mais longo; empate mostra o rival para fixar), 3 sugestões de próximo
   acorde (tabelas blues/maior/menor em core/next-chords.ts) com diagrama, alvo 3ª/7ª perto da última
   nota tocada, histórico. Tela limitada a ~8 redesenhos/s. Falta validar com a guitarra.
-- Próximo: validar Jam livre; depois Fase 1b (Músicas), que vai alimentar as tabelas de sugestão.
+- Consulta de acordes gera todas as formas tocáveis de qualquer cifra (core/chord-shapes.ts):
+  busca em janelas de 4 casas, até 4 dedos (pestana e pestaninha do anelar contam 1), baixo =
+  fundamental ou o baixo da barra (parseChord agora separa `bass`), 5ª/9ª podem sair em acordes
+  grandes; "principais" = melhores por região do braço.
+- Próximo: validar Jam livre; depois seguir `docs/plano.md` (v0.2 Músicas → v0.3 Treino do dia
+  + Progresso → v0.4 quiz pelo áudio → v0.5 placar de notas-alvo).
 - Git: um `git push` travou sem erro uma vez; enviar com limite de tempo (job + Wait-Job 60 s).
 - Publicado na Vercel: https://treinador-improviso.vercel.app (conta depaula12, projeto
   depaula12s-projects/treinador-improviso). Créditos CC BY dos samples no rodapé do app.

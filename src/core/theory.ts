@@ -9,6 +9,8 @@ export interface ChordInfo {
   semitones: number[]
   notes: string[]
   minor: boolean
+  /** baixo invertido (C/G -> 7), só quando a cifra tem barra */
+  bass?: number
 }
 
 // Cifras brasileiras -> notação que o tonal entende
@@ -20,9 +22,12 @@ function normalize(symbol: string): string {
 }
 
 export function parseChord(symbol: string): ChordInfo | null {
-  const c = Chord.get(normalize(symbol))
+  // baixo invertido: "D/F#" -> acorde D com F# no baixo (o tonal mede os intervalos a partir do baixo)
+  const slash = symbol.trim().match(/^(.+)\/([A-G][#b]?)$/)
+  const c = Chord.get(normalize(slash ? slash[1] : symbol))
   if (c.empty || !c.tonic) return null
   const semitones = c.intervals.map((i) => Interval.semitones(i) ?? 0)
+  const bass = slash ? Note.chroma(slash[2]) : undefined
   return {
     symbol,
     tonic: c.tonic,
@@ -30,6 +35,7 @@ export function parseChord(symbol: string): ChordInfo | null {
     semitones,
     notes: c.notes,
     minor: semitones.includes(3) && !semitones.includes(4),
+    ...(bass !== undefined ? { bass } : {}),
   }
 }
 
