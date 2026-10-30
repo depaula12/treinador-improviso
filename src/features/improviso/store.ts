@@ -1,12 +1,14 @@
 import { create } from 'zustand'
 import { engine, type Instrument, type MixState, type Position } from '../../audio/engine'
+import type { Segment } from '../../core/song'
 import type { LabelMode } from '../../ui/Fretboard'
 
 /** música da área Músicas carregada como base (progId === 'song'), já transposta */
 export interface LoadedSong {
   id: string
   title: string
-  bars: string[][]
+  /** compassos com as trocas (tempo 0–3 em que cada acorde entra) */
+  bars: Segment[][]
 }
 
 interface ImprovisoState {

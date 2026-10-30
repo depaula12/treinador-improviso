@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { flatBars, soundingKey, type Song } from '../../core/song'
+import { soundingKey, timedChords, toPlayBars, type Song } from '../../core/song'
 import { KEYS } from '../../core/theory'
 import { useImproviso } from '../improviso/store'
 import { db } from './db'
@@ -57,7 +57,7 @@ export function loadIntoImproviso(song: Song) {
   const minor = key.endsWith('m')
   useImproviso.getState().set({
     progId: 'song',
-    song: { id: song.id, title: song.title, bars: flatBars(song).map((b) => b.chords) },
+    song: { id: song.id, title: song.title, bars: toPlayBars(timedChords(song)) },
     key: KEYS[keyPc(key)],
     scaleId: minor ? 'pentMin' : 'pentMaj',
     bpm: song.bpm,
@@ -69,7 +69,7 @@ export function loadIntoImproviso(song: Song) {
 function syncImproviso(song: Song) {
   const imp = useImproviso.getState()
   if (imp.song?.id !== song.id) return
-  imp.set({ song: { id: song.id, title: song.title, bars: flatBars(song).map((b) => b.chords) }, bpm: song.bpm, styleId: song.styleId })
+  imp.set({ song: { id: song.id, title: song.title, bars: toPlayBars(timedChords(song)) }, bpm: song.bpm, styleId: song.styleId })
 }
 
 const PCS: Record<string, number> = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 }

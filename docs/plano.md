@@ -9,6 +9,8 @@ Feito antes do plano: **consulta de acordes gerando todas as formas tocáveis** 
 ## v0.2 Músicas (1ª prioridade) — feita
 Entregue: itens 1–5 abaixo. Decisões: arrastar para reordenar ficou de fora (repetir/apagar
 compasso e seção resolvem); o tom é o "Tom:" da cifra ou estimado, ajustável por transposição.
+v0.2.1: durações reais por "marcar tempos com a gravação" (bater no tempo e nas trocas);
+opcional, sem marcar continua 1 compasso por acorde.
 Falta validar com as cifras reais do repertório (o Cifra Club bloqueia acesso automático:
 o usuário cola).
 

@@ -307,7 +307,25 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 }
 .cell.split span + span { border-left: 1px solid var(--muted); padding-left: 6px; }
 .cell[aria-pressed="true"] { border-color: var(--next); }
-.cell.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.cell.playing { border-color: var(--accent); }
+.cell span { display: grid; justify-items: center; line-height: 1.1; border-radius: 6px; padding: 2px 6px; }
+.cell span.on { background: var(--accent); color: var(--on-accent); }
+.cell .beats { font: 500 .7rem var(--f-mono); opacity: .7; }
+.timing-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.timing-row .tag { margin: 0; }
+.tap-pad {
+  display: grid; place-items: center; gap: 2px; min-height: 180px; width: 100%; cursor: pointer; user-select: none;
+  touch-action: manipulation; border: 2px solid var(--accent); border-radius: 16px; background: var(--panel-2);
+  color: var(--fg); font: 700 1.6rem var(--f-display);
+}
+.tap-pad .mono { font-size: 3.4rem; line-height: 1; }
+.tap-pad small { font: 500 .85rem var(--f-body); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.tap-next { font: 700 clamp(3rem, 12vw, 5rem) / 1 var(--f-display); color: var(--accent); }
+.tap-pad.flash { animation: tap-flash .18s ease-out; }
+@keyframes tap-flash { from { background: color-mix(in srgb, var(--accent) 35%, var(--panel-2)); } }
+.tap-result { display: flex; flex-wrap: wrap; gap: 6px; }
+.tap-result span { display: grid; justify-items: center; min-width: 52px; padding: 4px 8px; border-radius: 6px; background: var(--panel-2); font: 700 1rem var(--f-display); }
+.tap-result small { font: 500 .75rem var(--f-mono); color: var(--muted); }
 .bar-tools { display: grid; gap: 8px; padding: 10px; border-radius: 8px; background: var(--panel-2); }
 .bar-tools form { display: flex; gap: 6px; }
 .now-next.roll { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 8px 0; }

@@ -21,8 +21,34 @@ export interface Song {
   bpm: number
   styleId: string
   sections: SongSection[]
+  /** durações marcadas com a gravação (modo "marcar trocas"); sem isso, 1 compasso por acorde */
+  timing?: SongTiming | null
+  /** usa as durações marcadas (se ainda batem com a grade) */
+  useTiming?: boolean
   createdAt: number
   updatedAt: number
+}
+
+export interface SongTiming {
+  /** duração de cada acorde da grade, em tempos */
+  beats: number[]
+  /** acordes da grade na hora da marcação: se a grade mudar, a marcação não vale mais */
+  sequence: string[]
+  bpm: number
+}
+
+/** Um acorde tocado, com duração e a célula da grade de onde veio. */
+export interface TimedChord {
+  chord: string
+  beats: number
+  section: number
+  bar: number
+}
+
+/** Trecho de um compasso tocado: acorde que entra no tempo `beat` (0–3). */
+export interface Segment {
+  beat: number
+  chord: string
 }
 
 export interface FlatBar {
@@ -109,6 +135,62 @@ export function flatBars(song: Song): FlatBar[] {
 /** Acordes diferentes da música (transpostos), na ordem em que aparecem. */
 export function songChords(song: Song): string[] {
   return [...new Set(flatBars(song).flatMap((b) => b.chords))]
+}
+
+/** Acordes da grade em ordem, como estão escritos (sem transpor). */
+export const writtenSequence = (song: Song) => song.sections.flatMap((s) => s.bars.flat())
+
+/** A marcação de tempos ainda corresponde à grade? */
+export const timingValid = (song: Song) =>
+  !!song.timing && song.timing.sequence.join(' ') === writtenSequence(song).join(' ')
+
+/** Usa as durações marcadas agora? */
+export const usesTiming = (song: Song) => !!song.useTiming && timingValid(song)
+
+/**
+ * Acordes na ordem em que tocam, com a duração em tempos.
+ * Sem marcação: cada compasso dura 4 tempos, dividido igualmente entre os acordes dele (2+2).
+ */
+export function timedChords(song: Song): TimedChord[] {
+  const flats = FLAT_KEYS.has(soundingKey(song))
+  const beats = usesTiming(song) ? song.timing!.beats : null
+  let k = 0
+  return song.sections.flatMap((s, section) =>
+    s.bars.flatMap((b, bar) =>
+      b.map((c) => ({ chord: transposeChord(c, song.transpose, flats), beats: beats ? beats[k++] : 4 / b.length, section, bar })),
+    ),
+  )
+}
+
+/** Corta a sequência em compassos de 4 tempos (o acorde que atravessa a barra continua no seguinte). */
+export function toPlayBars(seq: { chord: string; beats: number }[]): Segment[][] {
+  const bars: Segment[][] = []
+  let at = 0
+  for (const { chord, beats } of seq) {
+    let left = beats
+    while (left > 0) {
+      const bar = Math.floor(at / 4)
+      const beat = at % 4
+      bars[bar] ??= []
+      const segs = bars[bar]
+      // mesmo acorde seguido no mesmo compasso: um trecho só
+      if (!(segs.length && segs[segs.length - 1].chord === chord)) segs.push({ beat, chord })
+      const take = Math.min(left, 4 - beat)
+      at += take
+      left -= take
+    }
+  }
+  return bars
+}
+
+/** Início (em tempos) de cada acorde da sequência. */
+export function startBeats(seq: { beats: number }[]): number[] {
+  let at = 0
+  return seq.map((x) => {
+    const s = at
+    at += x.beats
+    return s
+  })
 }
 
 // ---------- edição da grade (funções puras: devolvem uma cópia) ----------

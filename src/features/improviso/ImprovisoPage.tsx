@@ -5,7 +5,7 @@ import { degreeName } from '../../core/fretboard-model'
 import { guideLine } from '../../core/guide'
 import { parseProgression, PROGRESSIONS, realize } from '../../core/progressions'
 import { boxPositions, boxRange, SCALES, scalePcs } from '../../core/scales'
-import { KEYS, parseChord, type ChordInfo } from '../../core/theory'
+import { KEYS, parseChord } from '../../core/theory'
 import { Fretboard, type LabelMode, type Mark } from '../../ui/Fretboard'
 import { Mixer } from '../../ui/Mixer'
 import { drawRestriction, RESTRICTIONS } from './restrictions'
@@ -39,12 +39,8 @@ export function ImprovisoPage() {
 
   const custom = s.progId === 'custom'
   const songMode = s.progId === 'song' && !!s.song
-  // só a música (compassos 2+2) precisa saber da metade do compasso: 1 = tempo 2, 2 = tempos 3–4
-  const phase = useImproviso((st) => {
-    if (!songMode) return 0
-    const b = st.pos?.beat ?? -1
-    return b >= 2 ? 2 : b === 1 ? 1 : 0
-  })
+  // só a música (troca no meio do compasso) precisa re-renderizar a cada tempo
+  const songBeat = useImproviso((st) => (songMode ? Math.max(0, st.pos?.beat ?? 0) : 0))
   const prog = PROGRESSIONS.find((p) => p.id === s.progId) ?? PROGRESSIONS[0]
   const style = STYLES.find((x) => x.id === s.styleId) ?? STYLES[0]
   const scale = SCALES.find((x) => x.id === s.scaleId) ?? SCALES[0]
@@ -52,17 +48,22 @@ export function ImprovisoPage() {
   const typed = useMemo(() => parseProgression(s.customText), [s.customText])
   const typedOk = typed.chords.length > 0
   // digitada vazia: mantém a de 12 compassos no braço, mas o play fica desabilitado
-  // música: 1º acorde de cada compasso; o 2º (compasso 2+2) entra no tempo 3
+  // música: o acorde do tempo 1 de cada compasso + as trocas no meio dele
   const songBars = useMemo(() => {
     if (!songMode) return null
-    const bars = s.song!.bars.map((b) => b.map((c) => parseChord(c)).filter((c): c is ChordInfo => !!c)).filter((b) => b.length)
+    const bars = s.song!.bars
+      .map((b) => b.flatMap((g) => {
+        const chord = parseChord(g.chord)
+        return chord ? [{ beat: g.beat, chord }] : []
+      }))
+      .filter((b) => b.length && b[0].beat === 0)
     return bars.length ? bars : null
   }, [songMode, s.song])
   const chords = useMemo(
-    () => (songBars ? songBars.map((b) => b[0]) : custom && typedOk ? typed.chords : realize(prog, s.key)),
+    () => (songBars ? songBars.map((b) => b[0].chord) : custom && typedOk ? typed.chords : realize(prog, s.key)),
     [songBars, custom, typedOk, typed, prog, s.key],
   )
-  const halves = useMemo(() => (songBars ? songBars.map((b) => b[1] ?? null) : undefined), [songBars])
+  const changes = useMemo(() => songBars?.map((b) => b.slice(1)), [songBars])
   const keyPc = KEYS.indexOf(s.key)
   const pcs = useMemo(() => scalePcs(scale, keyPc), [scale, keyPc])
 
@@ -78,8 +79,8 @@ export function ImprovisoPage() {
 
   // configuração lida pelo motor a cada compasso: mudanças entram no próximo compasso
   useEffect(() => {
-    engine.config = { chords, halves, style, bpm: s.bpm, loop: s.loop, countIn: s.countIn, fillEvery: s.fillEvery }
-  }, [chords, halves, style, s.bpm, s.loop, s.countIn, s.fillEvery])
+    engine.config = { chords, changes, style, bpm: s.bpm, loop: s.loop, countIn: s.countIn, fillEvery: s.fillEvery }
+  }, [chords, changes, style, s.bpm, s.loop, s.countIn, s.fillEvery])
   useEffect(() => engine.setBpm(s.bpm), [s.bpm])
   useEffect(() => engine.setMix(s.mix), [s.mix])
   useEffect(() => engine.setHumanize(s.humanize), [s.humanize])
@@ -109,10 +110,12 @@ export function ImprovisoPage() {
 
   // % : ao trocar para uma progressão mais curta no meio, o motor ainda manda o compasso antigo
   const i = Math.max(0, bar) % chords.length
-  const half = halves?.[i] ?? null
-  const secondHalf = phase === 2
-  const now = half && secondHalf ? half : chords[i]
-  const next = half && !secondHalf ? half : chords[(i + 1) % chords.length]
+  // troca dentro do compasso (música): o acorde vigente no tempo atual e a próxima troca dele
+  const inBar = changes?.[i] ?? []
+  const passed = inBar.filter((c) => c.beat <= songBeat)
+  const coming = inBar.find((c) => c.beat > songBeat) ?? null
+  const now = passed.length ? passed[passed.length - 1].chord : chords[i]
+  const next = coming ? coming.chord : chords[(i + 1) % chords.length]
   // próxima troca de fato: o primeiro acorde diferente do atual e quantos compassos faltam
   let ahead = 1
   while (ahead < chords.length && chords[(i + ahead) % chords.length].symbol === now.symbol) ahead++
@@ -121,8 +124,9 @@ export function ImprovisoPage() {
   const counting = s.status === 'playing' && bar < 0
   const playing = s.status === 'playing'
   // brilho no próximo acorde no último tempo antes da troca
-  const showNext = playing && !counting && (lastBeat || (half !== null && phase === 1)) && next.symbol !== now.symbol
-  const target = guide[i]
+  const showNext = playing && !counting && (coming ? coming.beat - songBeat === 1 : lastBeat) && next.symbol !== now.symbol
+  // o alvo é do acorde do tempo 1; depois de uma troca no meio do compasso ele não vale mais
+  const target = passed.length ? undefined : guide[i]
   const nextTarget = guide[(i + 1) % chords.length]
   const marks = useMemo<Mark[]>(() => {
     if (!target) return []
@@ -152,7 +156,7 @@ export function ImprovisoPage() {
           <div className="tag">Próxima troca</div>
           <div className="next-chord">{counting ? now.symbol : change.symbol}</div>
           {!counting && change.symbol !== now.symbol && (
-            <div className="next-when">{half && !secondHalf ? 'no tempo 3' : ahead === 1 ? 'no próximo compasso' : `em ${ahead} compassos`}</div>
+            <div className="next-when">{coming ? `no tempo ${coming.beat + 1}` : ahead === 1 ? 'no próximo compasso' : `em ${ahead} compassos`}</div>
           )}
         </div>
         <BeatDots />
@@ -221,7 +225,7 @@ export function ImprovisoPage() {
 
       <div className="bars" role="list" aria-label="Compassos">
         {chords.map((c, idx) => (
-          <span key={idx} role="listitem" className={idx === bar ? 'on' : ''}>{c.symbol}{halves?.[idx] ? ` ${halves[idx]!.symbol}` : ''}</span>
+          <span key={idx} role="listitem" className={idx === bar ? 'on' : ''}>{c.symbol}{changes?.[idx]?.map((g) => ` ${g.chord.symbol}`).join('')}</span>
         ))}
       </div>
 

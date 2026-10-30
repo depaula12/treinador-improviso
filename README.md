@@ -59,8 +59,13 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
   linhas marcadas com (2x) e pula tablatura. Capotraste vira transposição, para a base soar no tom real.
 - **Grade de compassos editável**: um acorde por compasso; clique para juntar dois no mesmo
   compasso (2+2), separar, repetir, apagar ou trocar o acorde. Seções podem ser repetidas.
+- **Marcar tempos com a gravação**: a cifra não diz quanto dura cada acorde. Com a música original
+  tocando, você bate no tempo (o app acha o BPM) e depois bate a cada troca; as batidas são
+  encaixadas nos tempos e viram a duração real de cada acorde, inclusive trocas no meio do
+  compasso. Sem marcar, a música toca com 1 compasso por acorde.
 - Transpor, andamento e estilo por música, salvos no aparelho (IndexedDB).
-- **Cifra rolando**: a base toca a música e a grade acompanha o compasso atual, com "agora/depois".
+- **Cifra rolando**: a base toca a música e a grade acompanha o acorde atual, com "agora / depois
+  / em N tempos".
 - **Integração**: "Improvisar sobre ela" carrega a música no Improviso (tom e escala certos) e
   "Treinar os acordes dela" filtra o quiz de Acordes.
 - Nenhuma cifra vem embutida no app: o repertório é seu e fica só no seu aparelho.

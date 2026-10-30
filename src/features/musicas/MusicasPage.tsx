@@ -3,11 +3,12 @@ import { STYLES } from '../../audio/engine'
 import { parseCifra } from '../../core/cifra'
 import {
   deleteBar, deleteSection, duplicateBar, duplicateSection, flatBars, mergeNext, setBar, songChords, songFromCifra,
-  soundingKey, splitBar, transposeChord, type Song,
+  soundingKey, splitBar, startBeats, timedChords, timingValid, toPlayBars, transposeChord, usesTiming, type Song,
 } from '../../core/song'
 import { useAcordes } from '../acordes/store'
 import { togglePlay, useImproviso } from '../improviso/store'
 import { loadIntoImproviso, useSongs } from './store'
+import { TapMode } from './TapMode'
 
 interface Props {
   /** abre outra área */
@@ -116,14 +117,20 @@ function SongEditor({ song, go }: { song: Song } & Props) {
   const pos = useImproviso((s) => s.pos)
   const isLoaded = loadedId === song.id
   const playing = isLoaded && status === 'playing'
-  const flat = useMemo(() => flatBars(song), [song])
-  const current = playing && pos && pos.bar >= 0 ? pos.bar % flat.length : -1
+  const [tapping, setTapping] = useState(false)
+  // acordes na ordem, com duração (marcada ou 1 compasso cada) e onde começa cada um
+  const timed = useMemo(() => timedChords(song), [song])
+  const starts = useMemo(() => startBeats(timed), [timed])
+  const playBars = useMemo(() => toPlayBars(timed).length, [timed])
+  const absBeat = playing && pos && pos.bar >= 0 ? (pos.bar % playBars) * 4 + pos.beat : -1
+  let current = -1
+  if (absBeat >= 0) for (let k = 0; k < starts.length && starts[k] <= absBeat; k++) current = k
   const grid = useRef<HTMLDivElement>(null)
 
   // cifra rolando: mantém o compasso atual na tela
   useEffect(() => {
     if (current < 0) return
-    grid.current?.querySelector('.cell.on')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    grid.current?.querySelector('.cell .on')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [current])
 
   const update = (s: Song | null) => s && void save({ ...s, updatedAt: Date.now() })
@@ -151,12 +158,17 @@ function SongEditor({ song, go }: { song: Song } & Props) {
     await togglePlay()
   }
 
-  const nowBar = current >= 0 ? flat[current] : null
-  const nextBar = current >= 0 ? flat[(current + 1) % flat.length] : null
-  const beat = pos?.beat ?? 0
-  const nowChord = nowBar ? (nowBar.chords[1] && beat >= 2 ? nowBar.chords[1] : nowBar.chords[0]) : null
-  const nextChord = nowBar && nowBar.chords[1] && beat < 2 ? nowBar.chords[1] : nextBar?.chords[0]
-  let idx = -1
+  const nowChord = current >= 0 ? timed[current].chord : null
+  const nextChord = current >= 0 ? timed[(current + 1) % timed.length].chord : null
+  const beatsLeft = current >= 0 ? starts[current] + timed[current].beats - absBeat : 0
+  const timingOn = usesTiming(song)
+  let ci = -1
+
+  function startTapping() {
+    if (playing) void togglePlay()
+    setSel(null)
+    setTapping(true)
+  }
 
   return (
     <div className="stack">
@@ -206,6 +218,22 @@ function SongEditor({ song, go }: { song: Song } & Props) {
           <button type="button" className="chip" onClick={() => { loadIntoImproviso(song); go('improviso') }}>Improvisar sobre ela</button>
           <button type="button" className="chip" onClick={() => { useAcordes.getState().set({ songId: song.id }); go('acordes') }}>Treinar os acordes dela</button>
         </div>
+        <div className="timing-row">
+          <span className="tag">Duração dos acordes</span>
+          <div className="segmented small" role="group" aria-label="Duração dos acordes">
+            <button type="button" aria-pressed={!timingOn} onClick={() => update({ ...song, useTiming: false })}>1 compasso cada</button>
+            <button type="button" aria-pressed={timingOn} disabled={!timingValid(song)} onClick={() => update({ ...song, useTiming: true, bpm: song.timing!.bpm })}>
+              Tempos marcados
+            </button>
+          </div>
+          <button type="button" className="chip" onClick={startTapping} disabled={tapping}>
+            {song.timing ? 'Marcar de novo com a gravação' : 'Marcar tempos com a gravação'}
+          </button>
+        </div>
+        {song.timing && !timingValid(song) && (
+          <p className="hint muted">A grade mudou depois da marcação: os tempos marcados não valem mais. Marque de novo.</p>
+        )}
+        {timingOn && <p className="hint muted">Os números embaixo dos acordes são a duração em tempos (4 = um compasso).</p>}
       </section>
 
       {nowChord && (
@@ -217,8 +245,19 @@ function SongEditor({ song, go }: { song: Song } & Props) {
           <div className="next">
             <div className="tag">Depois</div>
             <div className="next-chord">{nextChord}</div>
+            <div className="next-when">{beatsLeft === 1 ? 'no próximo tempo' : `em ${beatsLeft} tempos`}</div>
           </div>
         </section>
+      )}
+
+      {tapping && (
+        <TapMode
+          song={song}
+          onDone={(t) => {
+            setTapping(false)
+            if (t) update({ ...song, timing: t, useTiming: true, bpm: t.bpm })
+          }}
+        />
       )}
 
       <section className="stack-sm" ref={grid}>
@@ -237,15 +276,17 @@ function SongEditor({ song, go }: { song: Song } & Props) {
               </div>
             </div>
             <div className="cells">
-              {sec.bars.map((_, bi) => {
-                idx++
-                const chords = flat[idx]?.chords ?? []
-                const on = idx === current
+              {sec.bars.map((b, bi) => {
                 const selected = sel?.section === si && sel.bar === bi
+                const items = b.map(() => timed[++ci])
+                const on = items.some((t) => t === timed[current])
                 return (
-                  <button key={bi} type="button" className={`cell${on ? ' on' : ''}${chords.length > 1 ? ' split' : ''}`} aria-pressed={selected} onClick={() => pick(si, bi)}>
-                    {chords.map((c, k) => (
-                      <span key={k}>{c}</span>
+                  <button key={bi} type="button" className={`cell${on ? ' playing' : ''}${b.length > 1 ? ' split' : ''}`} aria-pressed={selected} onClick={() => pick(si, bi)}>
+                    {items.map((t, k) => (
+                      <span key={k} className={t === timed[current] ? 'on' : ''}>
+                        {t.chord}
+                        {timingOn && <small className="beats">{t.beats}</small>}
+                      </span>
                     ))}
                   </button>
                 )

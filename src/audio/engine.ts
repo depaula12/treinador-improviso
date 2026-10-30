@@ -23,8 +23,11 @@ export type MixState = Record<Instrument, ChannelState>
 
 export interface SongConfig {
   chords: ChordInfo[]
-  /** acorde da 2ª metade do compasso (compasso 2+2), por índice; null = compasso inteiro */
-  halves?: (ChordInfo | null)[]
+  /**
+   * Trocas dentro do compasso (música com durações): por índice de compasso, os acordes que entram
+   * depois do tempo 1, ex.: [{ beat: 2, chord: D }] num compasso que começa em G. Vazio = compasso inteiro.
+   */
+  changes?: { beat: number; chord: ChordInfo }[][]
   style: Style
   bpm: number
   loop: boolean
@@ -305,7 +308,7 @@ class Engine {
 
     const chordAt = (i: number) => cfg.chords[((i % n) + n) % n]
     const chord = chordAt(bar)
-    const half = cfg.halves?.[((bar % n) + n) % n] ?? null
+    const changes = cfg.changes?.[((bar % n) + n) % n] ?? []
     const phrase = Math.floor(bar / cfg.fillEvery)
     const pianoVoicing = voiceLead(chord, this.lastVoicing)
     this.lastVoicing = pianoVoicing
@@ -314,27 +317,40 @@ class Engine {
       index: bar,
       chord,
       prev: chordAt(bar - 1),
-      next: half ?? chordAt(bar + 1),
+      next: changes[0]?.chord ?? chordAt(bar + 1),
       variation: phrase % 2 === 0 ? 'A' : 'B',
       isFill: bar % cfg.fillEvery === cfg.fillEvery - 1,
       isPhraseStart: bar % cfg.fillEvery === 0,
       pianoVoicing,
       guitarVoicing: guitarVoicing(chord),
     }
-    // compasso 2+2: o estilo gera o compasso para cada acorde e cada um fica com a sua metade
-    let second: BarContext | null = null
-    if (half) {
-      const v2 = voiceLead(half, pianoVoicing)
-      this.lastVoicing = v2
-      second = { ...ctx, chord: half, prev: chord, next: chordAt(bar + 1), pianoVoicing: v2, guitarVoicing: guitarVoicing(half) }
-    }
+    // troca no meio do compasso: o estilo gera o compasso para cada acorde e cada um fica só com
+    // o seu trecho (notas cortadas na troca)
+    const parts: { from: number; to: number; ctx: BarContext }[] = [{ from: 0, to: changes[0]?.beat ?? 4, ctx }]
+    changes.forEach((c, k) => {
+      const prev = parts[parts.length - 1].ctx
+      const v = voiceLead(c.chord, prev.pianoVoicing)
+      this.lastVoicing = v
+      parts.push({
+        from: c.beat,
+        to: changes[k + 1]?.beat ?? 4,
+        ctx: { ...ctx, chord: c.chord, prev: prev.chord, next: changes[k + 1]?.chord ?? chordAt(bar + 1), pianoVoicing: v, guitarVoicing: guitarVoicing(c.chord) },
+      })
+    })
     const pitched = (inst: Pitched): PitchedNote[] =>
-      second
-        ? [
-            ...cfg.style[inst](ctx).filter((x) => x.beat < 2).map((x) => ({ ...x, dur: Math.min(x.dur, 2 - x.beat) })),
-            ...cfg.style[inst](second).filter((x) => x.beat >= 2),
-          ]
-        : cfg.style[inst](ctx)
+      parts.length === 1
+        ? cfg.style[inst](ctx)
+        : parts.flatMap((p, k) => {
+            const all = cfg.style[inst](p.ctx)
+            const inside = all.filter((x) => x.beat >= p.from && x.beat < p.to).map((x) => ({ ...x, dur: Math.min(x.dur, p.to - x.beat) }))
+            if (k === 0 || inside.some((x) => x.beat === p.from)) return inside
+            // o padrão não ataca bem na troca (ex.: piano em mínimas e troca no tempo 4):
+            // o que estaria soando ali entra junto com o acorde novo
+            const held = all
+              .filter((x) => x.beat < p.from && x.beat + x.dur > p.from)
+              .map((x) => ({ ...x, beat: p.from, dur: Math.min(x.beat + x.dur, p.to) - p.from }))
+            return [...held, ...inside]
+          })
 
     // tempo humanizado de um evento; nunca no passado
     const human = (t: number, feel: [number, number]) => Math.max(Tone.now(), t + timing(...feel))

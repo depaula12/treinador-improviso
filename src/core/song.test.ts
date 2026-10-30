@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { parseCifra } from './cifra'
 import {
   deleteBar, duplicateBar, duplicateSection, flatBars, guessKey, mergeNext, setBar, songChords, songFromCifra,
-  soundingKey, splitBar, transposeChord, transposeKey, type Song,
+  soundingKey, splitBar, startBeats, timedChords, timingValid, toPlayBars, transposeChord, transposeKey, writtenSequence,
+  type Song,
 } from './song'
 
 const song = (): Song => songFromCifra(parseCifra('Tom: G\n[Verso]\nG D Em C\n[Refrão]\nC D G G'), 0)
@@ -43,6 +44,34 @@ describe('songFromCifra', () => {
     const f = flatBars(song())
     expect(f).toHaveLength(8)
     expect(f[4]).toEqual({ section: 1, bar: 0, chords: ['C'] })
+  })
+})
+
+describe('durações', () => {
+  it('sem marcação: 1 compasso por acorde, 2+2 divide', () => {
+    const s = mergeNext(song(), 0, 0) // [G D] Em C | C D G G
+    expect(timedChords(s).map((t) => t.beats)).toEqual([2, 2, 4, 4, 4, 4, 4, 4])
+    expect(toPlayBars(timedChords(s))[0]).toEqual([{ beat: 0, chord: 'G' }, { beat: 2, chord: 'D' }])
+  })
+  it('com marcação: acordes atravessam a barra', () => {
+    const base = song()
+    const s: Song = { ...base, useTiming: true, timing: { beats: [6, 2, 4, 4, 3, 1, 8, 4], sequence: writtenSequence(base), bpm: 100 } }
+    const bars = toPlayBars(timedChords(s))
+    expect(bars[0]).toEqual([{ beat: 0, chord: 'G' }])
+    expect(bars[1]).toEqual([{ beat: 0, chord: 'G' }, { beat: 2, chord: 'D' }])
+    // C (4) + C (3) seguidos: o compasso 5 continua em C e o D entra no tempo 4
+    expect(bars[4]).toEqual([{ beat: 0, chord: 'C' }, { beat: 3, chord: 'D' }])
+    expect(bars.slice(5)).toEqual([[{ beat: 0, chord: 'G' }], [{ beat: 0, chord: 'G' }], [{ beat: 0, chord: 'G' }]])
+    expect(bars).toHaveLength(8)
+    expect(startBeats(timedChords(s)).slice(0, 4)).toEqual([0, 6, 8, 12])
+  })
+  it('marcação vencida quando a grade muda; desligada volta ao padrão', () => {
+    const base = song()
+    const s: Song = { ...base, useTiming: true, timing: { beats: [6, 2, 4, 4, 3, 1, 8, 4], sequence: writtenSequence(base), bpm: 100 } }
+    expect(timingValid(s)).toBe(true)
+    expect(timingValid(deleteBar(s, 0, 0))).toBe(false)
+    expect(timedChords(deleteBar(s, 0, 0)).every((t) => t.beats === 4)).toBe(true)
+    expect(timedChords({ ...s, useTiming: false }).every((t) => t.beats === 4)).toBe(true)
   })
 })
 

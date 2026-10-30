@@ -144,6 +144,11 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   ganhou progId 'song'; `togglePlay` saiu para improviso/store.ts (usado pela cifra rolando).
   Quiz de Acordes filtra por música (`songCards`, chave por fundamental). O Cifra Club devolve 403
   para acesso automático: as cifras reais vêm coladas pelo usuário; testes usam letra fictícia.
+- **v0.2.1 durações**: "Marcar tempos com a gravação" (features/musicas/TapMode.tsx + core/tap.ts:
+  BPM pela mediana das batidas, cada intervalo entre trocas arredondado sozinho, período refinado
+  ±15%). Song.timing {beats, sequence, bpm} + useTiming; vale só se `sequence` = grade atual.
+  timedChords/toPlayBars (core/song.ts) cortam em compassos; motor usa `SongConfig.changes`
+  (trocas em qualquer tempo, notas cortadas na troca). Sem marcação: 1 compasso por acorde.
 - Próximo: validar Músicas com as cifras do repertório (Iris, From the Start, Put Your Records On,
   You Know I'm No Good, I Want You Back) e a Jam livre; depois seguir `docs/plano.md` (v0.2 Músicas → v0.3 Treino do dia
   + Progresso → v0.4 quiz pelo áudio → v0.5 placar de notas-alvo).
