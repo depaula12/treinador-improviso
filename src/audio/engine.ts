@@ -189,6 +189,30 @@ class Engine {
     return chords.length * secEach
   }
 
+  /**
+   * Ouvir um desenho de acorde: cada grupo (notas MIDI do desenho) é tocado nota por nota, do grave
+   * ao agudo, e depois junto. Vários grupos = vários acordes em sequência (ex.: C e depois Cm).
+   * Devolve a duração em segundos.
+   */
+  async playShapes(groups: number[][], mix: MixState): Promise<number> {
+    await this.start(mix)
+    if (this.mode) this.stop()
+    this.exSampler.releaseAll()
+    const now = Tone.now() + 0.08
+    this.gate.gain.cancelScheduledValues(now)
+    this.gate.gain.setValueAtTime(1, now)
+    const NOTE = 0.22
+    let t = now
+    for (const g of groups) {
+      const notes = [...g].sort((a, b) => a - b)
+      notes.forEach((m, i) => this.exSampler.triggerAttackRelease(Tone.Frequency(m, 'midi').toNote(), NOTE * 1.6, t + i * NOTE, 0.62))
+      t += notes.length * NOTE + 0.12
+      notes.forEach((m, i) => this.exSampler.triggerAttackRelease(Tone.Frequency(m, 'midi').toNote(), 1.6, t + i * 0.022, 0.72 - i * 0.03))
+      t += 1.8
+    }
+    return t - now
+  }
+
   /** Metrônomo + nota da vez, em loop. Interrompe a base do Improviso, se estiver tocando. */
   playExercise(o: ExerciseConfig) {
     if (!o.notes.length) return

@@ -10,13 +10,19 @@ interface Props {
   /** esconde o nome do acorde (quiz desenho → cifra) */
   hideName?: boolean
   caption?: string
+  /** bolinhas clicáveis (quiz "onde está a 3ª?"): recebe a corda (0 = 6ª) */
+  onPick?: (string: number) => void
+  /** anel de certo/errado em volta de uma corda, depois de responder */
+  marks?: Partial<Record<number, 'right' | 'wrong'>>
+  /** todas as bolinhas da mesma cor (não entrega onde está a fundamental) */
+  neutral?: boolean
 }
 
 const LOW_TO_HIGH = [...TUNING].reverse()
 const FRETS_SHOWN = 5
 
 /** Diagrama vertical de acorde: 6ª corda à esquerda, pestana em cima. */
-export const ChordDiagram = memo(function ChordDiagram({ voicing, labels = 'graus', hideName, caption }: Props) {
+export const ChordDiagram = memo(function ChordDiagram({ voicing, labels = 'graus', hideName, caption, onPick, marks, neutral }: Props) {
   const fretted = voicing.frets.filter((f): f is number => f !== null && f > 0)
   const maxF = fretted.length ? Math.max(...fretted) : 0
   // janela de 5 casas; começa na 1 se o desenho couber nela
@@ -67,13 +73,20 @@ export const ChordDiagram = memo(function ChordDiagram({ voicing, labels = 'grau
           }
           const pc = (LOW_TO_HIGH[s] + f) % 12
           const semis = (pc - voicing.rootPc + 12) % 12
-          const isRoot = semis === 0
+          const isRoot = semis === 0 && !neutral
           const lab = labels === 'graus' ? formulaName(semis, voicing.quality) : labels === 'notas' ? KEYS[pc] : ''
+          const mark = marks?.[s]
+          const ring = mark ? <circle cx={x} cy={f === 0 ? top - 18 : top + (f - base + 0.5) * fh} r={f === 0 ? 11 : 14} fill="none" stroke={mark === 'right' ? 'var(--good)' : 'var(--root)'} strokeWidth={3} /> : null
+          const hit = onPick ? (
+            <circle cx={x} cy={f === 0 ? top - 18 : top + (f - base + 0.5) * fh} r={16} fill="transparent" className="cd-hit" onClick={() => onPick(s)} />
+          ) : null
           if (f === 0) {
             return (
               <g key={s}>
                 <circle cx={x} cy={top - 18} r={7} fill="none" stroke={isRoot ? 'var(--root)' : 'var(--fg)'} strokeWidth={2} />
                 {lab && <text x={x} y={top - 30} textAnchor="middle" className="cd-open">{lab}</text>}
+                {ring}
+                {hit}
               </g>
             )
           }
@@ -82,6 +95,8 @@ export const ChordDiagram = memo(function ChordDiagram({ voicing, labels = 'grau
             <g key={s}>
               <circle cx={x} cy={y} r={10} fill={isRoot ? 'var(--root)' : 'var(--accent)'} />
               {lab && <text x={x} y={y + 4} textAnchor="middle" className="cd-lab">{lab}</text>}
+              {ring}
+              {hit}
             </g>
           )
         })}

@@ -1,44 +1,51 @@
 import { useEffect, useMemo, useState } from 'react'
+import { KIND_LABEL, type ShapeKind } from '../../core/chord-bank'
 import { songChords } from '../../core/song'
 import { KEYS } from '../../core/theory'
-import { FORM_LABEL, QUALITIES, qualityById, type FormKind } from '../../core/voicings'
+import { qualityById } from '../../core/voicings'
 import { useSongs } from '../musicas/store'
 import { Decoder } from './Decoder'
 import { NEW_BOX } from './leitner'
-import { buildCards, songCards, type Card } from './quiz-model'
+import { buildItems, LEVELS, QUESTION_LABEL, SHAPE_TYPES, songTargets, type Item, type QuestionType, type QuizMode } from './quiz-model'
 import { Quiz } from './Quiz'
-import { useAcordes, type QuizMode } from './store'
+import { useAcordes } from './store'
 
-const MODES: { id: QuizMode; label: string }[] = [
-  { id: 'cifra-desenho', label: 'Cifra → desenho' },
-  { id: 'desenho-cifra', label: 'Desenho → cifra' },
-  { id: 'cifra-notas', label: 'Cifra → notas' },
-  { id: 'cronometrado', label: 'Cronometrado (com a guitarra)' },
+const TYPES = Object.keys(QUESTION_LABEL) as QuestionType[]
+// os tipos de acorde em grupos, do mais simples ao mais "colorido"
+const GROUPS: { label: string; ids: string[] }[] = [
+  { label: 'Básicos', ids: ['5', 'maj', 'm', '7', 'm7'] },
+  { label: 'Cores', ids: ['7M', 'sus2', 'sus4', 'add9'] },
+  { label: 'Jazz, bossa e blues', ids: ['6', '9', '7#9', 'm7b5', 'dim7'] },
 ]
-const FORM_SHORT: Record<FormKind, string> = { '6': '6ª corda', '5': '5ª corda', aberto: 'aberta' }
+const KINDS: ShapeKind[] = ['aberta', 'pestana', 'movel', 'triade']
 
 const toggle = <T,>(xs: T[], x: T) => (xs.includes(x) ? xs.filter((y) => y !== x) : [...xs, x])
+const qLabel = (id: string) => qualityById(id).suffix || 'maior'
 
-const cardName = (c: Card) => {
-  const q = qualityById(c.quality)
-  return c.root === null ? `${q.suffix || 'maior'}` : KEYS[c.root] + q.suffix
+/** Nome curto de um item, para a lista dos mais difíceis. */
+function itemName(i: Item): string {
+  const q = qLabel(i.quality)
+  const root = i.root !== undefined ? KEYS[i.root] : ''
+  if (i.card) return `${root}${root ? qualityById(i.quality).suffix : q} · ${i.card.label.split(' · ')[0]}`
+  if (i.type === 'comparar') return `${qLabel(i.from!)} → ${q}`
+  return `${root}${root ? qualityById(i.quality).suffix : q} (${QUESTION_LABEL[i.type].split(' ')[0].toLowerCase()})`
 }
 
 /** Progresso do que está no treino: dominados, caixas da repetição espaçada e os mais difíceis. */
-function Progress({ cards }: { cards: Card[] }) {
+function Progress({ items }: { items: Item[] }) {
   const { stats, resetStats } = useAcordes()
-  const boxes = [1, 2, 3, 4, 5].map((b) => cards.filter((c) => (stats[c.key]?.box ?? NEW_BOX) === b).length)
+  const boxes = [1, 2, 3, 4, 5].map((b) => items.filter((c) => (stats[c.key]?.box ?? NEW_BOX) === b).length)
   const most = Math.max(1, ...boxes)
   const mastered = boxes[3] + boxes[4]
-  const hard = cards
+  const hard = items
     .filter((c) => stats[c.key]?.seen)
     .sort((a, b) => stats[a.key].box - stats[b.key].box || stats[a.key].right / stats[a.key].seen - stats[b.key].right / stats[b.key].seen)
-    .slice(0, 4)
+    .slice(0, 5)
   return (
     <section className="card stack-sm" aria-label="Progresso">
       <div>
         <span className="tag">Dominados</span>
-        <div className="stat-big">{mastered} <small>de {cards.length}</small></div>
+        <div className="stat-big">{mastered} <small>de {items.length}</small></div>
       </div>
       <div>
         <span className="tag">Caixas (repetição espaçada)</span>
@@ -54,7 +61,7 @@ function Progress({ cards }: { cards: Card[] }) {
         {hard.length ? (
           <div className="hard">
             {hard.map((c) => (
-              <div key={c.key}><b>{cardName(c)}</b><span className="muted mono">{FORM_SHORT[c.form]} · {stats[c.key].right}/{stats[c.key].seen}</span></div>
+              <div key={c.key}><b>{itemName(c)}</b><span className="muted mono">{stats[c.key].right}/{stats[c.key].seen}</span></div>
             ))}
           </div>
         ) : (
@@ -71,13 +78,20 @@ function Progress({ cards }: { cards: Card[] }) {
 
 export function AcordesPage() {
   const [view, setView] = useState<'consultar' | 'treinar'>('treinar')
-  const { mode, qualities, forms, songId, set } = useAcordes()
+  const { mode, qualities, kinds, level, mixTypes, sessionLen, songId, set } = useAcordes()
   const { songs, load } = useSongs()
   useEffect(() => void load(), [load])
   const song = songs.find((s) => s.id === songId) ?? null
   const chords = useMemo(() => (song ? songChords(song) : null), [song])
-  const fromSong = useMemo(() => (chords ? songCards(mode, chords, forms) : null), [chords, mode, forms])
-  const cards = useMemo(() => fromSong?.cards ?? buildCards(mode, qualities, forms), [fromSong, mode, qualities, forms])
+  const skipped = useMemo(() => (chords ? songTargets(chords).skipped : []), [chords])
+  const types: QuestionType[] = mode === 'misturado' ? mixTypes : [mode]
+  const items = useMemo(
+    () => buildItems({ types, qualities, kinds, songChords: chords }),
+    [types.join(), qualities.join(), kinds.join(), chords?.join()],
+  )
+  const usesShapes = types.some((t) => SHAPE_TYPES.includes(t))
+
+  const pickLevel = (l: 1 | 2 | 3 | 4) => set({ level: l, qualities: LEVELS[l].qualities, kinds: LEVELS[l].kinds })
 
   return (
     <div className="page">
@@ -95,13 +109,38 @@ export function AcordesPage() {
         <div className="three">
           <section className="card cfg" aria-label="Configurar o treino">
             <div className="field">
+              <span className="tag">Nível</span>
+              <div className="segmented" role="group" aria-label="Nível">
+                {([1, 2, 3, 4] as const).map((l) => (
+                  <button key={l} type="button" aria-pressed={level === l} onClick={() => pickLevel(l)}>{l}</button>
+                ))}
+              </div>
+              <span className="level-desc">{level ? LEVELS[level].label : 'Personalizado: os tipos e formas que você marcou abaixo'}</span>
+            </div>
+
+            <div className="field">
               <span className="tag">Modo</span>
               <div className="vseg" role="group" aria-label="Modo">
-                {MODES.map((m) => (
-                  <button key={m.id} type="button" aria-pressed={mode === m.id} onClick={() => set({ mode: m.id })}>{m.label}</button>
+                {(['misturado', ...TYPES] as QuizMode[]).map((m) => (
+                  <button key={m} type="button" aria-pressed={mode === m} onClick={() => set({ mode: m })}>
+                    {m === 'misturado' ? 'Misturado (vários tipos de pergunta)' : QUESTION_LABEL[m]}
+                  </button>
                 ))}
               </div>
             </div>
+            {mode === 'misturado' && (
+              <div className="field">
+                <span className="tag">Entram no misturado</span>
+                <div className="chips">
+                  {TYPES.filter((t) => t !== 'cronometrado').map((t) => (
+                    <button key={t} type="button" className="chip" aria-pressed={mixTypes.includes(t)} onClick={() => set({ mixTypes: toggle(mixTypes, t) })}>
+                      {QUESTION_LABEL[t].split(' (')[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {songs.length > 0 && (
               <label>
                 Acordes
@@ -116,40 +155,55 @@ export function AcordesPage() {
             {song ? (
               <p className="hint">
                 <span className="mono">{chords!.join('  ')}</span>
-                {fromSong!.skipped.length > 0 && <span className="muted"> · fora do quiz (sem desenho no banco): {fromSong!.skipped.join(', ')}. Veja em Consultar.</span>}
+                {skipped.length > 0 && <span className="muted"> · fora do quiz (sem desenho no banco): {skipped.join(', ')}. Veja em Consultar.</span>}
               </p>
             ) : (
-              <div>
-                <span className="tag">Tipos</span>
-                <div className="chips">
-                  {QUALITIES.map((q) => (
-                    <button key={q.id} type="button" className="chip" aria-pressed={qualities.includes(q.id)} onClick={() => set({ qualities: toggle(qualities, q.id) })}>
-                      {q.suffix || 'maior'}
-                    </button>
-                  ))}
-                </div>
+              <div className="field">
+                <span className="tag">Tipos de acorde</span>
+                {GROUPS.map((g) => (
+                  <div key={g.label} className="chip-group">
+                    <small>{g.label}</small>
+                    <div className="chips">
+                      {g.ids.map((id) => (
+                        <button key={id} type="button" className="chip" aria-pressed={qualities.includes(id)} title={qualityById(id).name} onClick={() => set({ qualities: toggle(qualities, id), level: 0 })}>
+                          {qLabel(id)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-            {mode !== 'cifra-notas' && (
-              <div>
+            {usesShapes && (
+              <div className="field">
                 <span className="tag">Formas</span>
                 <div className="chips">
-                  {(['6', '5', 'aberto'] as FormKind[]).map((f) => (
-                    <button key={f} type="button" className="chip" aria-pressed={forms.includes(f)} title={FORM_LABEL[f]} onClick={() => set({ forms: toggle(forms, f) })}>
-                      {FORM_SHORT[f]}
+                  {KINDS.map((k) => (
+                    <button key={k} type="button" className="chip" aria-pressed={kinds.includes(k)} onClick={() => set({ kinds: toggle(kinds, k), level: 0 })}>
+                      {KIND_LABEL[k]}
                     </button>
                   ))}
                 </div>
               </div>
             )}
+            <label>
+              Sessão
+              <select value={sessionLen} onChange={(e) => set({ sessionLen: +e.target.value as 0 | 10 | 20 | 50 })}>
+                <option value={10}>10 perguntas</option>
+                <option value={20}>20 perguntas</option>
+                <option value={50}>50 perguntas</option>
+                <option value={0}>Sem fim</option>
+              </select>
+            </label>
+            <p className="hint muted">{items.length} perguntas possíveis com esta escolha.</p>
           </section>
 
           <Quiz
-            cards={cards}
-            emptyMsg={song ? 'Nenhum acorde desta música tem desenho nas formas escolhidas.' : 'Escolha pelo menos um tipo de acorde e uma forma.'}
+            items={items}
+            emptyMsg={song ? 'Nenhum acorde desta música tem desenho nas formas escolhidas.' : 'Escolha pelo menos um tipo de acorde, uma forma e um tipo de pergunta.'}
           />
 
-          <Progress cards={cards} />
+          <Progress items={items} />
         </div>
       )}
     </div>

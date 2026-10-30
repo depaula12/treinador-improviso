@@ -352,6 +352,14 @@ button { font-family: inherit; }
 .grade.bad { border-color: var(--root); color: var(--root); }
 .grade.good { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .keys-hint { text-align: center; font-size: 13px; color: var(--muted); }
+.good-txt { color: var(--good); }
+.bad-txt { color: var(--root); }
+.opt-label { font-size: 1.05rem; line-height: 1.3; text-align: center; padding: 0 6px; }
+.session-score { display: grid; justify-items: center; gap: 2px; }
+.session-score b { font: 700 64px/1 var(--f-display); color: var(--accent); }
+.level-desc { font-size: 13px; color: var(--muted); line-height: 1.35; }
+.chip-group { display: grid; gap: 4px; }
+.chip-group small { font-size: 11px; color: var(--muted); }
 .stat-big { font: 700 44px/1 var(--f-display); }
 .stat-big small { font-size: 22px; color: var(--muted); }
 .leit { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; align-items: end; height: 90px; }
@@ -380,6 +388,9 @@ button { font-family: inherit; }
 .cd-mark { font: 500 15px var(--f-mono); fill: var(--muted); }
 .cd-open { font: 500 10px var(--f-mono); fill: var(--muted); }
 .cd-lab { font: 600 10px var(--f-mono); fill: var(--on-accent); }
+.cd-hit { cursor: pointer; }
+.cd-hit:hover { fill: rgb(255 255 255 / .12); }
+.chord-diagram.big { width: 210px; }
 .shape-pick { padding: 8px 4px 6px; cursor: pointer; border: 2px solid var(--line); border-radius: 12px; background: var(--panel-2); color: var(--fg); display: grid; justify-items: center; }
 .shape-pick[aria-pressed="true"] { border-color: var(--accent); }
 .shape-pick .chord-diagram { width: min(124px, 100%); }
