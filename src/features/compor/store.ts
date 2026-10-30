@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { Lang } from '../../core/compose'
 import { fromV1, newSection, type CompSection } from '../../core/compose-doc'
 
 interface ComposeState {
@@ -11,6 +12,8 @@ interface ComposeState {
   bpm: number
   /** estilo da base (bateria, baixo, piano) */
   styleId: string
+  /** linguagem das sugestões (pop/rock, blues, bossa/jazz) */
+  lang: Lang
   set: (patch: Partial<Omit<ComposeState, 'set'>>) => void
 }
 
@@ -24,6 +27,7 @@ export const useCompose = create<ComposeState>()(
       cur: 0,
       bpm: 90,
       styleId: 'ballad',
+      lang: 'pop',
       set: (patch) => set(patch),
     }),
     {

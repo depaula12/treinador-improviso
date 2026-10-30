@@ -129,7 +129,9 @@ function evaluate(frets: F[], c: ChordInfo, bass: number, need: number[], minStr
   const form = position <= 4 && played.some((i) => frets[i] === 0) ? 'aberto' : first === 0 ? '6' : '5'
   // nota de "quão natural" é o desenho: mais cordas soando, menos dedos, sem buraco, nada faltando
   const holes = last - first + 1 - played.length
-  const score =
+  // baixo pressionado acima da pestana (mindinho no bordão por cima do 1º dedo): incômodo
+  const bassOverBarre = barre && frets[first]! > position && first < atMin[0] ? 3 : 0
+  const score = -bassOverBarre +
     played.length * 2 - fingers - holes * 3 - omitted.length * 2 + (pcs.filter((p) => p === c.root).length > 1 ? 1 : 0) -
     (maxPressed - position >= 3 ? 1 : 0) - (first > 2 ? 2 : 0)
   return { quality, form, rootPc: c.root, symbol: c.symbol, frets: [...frets], rootString, position, fingers, barre, omitted, score, strings: played.length }

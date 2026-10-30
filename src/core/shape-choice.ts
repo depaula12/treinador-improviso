@@ -1,4 +1,4 @@
-import { findShapes, mainShapes } from './chord-shapes'
+import { findShapes, mainShapes, type Shape } from './chord-shapes'
 import { TUNING } from './fretboard-model'
 import { parseChord } from './theory'
 import { matchQuality, voicingsFor, type Voicing } from './voicings'
@@ -25,17 +25,58 @@ function search(sym: string, max = 8): Voicing[] {
   const c = parseChord(sym)
   if (!c) return []
   const q = c.bass === undefined ? matchQuality(c) : null
-  const bank = q ? voicingsFor(q.id, c.root) : []
-  const gen = mainShapes(findShapes(c)).sort((a, b) => b.score - a.score)
+  const all = findShapes(c)
+  const byFrets = new Map(all.map((s) => [s.frets.join(), s]))
+  // primeiro as formas consagradas do banco (aberta, de Mi, de Lá) até a casa 7, as mais fáceis
+  // antes; depois os desenhos gerados (os melhores de cada região) e o resto do banco, pelo esforço
+  const cost = new Map<Voicing, number>()
+  const BANK_FIRST = -100
+  for (const v of q ? voicingsFor(q.id, c.root) : []) {
+    // (o gerador pode ter podado a forma do banco: aí a conta é feita direto pelas casas)
+    const s = byFrets.get(v.frets.join()) ?? rough(v.frets)
+    cost.set(v, effort(s) + (s.position <= 7 ? BANK_FIRST : 0))
+  }
+  for (const s of mainShapes(all, 6)) if (!cost.has(s)) cost.set(s, effort(s))
+  const ranked = [...cost.keys()].sort((a, b) => cost.get(a)! - cost.get(b)!)
   const seen = new Set<string>()
   const out: Voicing[] = []
-  for (const v of [...bank, ...gen]) {
+  for (const v of ranked) {
     const k = v.frets.join()
     if (seen.has(k)) continue
     seen.add(k)
     out.push({ ...v, symbol: sym })
   }
   return out.slice(0, max)
+}
+
+/**
+ * Esforço para tocar (menor = mais fácil): dedos, abestamento, mão longe da cabeça do braço,
+ * nota que falta, abertura grande e baixo pressionado por cima da pestana. Mais cordas soando
+ * ajuda um pouco. Os do banco (aberto, formas de Mi e de Lá) já vêm antes.
+ */
+export function effort(s: Shape): number {
+  const played = s.frets.flatMap((f, i) => (f === null ? [] : [i]))
+  const first = played[0]
+  const holes = played[played.length - 1] - first + 1 - played.length
+  const pressed = s.frets.filter((f): f is number => f !== null && f > 0)
+  const top = pressed.length ? Math.max(...pressed) : 0
+  const bassOverBarre = s.barre && s.frets[first]! > s.position ? 3 : 0
+  const missing = s.omitted.filter((x) => x !== 7).length * 1.5 + (s.omitted.includes(7) ? 0.3 : 0)
+  const open = s.frets.includes(0) && s.position <= 3 ? 0.5 : 0
+  return (
+    s.fingers * 1.5 + (s.barre ? 1.5 : 0) + pressed.length * 0.3 + Math.max(0, s.position - 4) * 0.6 + holes * 2 + missing -
+    played.length * 0.5 + bassOverBarre + (top - s.position >= 3 ? 1.5 : 0) - open
+  )
+}
+
+/** Medidas aproximadas de um desenho que o gerador não devolveu (dedos = cordas pressionadas, fora a pestana). */
+function rough(frets: F[]): Shape {
+  const pressed = frets.filter((f): f is number => f !== null && f > 0)
+  const position = pressed.length ? Math.min(...pressed) : 0
+  const atMin = pressed.filter((f) => f === position).length
+  const barre = atMin >= 2
+  const fingers = barre ? 1 + pressed.length - atMin : pressed.length
+  return { frets, position, fingers, barre, omitted: [], score: 0, quality: '', form: '5', rootPc: 0, symbol: '', rootString: 0 }
 }
 
 /** O desenho mais simples (o primeiro das opções). */

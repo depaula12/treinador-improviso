@@ -325,6 +325,7 @@ button { font-family: inherit; }
 .chord-field input.text { width: 190px; }
 .chord-field input.text.bad { border-color: var(--root); }
 .chip.danger { color: var(--root); }
+.chip.color-btn { color: var(--next); border-color: color-mix(in srgb, var(--next) 45%, var(--line)); }
 .chip:disabled { opacity: .4; cursor: not-allowed; }
 .bpm-input { width: 76px !important; }
 .shape-choice { display: grid; gap: 6px; flex-basis: 100%; min-width: 0; }

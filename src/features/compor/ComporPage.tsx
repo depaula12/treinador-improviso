@@ -5,7 +5,7 @@ import {
   DURATIONS, compositionSong, duplicateChord, insertChords, keyName, moveChord, newSection, playSequence,
   removeChord, replaceChord, totalBars, transposeSections, updateChord, type CompChord, type CompSection, type Place,
 } from '../../core/compose-doc'
-import { movesFor, romanIn, sectionStarts, type Move } from '../../core/compose'
+import { colorize, LANGS, movesFor, romanIn, sectionStarts, type Move } from '../../core/compose'
 import { keyLabel } from '../../core/progressions'
 import { toPlayBars } from '../../core/song'
 import { KEYS, parseChord } from '../../core/theory'
@@ -110,7 +110,7 @@ function ShapePicker({ symbol, current, prev, onPick }: {
 }
 
 export function ComporPage({ go }: Props) {
-  const { root, minor, sections, cur, bpm, styleId, set } = useCompose()
+  const { root, minor, sections, cur, bpm, styleId, lang, set } = useCompose()
   const [alt, setAlt] = useState<Record<string, number>>({})
   const [playing, setPlaying] = useState<string | null>(null)
   const [sel, setSel] = useState<Place | null>(null)
@@ -122,6 +122,7 @@ export function ComporPage({ go }: Props) {
   // a seleção pode ter ficado para trás (apagou o acorde, recarregou)
   const selected = sel && sections[sel.sec]?.chords[sel.idx] ? sel : null
   const selChord = selected ? sections[selected.sec].chords[selected.idx] : null
+  const nextColor = selChord ? colorize(selChord.symbol, lang) : null
 
   // as opções valem para o acorde selecionado; sem seleção, para o último da seção
   const ref: Place | null = selected ?? (sec.chords.length ? { sec: curSec, idx: sec.chords.length - 1 } : null)
@@ -135,8 +136,8 @@ export function ComporPage({ go }: Props) {
     }
     return null
   }, [curSec, sections])
-  const moves = useMemo(() => (refChord ? movesFor(key, refChord) : []), [root, minor, refSym])
-  const starts = useMemo(() => sectionStarts(key, sec.name), [root, minor, sec.name])
+  const moves = useMemo(() => (refChord ? movesFor(key, refChord, lang) : []), [root, minor, refSym, lang])
+  const starts = useMemo(() => sectionStarts(key, sec.name, lang), [root, minor, sec.name, lang])
   const all = playSequence(sections)
   const unique = [...new Set(all.map((c) => c.symbol))]
   const styleName = STYLES.find((x) => x.id === styleId)?.name ?? ''
@@ -437,6 +438,19 @@ export function ComporPage({ go }: Props) {
                       <button type="button" className="chip" disabled={selected.idx === s.chords.length - 1} title="Mover para a direita (Shift+→)" onClick={() => move(selected, { sec: i, idx: selected.idx + 2 })}>▶</button>
                       <button type="button" className="chip" onClick={() => put(duplicateChord(sections, selected), { sec: i, idx: selected.idx + 1 })}>duplicar</button>
                       <button type="button" className="chip" onClick={() => listen('sel', [{ symbol: selChord.symbol }])}>ouvir</button>
+                      {nextColor && (
+                        <button
+                          type="button"
+                          className="chip color-btn"
+                          title="Troca pela versão mais rica do acorde (sétima, nona, sexta…)"
+                          onClick={() => {
+                            put(replaceChord(sections, selected, nextColor))
+                            void listen('cor', [{ symbol: nextColor }])
+                          }}
+                        >
+                          colorir → {nextColor}
+                        </button>
+                      )}
                       <button type="button" className="chip danger" title="Apagar (Delete)" onClick={() => remove(selected)}>apagar</button>
                     </div>
                     <ChordField key={selChord.id} label="trocar" placeholder="outra cifra" initial={selChord.symbol} onSubmit={(sym) => put(replaceChord(sections, selected, sym))} />
@@ -519,7 +533,14 @@ export function ComporPage({ go }: Props) {
         <aside className="stack" aria-label="E agora?">
           <div className="card stack-sm">
             <div>
-              <h2 style={{ fontSize: '1.3rem' }}>{refSym ? 'E agora?' : `Como começar ${sec.name.toLowerCase()}?`}</h2>
+              <div className="row-between">
+                <h2 style={{ fontSize: '1.3rem' }}>{refSym ? 'E agora?' : `Como começar ${sec.name.toLowerCase()}?`}</h2>
+                <div className="segmented" role="group" aria-label="Linguagem">
+                  {LANGS.map((l) => (
+                    <button key={l.id} type="button" aria-pressed={lang === l.id} onClick={() => { set({ lang: l.id }); setAlt({}) }}>{l.label}</button>
+                  ))}
+                </div>
+              </div>
               <p className="muted hint">
                 {refSym
                   ? <>Depois de <b className="mono">{refSym}</b> ({romanIn(key, refSym)}){selected ? ' (o selecionado)' : ''}, escolha o efeito que você quer. Ouça antes de usar.</>
@@ -564,7 +585,7 @@ export function ComporPage({ go }: Props) {
                 })}
               </div>
             )}
-            <p className="muted hint">São tendências da música pop, rock e blues, não regras: confie no seu ouvido.</p>
+            <p className="muted hint">{LANGS.find((l) => l.id === lang)!.hint}</p>
           </div>
         </aside>
       </div>
