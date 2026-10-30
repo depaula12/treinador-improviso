@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from 'react'
+import { memo, useEffect, useRef, type ReactNode } from 'react'
 import { allPositions, degreeName, fretFractions, INLAYS } from '../core/fretboard-model'
 import { posKey } from '../core/scales'
 import { KEYS, type ChordInfo } from '../core/theory'
@@ -24,6 +24,8 @@ interface Props {
   marks?: Mark[]
   /** torna as casas clicáveis */
   onPick?: (string: number, fret: number) => void
+  /** faixa destacada no braço inteiro (a box escolhida), [primeira, última casa] */
+  band?: [number, number] | null
 }
 
 export interface Mark {
@@ -43,18 +45,19 @@ const noteName = (chord: ChordInfo, pc: number) => {
  * Hierarquia: notas do acorde grandes e coloridas; escala em pontos pequenos e discretos.
  */
 // memo: só redesenha quando as props mudam (troca de acorde, brilho no tempo 4)
-export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, onlyChord, labels = 'graus', only, strings, window: win, marks, onPick }: Props) {
+export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, onlyChord, labels = 'graus', only, strings, window: win, marks, onPick, band }: Props) {
   const focus = !!win
   const a = win ? win[0] : 0
   const b = win ? win[1] : maxFret
-  // foco mais estreito: no celular as bolinhas e rótulos ficam legíveis
-  const W = focus ? 440 : 1000
-  const H = focus ? 270 : 210
-  const padL = 34
+  // foco mais estreito: no celular as bolinhas e rótulos ficam legíveis.
+  // Braço inteiro: de ponta a ponta da tela, alto o bastante para ler com a guitarra no colo.
+  const W = focus ? 440 : 1600
+  const H = focus ? 270 : 340
+  const padL = focus ? 34 : 16
   const padR = 12
-  const top = focus ? 30 : 26
-  const bottom = focus ? 48 : 32
-  const openW = a === 0 ? 40 : 0
+  const top = focus ? 30 : 34
+  const bottom = focus ? 48 : 58
+  const openW = a === 0 ? (focus ? 40 : 46) : 0
   const x0 = padL + openW
   const x1 = W - padR
   const firstWire = a === 0 ? 0 : a - 1
@@ -63,8 +66,12 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
   const mid = (f: number) => (f === 0 ? padL + openW / 2 - 4 : (wire(f - 1) + wire(f)) / 2)
   const step = (H - top - bottom) / 5
   const y = (s: number) => top + s * step
-  const big = focus ? 16 : 11
-  const small = focus ? 5.5 : 4.5
+  const big = focus ? 16 : 22
+  const small = focus ? 5.5 : 7.5
+  // rótulos: no braço inteiro o SVG é largo e encolhe na tela, então as letras são maiores
+  const labCls = focus ? 'fb-lab big' : 'fb-lab xl'
+  const labDy = focus ? 5 : 7
+  const inBand = (f: number) => !!band && f >= band[0] && f <= band[1]
 
   const chordPcs = chord.semitones.map((s) => (chord.root + s) % 12)
   const nextPcs = next ? next.semitones.map((s) => (next.root + s) % 12) : []
@@ -74,8 +81,15 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
   const els: ReactNode[] = []
   els.push(<rect key="wood" x={x0} y={top - 12} width={x1 - x0} height={H - top - bottom + 24} rx={3} fill="var(--wood)" />)
 
+  if (band && !focus) {
+    const bx0 = band[0] === 0 ? padL : wire(band[0] - 1)
+    const bx1 = wire(band[1])
+    els.push(
+      <rect key="band" x={bx0} y={top - 12} width={bx1 - bx0} height={H - top - bottom + 24} rx={6} className="fb-band" />,
+    )
+  }
   const inlay = (f: number, cy: number, k: string) =>
-    els.push(<circle key={k} cx={mid(f)} cy={cy} r={focus ? 6 : 5} fill="var(--inlay)" />)
+    els.push(<circle key={k} cx={mid(f)} cy={cy} r={focus ? 6 : 8} fill="var(--inlay)" />)
   // no foco os números das casas bastam; as marcações pareceriam notas
   if (!focus) for (const f of INLAYS) if (f >= Math.max(1, a) && f <= b) inlay(f, (y(0) + y(5)) / 2, `in${f}`)
   if (!focus && 12 >= Math.max(1, a) && 12 <= b) {
@@ -88,10 +102,10 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
     els.push(<line key={`f${f}`} x1={wire(f)} y1={top - 12} x2={wire(f)} y2={H - bottom + 12} stroke={nut ? 'var(--nut)' : 'var(--fret)'} strokeWidth={nut ? 7 : 2} />)
   }
   for (let f = Math.max(1, a); f <= b; f++) {
-    els.push(<text key={`n${f}`} x={mid(f)} y={H - (focus ? 10 : 8)} textAnchor="middle" className={focus ? 'fb-num big' : 'fb-num'}>{f}</text>)
+    els.push(<text key={`n${f}`} x={mid(f)} y={H - (focus ? 10 : 12)} textAnchor="middle" className={`fb-num ${focus ? 'big' : 'xl'}${inBand(f) ? ' in' : ''}`}>{f}</text>)
   }
   for (let s = 0; s < 6; s++) {
-    els.push(<line key={`s${s}`} x1={a === 0 ? padL - 6 : x0} y1={y(s)} x2={x1} y2={y(s)} stroke="var(--string)" strokeWidth={0.8 + s * 0.35} />)
+    els.push(<line key={`s${s}`} x1={a === 0 ? padL - 6 : x0} y1={y(s)} x2={x1} y2={y(s)} stroke="var(--string)" strokeWidth={focus ? 0.8 + s * 0.35 : 1.2 + s * 0.5} />)
   }
 
   // primeiro a escala (atrás), depois o acorde (na frente)
@@ -106,7 +120,7 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
     const k = `${p.string}-${p.fret}`
 
     if (nextPcs.includes(p.pc)) {
-      chordEls.push(<circle key={`g${k}`} cx={cx} cy={cy} r={big + 5} fill="none" stroke="var(--next)" strokeWidth={3} opacity={0.85} />)
+      chordEls.push(<circle key={`g${k}`} cx={cx} cy={cy} r={big + 6} fill="none" stroke="var(--next)" strokeWidth={focus ? 3 : 4} opacity={0.85} />)
     }
 
     if (ci < 0) {
@@ -115,7 +129,7 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
         scaleEls.push(
           <g key={`d${k}`}>
             <circle cx={cx} cy={cy} r={big - 5} fill="var(--scale)" />
-            <text x={cx} y={cy + 4} textAnchor="middle" className="fb-lab dim">{KEYS[p.pc]}</text>
+            <text x={cx} y={cy + (focus ? 4 : 6)} textAnchor="middle" className={focus ? 'fb-lab dim' : 'fb-lab dim xl'}>{KEYS[p.pc]}</text>
           </g>,
         )
       } else {
@@ -129,7 +143,7 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
     chordEls.push(
       <g key={`d${k}`}>
         <circle cx={cx} cy={cy} r={big} fill={isRoot ? 'var(--root)' : 'var(--accent)'} />
-        {lab && <text x={cx} y={cy + (focus ? 5 : 4)} textAnchor="middle" className={focus ? 'fb-lab big' : 'fb-lab'}>{lab}</text>}
+        {lab && <text x={cx} y={cy + labDy} textAnchor="middle" className={labCls}>{lab}</text>}
       </g>,
     )
   }
@@ -140,15 +154,36 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
       const cx = mid(m.fret)
       const cy = y(m.string)
       const k = `m${m.string}-${m.fret}-${m.kind}`
-      if (m.kind === 'next') return <circle key={k} cx={cx} cy={cy} r={big + 5} fill="none" stroke="var(--next)" strokeWidth={3} />
+      if (m.kind === 'next') return <circle key={k} cx={cx} cy={cy} r={big + 6} fill="none" stroke="var(--next)" strokeWidth={focus ? 3 : 4} />
       const fill = m.kind === 'current' ? 'var(--fg)' : m.kind === 'right' ? 'var(--good)' : 'var(--root)'
       return (
         <g key={k}>
+          {m.kind === 'current' && !focus && <circle cx={cx} cy={cy} r={big + 12} fill="rgb(255 255 255 / .16)" />}
           <circle cx={cx} cy={cy} r={big + 2} fill={fill} />
-          {m.label && <text x={cx} y={cy + (focus ? 5 : 4)} textAnchor="middle" className={focus ? 'fb-lab big inv' : 'fb-lab inv'}>{m.label}</text>}
+          {m.label && <text x={cx} y={cy + labDy} textAnchor="middle" className={`${labCls} inv`}>{m.label}</text>}
         </g>
       )
     })
+
+  // celular: o braço inteiro rola de lado; mantém a box à vista
+  const wrap = useRef<HTMLDivElement>(null)
+  const bandX = band && !focus ? (band[0] === 0 ? 0 : wire(band[0] - 1)) / W : null
+  useEffect(() => {
+    const el = wrap.current
+    if (!el || bandX === null) return
+    // só dá para rolar quando o braço tem largura (a área pode estar montada escondida):
+    // rola na primeira vez que aparece e quando a box muda
+    let done = false
+    const go = () => {
+      if (done || !el.clientWidth) return
+      done = true
+      if (el.scrollWidth > el.clientWidth) el.scrollTo({ left: Math.max(0, bandX * el.scrollWidth - 24) })
+    }
+    const ro = new ResizeObserver(go)
+    ro.observe(el)
+    go()
+    return () => ro.disconnect()
+  }, [bandX])
 
   // áreas clicáveis: uma por corda × casa
   const hits: ReactNode[] = []
@@ -165,7 +200,7 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
   }
 
   return (
-    <div className={focus ? 'board-wrap' : 'board-wrap full'}>
+    <div className={focus ? 'board-wrap' : 'board-wrap full'} ref={wrap}>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Braço da guitarra">
         {els}
         {scaleEls}

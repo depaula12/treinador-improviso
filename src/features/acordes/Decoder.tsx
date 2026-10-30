@@ -26,6 +26,11 @@ export function Decoder() {
   const main = useMemo(() => mainShapes(shapes), [shapes])
   const listed = showAll ? shapes : main
   const pickedShape = shapes.find((v) => v.frets.join(',') === picked) ?? null
+  // a região do desenho escolhido fica destacada no braço inteiro
+  const pickedBand = useMemo<[number, number] | null>(() => {
+    const fs = pickedShape ? pickedShape.frets.filter((f): f is number => f !== null) : []
+    return fs.length ? [Math.min(...fs), Math.max(...fs)] : null
+  }, [pickedShape])
   // braço: só o desenho escolhido, ou todas as notas do acorde (com o baixo invertido, se houver)
   const only = useMemo(
     () => (pickedShape ? new Set(pickedShape.frets.flatMap((f, i) => (f === null ? [] : [posKey(5 - i, f)]))) : null),
@@ -43,10 +48,11 @@ export function Decoder() {
 
   return (
     <div className="stack">
-      <section className="panel decoder-input">
+      <div className="dec-top">
+      <section className="card stack-sm">
         <label>
-          Digite uma cifra
-          <input className="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="ex.: F#7, Am7b5, E9, D/F#" spellCheck={false} autoCapitalize="off" />
+          Digite qualquer cifra
+          <input className="text big-input" value={text} onChange={(e) => setText(e.target.value)} placeholder="ex.: F#7, Am7b5, E9, D/F#" spellCheck={false} autoCapitalize="off" />
         </label>
         <div className="quick">
           <span className="tag">ou escolha</span>
@@ -64,25 +70,27 @@ export function Decoder() {
           </div>
         </div>
       </section>
-
       {!chord ? (
-        <section className="panel"><p>Não reconheci essa cifra. Tente algo como <b>A7</b>, <b>Dm</b>, <b>G7M</b>, <b>Bm7b5</b>, <b>E9</b> ou <b>D/F#</b>.</p></section>
+        <section className="card"><p>Não reconheci essa cifra. Tente algo como <b>A7</b>, <b>Dm</b>, <b>G7M</b>, <b>Bm7b5</b>, <b>E9</b> ou <b>D/F#</b>.</p></section>
       ) : (
-        <>
-          <section className="panel decoder-info">
-            <div className="chord-big accent">{chord.symbol}</div>
-            <dl>
-              <dt>Tipo</dt>
-              <dd>{quality?.name ?? 'Fora do banco do quiz'}{chord.bass !== undefined ? ` · baixo em ${KEYS[chord.bass]}` : ''}</dd>
-              <dt>Fórmula</dt>
-              <dd className="mono">{chord.semitones.map((s) => formulaName(s, quality?.id)).join('  ')}</dd>
-              <dt>Notas</dt>
-              <dd className="mono">{chord.notes.join('  ')}</dd>
-            </dl>
-          </section>
+        <section className="card decoder-info">
+          <div className="chord-big accent">{chord.symbol}</div>
+          <dl>
+            <dt>Tipo</dt>
+            <dd style={{ fontFamily: 'var(--f-body)' }}>{quality?.name ?? 'Fora do banco do quiz'}{chord.bass !== undefined ? ` · baixo em ${KEYS[chord.bass]}` : ''}</dd>
+            <dt>Fórmula</dt>
+            <dd>{chord.semitones.map((s) => formulaName(s, quality?.id)).join('  ')}</dd>
+            <dt>Notas</dt>
+            <dd>{chord.notes.join('  ')}</dd>
+          </dl>
+        </section>
+      )}
+      </div>
 
+      {chord && (
+        <>
           {voicings.length > 0 && (
-            <section className="panel">
+            <section className="card">
               <div className="row-between">
                 <div className="tag">Desenhos do banco (os do quiz)</div>
                 {labelSelect}
@@ -95,9 +103,9 @@ export function Decoder() {
             </section>
           )}
 
-          <section className="panel">
+          <section className="card stack-sm">
             <div className="row-between">
-              <div className="tag">Formas no braço</div>
+              <div className="tag">Formas no braço · clique para ver no braço</div>
               <div className="chips">
                 <button type="button" className="chip" aria-pressed={!showAll} onClick={() => setShowAll(false)}>Principais ({main.length})</button>
                 <button type="button" className="chip" aria-pressed={showAll} onClick={() => setShowAll(true)}>Todas ({shapes.length})</button>
@@ -105,7 +113,7 @@ export function Decoder() {
               </div>
             </div>
             {listed.length ? (
-              <div className="diagrams">
+              <div className="shapes">
                 {listed.map((v) => {
                   const k = v.frets.join(',')
                   return (
@@ -118,12 +126,14 @@ export function Decoder() {
             ) : (
               <p className="muted">Não achei forma tocável (até 4 dedos, 4 casas) para esse acorde. As notas dele no braço estão abaixo.</p>
             )}
-            <p className="muted hint">Clique num desenho para ver onde ele fica no braço.</p>
           </section>
 
-          <section>
-            <div className="tag">{pickedShape ? `Desenho escolhido: ${shapeCaption(pickedShape)}` : 'Notas do acorde no braço'}</div>
-            <Fretboard maxFret={15} scale={NO_SCALE} chord={shown!} onlyChord labels={labels} only={only} />
+          <section className="neck-band">
+            <div className="neck-cap">
+              <span className="tag">{pickedShape ? `Desenho escolhido: ${shapeCaption(pickedShape)}` : 'Todas as notas do acorde no braço'}</span>
+              {pickedShape && <button type="button" className="link" onClick={() => setPicked(null)}>ver todas as notas</button>}
+            </div>
+            <Fretboard maxFret={15} scale={NO_SCALE} chord={shown!} onlyChord labels={labels} only={only} band={pickedBand} />
           </section>
         </>
       )}

@@ -15,13 +15,13 @@ function LevelMeter({ peak }: { peak: number }) {
   const msg = { hot: 'Alto demais: abaixe o volume', good: 'Nível bom', low: 'Baixo: suba o volume do Cube Baby', off: 'Sem sinal' }[state]
   return (
     <div className="meter">
+      <div className="row-between">
+        <span className="tag" style={{ margin: 0 }}>Nível · <span className={`meter-msg ${state}`} style={{ textTransform: 'none', letterSpacing: 0 }}>{msg}</span></span>
+        <span className="mono muted" style={{ fontSize: 12 }}>{Number.isFinite(peak) ? `${peak.toFixed(0)} dB` : '—'}</span>
+      </div>
       <div className="meter-bar">
         <div className="meter-zone" style={{ left: `${pct(GOOD_LO)}%`, width: `${pct(GOOD_HI) - pct(GOOD_LO)}%` }} />
         <div className={`meter-fill ${state}`} style={{ width: `${pct(peak)}%` }} />
-      </div>
-      <div className="row-between">
-        <span className={`meter-msg ${state}`}>{msg}</span>
-        <span className="mono muted">{Number.isFinite(peak) ? `${peak.toFixed(0)} dB` : '—'}</span>
       </div>
     </div>
   )
@@ -111,40 +111,42 @@ interface PanelProps {
   children?: ReactNode
 }
 
-/** Painel padrão: entrada, Ativar/Desligar, mensagens e medidor de nível. */
+/** Faixa compacta no topo: entrada, Ativar/Desligar, medidor de nível, ajustes extras e mensagens. */
 export function InputPanel({ io, peak, children }: PanelProps) {
   return (
-    <section className="panel stack-sm">
-      <div className="rule-pick">
-        <label>
-          Entrada de áudio
-          <select
-            value={io.deviceId}
-            onChange={(e) => {
-              io.setDeviceId(e.target.value)
-              if (io.active) void io.start(e.target.value)
-            }}
-          >
-            {io.devices.length === 0 && <option value="">Entrada padrão</option>}
-            {io.devices.map((d, i) => (
-              <option key={d.deviceId || i} value={d.deviceId}>{d.label || `Entrada ${i + 1} (dê permissão para ver o nome)`}</option>
-            ))}
-          </select>
-        </label>
-        <button type="button" className="play" aria-pressed={!!io.active} onClick={() => (io.active ? io.stop() : void io.start())}>
-          {io.active ? 'Desligar' : 'Ativar'}
-        </button>
-      </div>
-      {io.active && <p className="muted hint">Ouvindo: {io.active}</p>}
-      {io.error && <p className="error">{io.error}</p>}
-      {!io.active && !io.error && (
-        <p className="muted hint">
-          Ligue a guitarra no Cube Baby e o Cube Baby no PC pelo cabo USB. Ao ativar, o navegador pede acesso ao "microfone": é o Cube Baby.
-          Use o som limpo, sem distorção.
-        </p>
-      )}
+    <section className="card input-strip" aria-label="Entrada de áudio">
+      <label>
+        Entrada de áudio
+        <select
+          value={io.deviceId}
+          onChange={(e) => {
+            io.setDeviceId(e.target.value)
+            if (io.active) void io.start(e.target.value)
+          }}
+        >
+          {io.devices.length === 0 && <option value="">Entrada padrão</option>}
+          {io.devices.map((d, i) => (
+            <option key={d.deviceId || i} value={d.deviceId}>{d.label || `Entrada ${i + 1} (dê permissão para ver o nome)`}</option>
+          ))}
+        </select>
+      </label>
+      <button type="button" className="play" aria-pressed={!!io.active} onClick={() => (io.active ? io.stop() : void io.start())}>
+        {io.active ? 'Desligar' : 'Ativar'}
+      </button>
       <LevelMeter peak={peak} />
-      {children}
+      <div className="extra">{children}</div>
+      {(io.error || !io.active) && (
+        <div className="msgs">
+          {io.error ? (
+            <p className="error">{io.error}</p>
+          ) : (
+            <p className="muted hint">
+              Ligue a guitarra no Cube Baby e o Cube Baby no PC pelo cabo USB. Ao ativar, o navegador pede acesso ao "microfone": é o Cube Baby.
+              Use o som limpo, sem distorção.
+            </p>
+          )}
+        </div>
+      )}
     </section>
   )
 }

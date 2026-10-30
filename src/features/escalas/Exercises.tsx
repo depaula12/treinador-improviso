@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { engine, type StepPos } from '../../audio/engine'
 import { buildExercise, EXERCISES, type ExerciseId } from '../../core/exercises'
 import { degreeName } from '../../core/fretboard-model'
 import { boxPositions, boxRange, SCALES } from '../../core/scales'
 import { KEYS, type ChordInfo } from '../../core/theory'
 import { Fretboard, type Mark } from '../../ui/Fretboard'
+import { usePlayerSlot } from '../../ui/player-slot'
 import { useImproviso } from '../improviso/store'
 import { useEscalas, type Display } from './store'
 
@@ -39,8 +40,6 @@ export function Exercises() {
     const rs = boxes.map((b) => boxRange(scale, keyPc, b))
     return [Math.min(...rs.map((r) => r[0])), Math.max(...rs.map((r) => r[1]))]
   }, [boxes, scale, keyPc])
-  // até ~8 casas cabe na janela de foco; mais que isso, braço inteiro
-  const win: [number, number] | null = hi - lo <= 8 ? [lo, hi] : null
 
   // a escala desenhada como "acorde": tônica em vermelho, graus da escala como rótulo
   const shown: ChordInfo = useMemo(() => {
@@ -90,11 +89,35 @@ export function Exercises() {
 
   const bpm = (d: number) => s.set({ bpm: Math.min(200, Math.max(40, s.bpm + d)) })
   const ex = EXERCISES.find((e) => e.id === s.exercise)!
+  const rhythm = PER_BEAT.find((p) => p.v === s.perBeat)!.label.split(' ')[0].toLowerCase()
+
+  // o player fixo embaixo vira o transporte do exercício enquanto esta tela está aberta
+  const toggleRef = useRef(toggleplay)
+  toggleRef.current = toggleplay
+  useEffect(() => {
+    usePlayerSlot.getState().set({
+      slot: {
+        art: 'Ex',
+        title: `Exercício: ${ex.name.toLowerCase()}`,
+        sub: `${scale.name} em ${s.key} · box ${boxes.join(', ')} · ${rhythm}`,
+        bpm: s.bpm,
+        playing,
+        onToggle: () => void toggleRef.current(),
+        onBpm: bpm,
+      },
+    })
+  }, [ex.name, scale.name, s.key, boxes, rhythm, s.bpm, playing])
+  useEffect(() => () => usePlayerSlot.getState().set({ slot: null }), [])
+
+  // sequência visível: no máximo 24 notas em volta da atual
+  const curIdx = step && step.index >= 0 ? step.index : -1
+  const from = seq.length > 24 ? Math.max(0, Math.min(seq.length - 24, curIdx - 8)) : 0
+  const seqShown = seq.slice(from, from + 24)
 
   return (
-    <div className="stack">
-      <section className="panel stack-sm">
-        <div className="grid-3">
+    <>
+      <section className="card stack-sm">
+        <div className="cfg-row">
           <label>
             Escala
             <select value={s.scaleId} onChange={(e) => s.set({ scaleId: e.target.value })}>
@@ -119,30 +142,6 @@ export function Exercises() {
               ))}
             </select>
           </label>
-        </div>
-        <div className="row-wrap">
-          <div>
-            <div className="tag">Desenhos</div>
-            <div className="chips">
-              {[1, 2, 3, 4, 5].map((b) => (
-                <button key={b} type="button" className="chip" aria-pressed={s.boxes.includes(b)} onClick={() => s.set({ boxes: toggle(s.boxes, b) })}>
-                  Box {b}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="tag">Mostrar</div>
-            <div className="segmented small" role="group" aria-label="Exibição">
-              {(['tudo', 'fundamentais', 'esconder'] as Display[]).map((d) => (
-                <button key={d} type="button" aria-pressed={s.display === d} onClick={() => { s.set({ display: d }); setReveal(false) }}>
-                  {d === 'tudo' ? 'Tudo' : d === 'fundamentais' ? 'Só tônicas' : 'Esconder'}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="grid-3">
           <label>
             Ritmo
             <select value={s.perBeat} onChange={(e) => s.set({ perBeat: +e.target.value as 1 | 2 | 3 | 4 })}>
@@ -151,81 +150,109 @@ export function Exercises() {
               ))}
             </select>
           </label>
-          <div className="checks end">
+          <div>
+            <div className="tag">Mostrar</div>
+            <div className="segmented small" role="group" aria-label="Exibição">
+              {(['tudo', 'fundamentais', 'esconder'] as Display[]).map((d) => (
+                <button key={d} type="button" aria-pressed={s.display === d} onClick={() => { s.set({ display: d }); setReveal(false) }}>
+                  {d === 'tudo' ? 'Tudo' : d === 'fundamentais' ? 'Tônicas' : 'Esconder'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="checks" style={{ flexDirection: 'column', gap: 4 }}>
             <label><input type="checkbox" checked={s.sound} onChange={(e) => s.set({ sound: e.target.checked })} /> Tocar as notas</label>
             <label><input type="checkbox" checked={s.countIn} onChange={(e) => s.set({ countIn: e.target.checked })} /> Contagem</label>
           </div>
         </div>
-        <p className="muted hint">{ex.hint} {seq.length} notas por volta.</p>
-      </section>
-
-      <section className="board">
-        <Fretboard
-          maxFret={win ? 17 : Math.min(17, hi + 1)}
-          scale={NO_SCALE}
-          chord={shown}
-          labels="graus"
-          only={only}
-          window={win}
-          marks={marks}
-        />
-        <div className="board-bar">
-          <span className="muted">
-            {step?.index === -1 ? `Contagem: ${step.count}` : cur ? `Nota ${step!.index + 1} de ${seq.length}` : `${scale.name} em ${s.key}`}
-          </span>
-          {s.display === 'esconder' && (
-            <button type="button" className="chip" aria-pressed={reveal} onClick={() => setReveal(!reveal)}>
-              {reveal ? 'Esconder de novo' : 'Revelar'}
-            </button>
-          )}
+        <div className="row-between">
+          <div className="row">
+            <span className="tag" style={{ margin: 0 }}>Desenhos</span>
+            {[1, 2, 3, 4, 5].map((b) => (
+              <button key={b} type="button" className="chip" aria-pressed={s.boxes.includes(b)} onClick={() => s.set({ boxes: toggle(s.boxes, b) })}>
+                Box {b}
+              </button>
+            ))}
+          </div>
+          <span className="muted hint">{ex.hint} {seq.length} notas por volta.</span>
         </div>
       </section>
 
-      <section className="transport">
-        <div className="bpm-ctl">
-          <button type="button" onClick={() => bpm(-5)} aria-label="Diminuir andamento">−</button>
-          <span className="mono">{s.bpm}<small> bpm</small></span>
-          <button type="button" onClick={() => bpm(5)} aria-label="Aumentar andamento">+</button>
+      <div className="ex-top">
+        <section className="card stack-sm" aria-label="Sequência">
+          <div className="row-between">
+            <span className="tag" style={{ margin: 0 }}>Sequência</span>
+            <span className="muted mono">
+              {step?.index === -1 ? `contagem: ${step.count}` : cur ? `nota ${step!.index + 1} de ${seq.length}` : `${scale.name} em ${s.key}`}
+            </span>
+          </div>
+          <div className="seq">
+            {seqShown.map((n, k) => {
+              const idx = from + k
+              const hide = !showMarks && idx !== curIdx
+              return (
+                <span key={idx} className={idx === curIdx ? 'on' : idx < curIdx ? 'done' : ''}>
+                  {hide ? '·' : KEYS[n.midi % 12]}
+                </span>
+              )
+            })}
+            {from + 24 < seq.length && <span>…</span>}
+          </div>
+        </section>
+        <section className="card now-note" aria-live="polite">
+          <span className="tag">Agora</span>
+          <b>{cur && showMarks ? KEYS[cur.midi % 12] : '—'}</b>
+          <span className="muted mono">{cur && showMarks ? `${cur.string + 1}ª corda, casa ${cur.fret}` : playing ? 'escondido' : 'aperte Começar'}</span>
+        </section>
+      </div>
+
+      <section className="neck-band">
+        <Fretboard maxFret={Math.max(12, Math.min(17, hi + 1))} scale={NO_SCALE} chord={shown} labels="graus" only={only} band={[lo, hi]} marks={marks} />
+        <div className="neck-cap">
+          <span><span className="guide-dot" />nota atual · <span className="guide-ring" />próxima</span>
+          <div className="row">
+            {s.display === 'esconder' && (
+              <button type="button" className="chip" aria-pressed={reveal} onClick={() => setReveal(!reveal)}>
+                {reveal ? 'Esconder de novo' : 'Revelar'}
+              </button>
+            )}
+            <span className="muted mono">casas {lo}–{hi}</span>
+          </div>
         </div>
-        <button className="play big" type="button" aria-pressed={playing} onClick={toggleplay}>
-          {playing ? 'Parar' : 'Começar'}
-        </button>
       </section>
 
       <Presets />
-    </div>
+    </>
   )
 }
 
 function Presets() {
   const { presets, savePreset, loadPreset, deletePreset } = useEscalas()
   return (
-    <section className="panel stack-sm">
-      <div className="row-between">
-        <div className="tag">Treinos salvos</div>
-        <button
-          type="button"
-          className="chip"
-          onClick={() => {
-            const name = prompt('Nome do treino (ex.: "Segunda: pentatônica box 1–2")')
-            if (name?.trim()) savePreset(name.trim())
-          }}
-        >
-          + Salvar este treino
-        </button>
-      </div>
-      {presets.length === 0 ? (
-        <p className="muted hint">Salve combinações que você usa sempre. Um conjunto delas vira o seu plano da semana.</p>
-      ) : (
-        <div className="chips">
-          {presets.map((p) => (
+    <section className="card row-between">
+      <div className="presets">
+        <span className="tag" style={{ margin: 0 }}>Treinos salvos</span>
+        {presets.length === 0 ? (
+          <span className="muted hint">Salve combinações que você usa sempre. Um conjunto delas vira o seu plano da semana.</span>
+        ) : (
+          presets.map((p) => (
             <span key={p.id} className="preset">
               <button type="button" className="chip" onClick={() => loadPreset(p.id)}>{p.name}</button>
               <button type="button" className="preset-del" aria-label={`Apagar ${p.name}`} onClick={() => confirm(`Apagar "${p.name}"?`) && deletePreset(p.id)}>×</button>
             </span>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
+      <button
+        type="button"
+        className="btn"
+        onClick={() => {
+          const name = prompt('Nome do treino (ex.: "Segunda: pentatônica box 1–2")')
+          if (name?.trim()) savePreset(name.trim())
+        }}
+      >
+        + Salvar este treino
+      </button>
     </section>
   )
 }

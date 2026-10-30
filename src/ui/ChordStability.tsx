@@ -7,7 +7,7 @@ const LABEL: Record<Stability, string> = { rapida: 'Rápida', equilibrada: 'Equi
 export function ChordStability() {
   const { stability, minHoldSec, set } = useInputSettings()
   return (
-    <div className="row-wrap stability">
+    <div className="stability">
       <div>
         <div className="tag">Troca de acorde</div>
         <div className="segmented small" role="group" aria-label="Estabilidade">
@@ -19,7 +19,7 @@ export function ChordStability() {
         </div>
       </div>
       <label className="hold">
-        Tempo mínimo entre trocas <span className="mono">{minHoldSec.toFixed(1)} s</span>
+        Mínimo entre trocas <span className="mono" style={{ textTransform: 'none' }}>{minHoldSec.toFixed(1)} s</span>
         <input type="range" min={0.2} max={3} step={0.1} value={minHoldSec} onChange={(e) => set({ minHoldSec: +e.target.value })} />
       </label>
     </div>

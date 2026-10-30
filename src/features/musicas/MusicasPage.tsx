@@ -15,33 +15,67 @@ interface Props {
   go: (area: 'improviso' | 'acordes') => void
 }
 
+/** Repertório sempre à esquerda; à direita, a música aberta (ou a importação). */
 export function MusicasPage({ go }: Props) {
   const { songs, loaded, openId, load, open } = useSongs()
   const [importing, setImporting] = useState(false)
+  const [query, setQuery] = useState('')
+  // no celular a lista fica recolhida (só a música aberta) até pedir para trocar
+  const [libOpen, setLibOpen] = useState(false)
   useEffect(() => void load(), [load])
   const song = songs.find((s) => s.id === openId) ?? null
+  // abriu a área sem música escolhida: abre a mais recente (um clique a menos)
+  useEffect(() => {
+    if (loaded && !openId && !importing && songs.length) open(songs[0].id)
+  }, [loaded, openId, importing, songs, open])
 
-  if (importing) return <Importer onDone={(id) => { setImporting(false); if (id) open(id) }} />
-  if (song) return <SongEditor song={song} go={go} />
+  const q = query.trim().toLowerCase()
+  const shown = q ? songs.filter((s) => `${s.title} ${s.artist}`.toLowerCase().includes(q)) : songs
 
   return (
-    <div className="stack">
-      <section className="panel row-between">
-        <div>
-          <div className="tag">Seu repertório</div>
-          <p className="hint muted">Cole a cifra de uma música e ela vira base de treino, com a grade de compassos editável.</p>
+    <div className="page">
+      <div className="two-pane">
+        <aside className={`lib${libOpen || !song ? ' open' : ''}`} aria-label="Repertório">
+          <div className="lib-head">
+            <h1>Repertório</h1>
+            <button type="button" className="play" onClick={() => { setImporting(true); setLibOpen(false) }}>+ Importar</button>
+          </div>
+          {songs.length > 3 && (
+            <input className="text lib-search" placeholder="Buscar música…" aria-label="Buscar música" value={query} onChange={(e) => setQuery(e.target.value)} />
+          )}
+          {songs.length > 1 && song && (
+            <button type="button" className="chip lib-toggle" onClick={() => setLibOpen(!libOpen)}>
+              {libOpen ? 'Fechar a lista' : `Trocar de música (${songs.length}) ▾`}
+            </button>
+          )}
+          {shown.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className="song-item"
+              aria-current={!importing && s.id === openId}
+              onClick={() => { open(s.id); setImporting(false); setLibOpen(false) }}
+            >
+              <span className="k">{soundingKey(s)}</span>
+              <span>
+                <b>{s.title}</b>
+                <small>{s.artist || '—'} · {s.bpm} bpm · {flatBars(s).length} comp.</small>
+                {usesTiming(s) && <span className="badge">tempos marcados</span>}
+              </span>
+            </button>
+          ))}
+          {loaded && !songs.length && <p className="hint muted">Nenhuma música ainda. Importe a cifra de uma música da banda para começar.</p>}
+        </aside>
+
+        <div className="stack">
+          {importing || (loaded && !songs.length) ? (
+            <Importer onDone={(id) => { setImporting(false); if (id) open(id) }} canCancel={songs.length > 0} />
+          ) : song ? (
+            <SongEditor key={song.id} song={song} go={go} />
+          ) : (
+            <div className="card empty">Escolha uma música do repertório.</div>
+          )}
         </div>
-        <button type="button" className="play" onClick={() => setImporting(true)}>Importar cifra</button>
-      </section>
-      {loaded && !songs.length && <p className="muted center">Nenhuma música ainda. Comece importando uma cifra.</p>}
-      <div className="song-list">
-        {songs.map((s) => (
-          <button key={s.id} type="button" className="song-card" onClick={() => open(s.id)}>
-            <b>{s.title}</b>
-            <span className="muted">{s.artist || '—'}</span>
-            <span className="mono muted">{soundingKey(s)} · {s.bpm} bpm · {flatBars(s).length} compassos</span>
-          </button>
-        ))}
       </div>
     </div>
   )
@@ -49,7 +83,7 @@ export function MusicasPage({ go }: Props) {
 
 // ---------- importar ----------
 
-function Importer({ onDone }: { onDone: (id: string | null) => void }) {
+function Importer({ onDone, canCancel }: { onDone: (id: string | null) => void; canCancel: boolean }) {
   const [text, setText] = useState('')
   const save = useSongs((s) => s.save)
   const parsed = useMemo(() => (text.trim() ? parseCifra(text) : null), [text])
@@ -64,10 +98,10 @@ function Importer({ onDone }: { onDone: (id: string | null) => void }) {
 
   return (
     <div className="stack">
-      <section className="panel stack-sm">
+      <section className="card stack-sm">
         <div className="row-between">
-          <div className="tag">Importar cifra</div>
-          <button type="button" className="link" onClick={() => onDone(null)}>voltar</button>
+          <h2>Importar cifra</h2>
+          {canCancel && <button type="button" className="link" onClick={() => onDone(null)}>cancelar</button>}
         </div>
         <p className="hint muted">
           No Cifra Club, selecione a cifra inteira (do título até o fim), copie e cole aqui. Pode vir com letra e
@@ -77,7 +111,7 @@ function Importer({ onDone }: { onDone: (id: string | null) => void }) {
       </section>
 
       {parsed && (
-        <section className="panel stack-sm">
+        <section className="card stack-sm">
           <div className="tag">O que eu entendi</div>
           <p className="hint">
             <b>{parsed.title || 'Sem título'}</b>{parsed.artist ? ` · ${parsed.artist}` : ''} · tom {parsed.key ?? 'estimado pelos acordes'}
@@ -108,7 +142,7 @@ interface Sel {
 }
 
 function SongEditor({ song, go }: { song: Song } & Props) {
-  const { save, remove, open } = useSongs()
+  const { save, remove } = useSongs()
   const [sel, setSel] = useState<Sel | null>(null)
   const [draft, setDraft] = useState('')
   const [bad, setBad] = useState(false)
@@ -172,21 +206,15 @@ function SongEditor({ song, go }: { song: Song } & Props) {
 
   return (
     <div className="stack">
-      <section className="panel stack-sm">
-        <div className="row-between">
-          <button type="button" className="link" onClick={() => { open(null); setSel(null) }}>← todas as músicas</button>
-          <button type="button" className="link" onClick={() => confirm(`Apagar "${song.title}"?`) && void remove(song.id)}>apagar música</button>
-        </div>
-        <div className="grid-2">
+      <section className="card stack-sm">
+        <div className="editor-head">
           <label>Título<input className="text" value={song.title} onChange={(e) => update({ ...song, title: e.target.value })} /></label>
           <label>Artista<input className="text" value={song.artist} onChange={(e) => update({ ...song, artist: e.target.value })} /></label>
-        </div>
-        <div className="song-ctl">
           <label>
             Tom
             <div className="stepper">
               <button type="button" onClick={() => update({ ...song, transpose: song.transpose - 1 })} aria-label="Meio tom abaixo">−</button>
-              <span className="mono">{soundingKey(song)}</span>
+              <span>{soundingKey(song)}</span>
               <button type="button" onClick={() => update({ ...song, transpose: song.transpose + 1 })} aria-label="Meio tom acima">+</button>
             </div>
           </label>
@@ -194,7 +222,7 @@ function SongEditor({ song, go }: { song: Song } & Props) {
             Andamento
             <div className="stepper">
               <button type="button" onClick={() => update({ ...song, bpm: Math.max(50, song.bpm - 5) })} aria-label="Mais lento">−</button>
-              <span className="mono">{song.bpm}</span>
+              <span>{song.bpm}</span>
               <button type="button" onClick={() => update({ ...song, bpm: Math.min(180, song.bpm + 5) })} aria-label="Mais rápido">+</button>
             </div>
           </label>
@@ -210,42 +238,50 @@ function SongEditor({ song, go }: { song: Song } & Props) {
         {song.transpose !== 0 && (
           <p className="hint muted">Cifra escrita em {song.key}; tocando {song.transpose > 0 ? '+' : ''}{song.transpose} semitom(s), em {soundingKey(song)}. Os acordes abaixo já estão no tom novo.</p>
         )}
-        <p className="hint muted">Acordes da música: <span className="mono">{songChords(song).join('  ')}</span></p>
-        <div className="chips">
-          <button type="button" className="play" onClick={playHere} disabled={status === 'loading'}>
-            {status === 'loading' && isLoaded ? 'Carregando…' : playing ? 'Parar' : 'Tocar a cifra'}
-          </button>
-          <button type="button" className="chip" onClick={() => { loadIntoImproviso(song); go('improviso') }}>Improvisar sobre ela</button>
-          <button type="button" className="chip" onClick={() => { useAcordes.getState().set({ songId: song.id }); go('acordes') }}>Treinar os acordes dela</button>
-        </div>
-        <div className="timing-row">
-          <span className="tag">Duração dos acordes</span>
-          <div className="segmented small" role="group" aria-label="Duração dos acordes">
-            <button type="button" aria-pressed={!timingOn} onClick={() => update({ ...song, useTiming: false })}>1 compasso cada</button>
-            <button type="button" aria-pressed={timingOn} disabled={!timingValid(song)} onClick={() => update({ ...song, useTiming: true, bpm: song.timing!.bpm })}>
-              Tempos marcados
+        <div className="row-between">
+          <div className="row">
+            <button type="button" className="play" onClick={playHere} disabled={status === 'loading'}>
+              {status === 'loading' && isLoaded ? 'Carregando…' : playing ? 'Parar' : 'Tocar a cifra'}
+            </button>
+            <button type="button" className="btn" onClick={() => { loadIntoImproviso(song); go('improviso') }}>Improvisar sobre ela</button>
+            <button type="button" className="btn" onClick={() => { useAcordes.getState().set({ songId: song.id }); go('acordes') }}>Treinar os acordes dela</button>
+          </div>
+          <div className="row">
+            <span className="tag" style={{ margin: 0 }}>Duração</span>
+            <div className="segmented small" role="group" aria-label="Duração dos acordes">
+              <button type="button" aria-pressed={!timingOn} onClick={() => update({ ...song, useTiming: false })}>1 compasso cada</button>
+              <button type="button" aria-pressed={timingOn} disabled={!timingValid(song)} onClick={() => update({ ...song, useTiming: true, bpm: song.timing!.bpm })}>
+                Tempos marcados
+              </button>
+            </div>
+            <button type="button" className="btn" onClick={startTapping} disabled={tapping}>
+              {song.timing ? 'Marcar de novo com a gravação' : 'Marcar tempos com a gravação'}
             </button>
           </div>
-          <button type="button" className="chip" onClick={startTapping} disabled={tapping}>
-            {song.timing ? 'Marcar de novo com a gravação' : 'Marcar tempos com a gravação'}
-          </button>
         </div>
         {song.timing && !timingValid(song) && (
           <p className="hint muted">A grade mudou depois da marcação: os tempos marcados não valem mais. Marque de novo.</p>
         )}
-        {timingOn && <p className="hint muted">Os números embaixo dos acordes são a duração em tempos (4 = um compasso).</p>}
+        <p className="hint muted">
+          Acordes: <span className="mono">{songChords(song).join('  ')}</span>
+          {timingOn && ' · os números embaixo dos acordes são a duração em tempos (4 = um compasso)'} ·{' '}
+          <button type="button" className="link" onClick={() => confirm(`Apagar "${song.title}"?`) && void remove(song.id)}>apagar música</button>
+        </p>
       </section>
 
       {nowChord && (
-        <section className="now-next roll">
+        <section className="card roll" aria-live="polite">
           <div>
             <div className="tag">Agora</div>
             <div className="now-chord">{nowChord}</div>
           </div>
-          <div className="next">
+          <div>
             <div className="tag">Depois</div>
             <div className="next-chord">{nextChord}</div>
             <div className="next-when">{beatsLeft === 1 ? 'no próximo tempo' : `em ${beatsLeft} tempos`}</div>
+          </div>
+          <div className="muted mono hide-phone" style={{ justifySelf: 'end', textAlign: 'right' }}>
+            {song.sections[timed[current].section]?.name} · {current + 1} de {timed.length}
           </div>
         </section>
       )}
@@ -262,7 +298,7 @@ function SongEditor({ song, go }: { song: Song } & Props) {
 
       <section className="stack-sm" ref={grid}>
         {song.sections.map((sec, si) => (
-          <div key={si} className="panel sec">
+          <div key={si} className="card sec">
             <div className="row-between">
               <input
                 className="sec-title"

@@ -108,9 +108,17 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
 ## Estado (atualizar ao fim de cada etapa)
 - Feito: setup, motor de áudio (4 estilos, mixer, humanização, Parar instantâneo), Improviso
   (braço, desenhos 1–5, restrições, progressão digitada), Acordes (banco, decodificador, 4 quizzes, Leitner).
-- Visual (etapa 1): tema escuro único; Improviso em "palco" (acorde grande, braço em foco no box,
-  próxima troca) + gaveta de Ajustes (<dialog>); braço com hierarquia (acorde grande, escala em pontos).
-- Revisão visual completa (Tailwind + Radix/shadcn) fica para depois da Fase 1b.
+- **Nome do app: solonely.** (repositório e URL da Vercel continuam treinador-improviso).
+- **Layout novo** (aprovado pelo usuário a partir do protótipo; cores e fontes de antes mantidas):
+  menu lateral (`App.tsx`; no celular vira barra embaixo, media query 760px), player fixo
+  (`ui/Player.tsx`: tocar, bpm, contagem, loop, mixer em popover, espaço toca/para; uma área com
+  transporte próprio toma o lugar via `ui/player-slot.ts`, ex.: exercícios de Escalas; TapMode usa
+  `spaceTaken`). Braço inteiro de ponta a ponta (`Fretboard` sem `window`, prop `band` destaca a box e
+  rola até ela no celular; classe `.neck-band` encosta nas bordas). Improviso: faixa da progressão
+  andando (Lane), ajustes à vista (sem a gaveta). Músicas em duas colunas; Acordes em três (config |
+  pergunta | progresso), atalhos 1–4/Enter; entrada de áudio em faixa compacta (InputPanel).
+  O plano antigo de Tailwind/Radix foi abandonado: CSS próprio em `styles.css`.
+- Mudança visual grande: fazer em branch, mostrar prints e só juntar na main com aprovação.
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),
   treinos salvos. Motor tem `mode` ('base' | 'exercise'): um para o outro sem avisar errado a tela.

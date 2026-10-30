@@ -5,10 +5,13 @@ import { NoteQuiz } from './NoteQuiz'
 export function EscalasPage() {
   const [view, setView] = useState<'exercicios' | 'onde'>('exercicios')
   return (
-    <div className="stack">
-      <div className="segmented" role="tablist">
-        <button type="button" role="tab" aria-selected={view === 'exercicios'} onClick={() => setView('exercicios')}>Exercícios</button>
-        <button type="button" role="tab" aria-selected={view === 'onde'} onClick={() => setView('onde')}>Onde está a nota?</button>
+    <div className="page">
+      <div className="page-head">
+        <h1>Escalas</h1>
+        <div className="segmented" role="tablist">
+          <button type="button" role="tab" aria-selected={view === 'exercicios'} onClick={() => setView('exercicios')}>Exercícios</button>
+          <button type="button" role="tab" aria-selected={view === 'onde'} onClick={() => setView('onde')}>Onde está a nota?</button>
+        </div>
       </div>
       {view === 'exercicios' ? <Exercises /> : <NoteQuiz />}
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { timedChords, writtenSequence, type Song, type SongTiming } from '../../core/song'
 import { bpmFromTaps, quantizeChanges } from '../../core/tap'
+import { usePlayerSlot } from '../../ui/player-slot'
 
 type Step = 'tempo' | 'trocas' | 'pronto'
 
@@ -66,7 +67,12 @@ export function TapMode({ song, onDone }: { song: Song; onDone: (t: SongTiming |
       }
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    // enquanto marca, o espaço é a batida: o player não toca/para com ele
+    usePlayerSlot.getState().set({ spaceTaken: true })
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      usePlayerSlot.getState().set({ spaceTaken: false })
+    }
   }, [])
 
   const result = useMemo(() => {

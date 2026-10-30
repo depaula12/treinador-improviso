@@ -1,23 +1,34 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { engine, STYLES } from '../../audio/engine'
 import { degreeName } from '../../core/fretboard-model'
 import { guideLine } from '../../core/guide'
 import { parseProgression, PROGRESSIONS, realize } from '../../core/progressions'
 import { boxPositions, boxRange, SCALES, scalePcs } from '../../core/scales'
-import { KEYS, parseChord } from '../../core/theory'
+import { KEYS, parseChord, type ChordInfo } from '../../core/theory'
 import { Fretboard, type LabelMode, type Mark } from '../../ui/Fretboard'
-import { Mixer } from '../../ui/Mixer'
 import { drawRestriction, RESTRICTIONS } from './restrictions'
-import { togglePlay, useImproviso } from './store'
+import { useImproviso } from './store'
 
-// Componentes pequenos que acompanham o tempo: só eles re-renderizam a cada batida.
-function BeatDots() {
+interface Change {
+  beat: number
+  chord: ChordInfo
+}
+
+const BOX_OPTIONS = [1, 2, 3, 4, 5, 0]
+// largura de um compasso na faixa da progressão (cartão + espaço) e onde fica a linha "agora"
+const BAR_W = 122
+const HIT_X = 96
+
+// ---------- pedaços que acompanham o tempo: só eles re-renderizam a cada batida ----------
+
+function Beats() {
   const beat = useImproviso((st) => st.pos?.beat ?? -1)
+  const bar = useImproviso((st) => st.pos?.bar ?? -1)
   return (
     <div className="beats" aria-hidden>
       {[0, 1, 2, 3].map((b) => (
-        <span key={b} className={beat === b ? 'on' : ''} />
+        <span key={b} className={bar < 0 && beat < 0 ? '' : b === beat ? 'on' : b < beat ? 'past' : ''} />
       ))}
     </div>
   )
@@ -28,14 +39,77 @@ function CountIn() {
   return <div className="now-chord count">{beat === undefined ? '…' : beat + 1}</div>
 }
 
-const BOX_OPTIONS = [1, 2, 3, 4, 5, 0]
+/** Faixa da progressão andando até a linha "agora" (estilo Yousician), um cartão por compasso. */
+function Lane({ labels, playing }: { labels: { name: string; sub: string }[]; playing: boolean }) {
+  const pos = useImproviso((st) => st.pos)
+  const bpm = useImproviso((st) => st.bpm)
+  const track = useRef<HTMLDivElement>(null)
+  const prev = useRef(-1)
+  const n = labels.length
+  // posição em tempos dentro da volta; na contagem e parado, fica no compasso 1
+  const p = playing && pos && pos.bar >= 0 ? (pos.bar % n) * 4 + pos.beat : 0
+  const cur = playing && pos && pos.bar >= 0 ? pos.bar % n : 0
+
+  useLayoutEffect(() => {
+    const el = track.current
+    if (!el) return
+    // três cópias da progressão: a do meio passa pela linha; antes e depois ficam à vista
+    const x = (beats: number) => `translateX(${HIT_X - (n + beats / 4) * BAR_W}px)`
+    const moving = playing && pos && pos.bar >= 0
+    if (!moving || p < prev.current) {
+      // parado ou deu a volta: pula sem animar (as cópias são iguais, ninguém percebe)
+      el.style.transition = 'none'
+      el.style.transform = x(p)
+      void el.offsetWidth
+    }
+    if (moving) {
+      // anda até o próximo tempo durante este tempo: movimento contínuo
+      el.style.transition = `transform ${60 / bpm}s linear`
+      el.style.transform = x(p + 1)
+    }
+    prev.current = p
+  }, [p, playing, pos, bpm, n])
+
+  const all = [...labels, ...labels, ...labels]
+  return (
+    <div className="lane">
+      <div className="lane-track" ref={track}>
+        {all.map((l, i) => (
+          <div key={i} className={`lane-bar${i % n === cur ? ' cur' : ''}`}>
+            <b>{l.name}</b>
+            <small>{l.sub}</small>
+          </div>
+        ))}
+      </div>
+      <div className="lane-hit" aria-hidden />
+    </div>
+  )
+}
+
+/** Quanto falta para a troca: texto e barrinha que enche a cada tempo. */
+function NextWhen({ ahead, midBar }: { ahead: number; midBar: Change | null }) {
+  const beat = Math.max(0, useImproviso((st) => st.pos?.beat ?? 0))
+  const playing = useImproviso((st) => st.status === 'playing' && (st.pos?.bar ?? -1) >= 0)
+  const total = midBar ? midBar.beat : ahead * 4
+  const done = playing ? (midBar ? beat : beat + 1) : 0
+  const text = midBar
+    ? `no tempo ${midBar.beat + 1}`
+    : ahead === 1
+      ? beat === 3 && playing ? 'no próximo tempo' : 'no próximo compasso'
+      : `em ${ahead} compassos`
+  return (
+    <>
+      <span className="next-when">{text}</span>
+      <div className="next-meter" aria-hidden><i style={{ width: `${Math.min(100, Math.max(4, (done / total) * 100))}%` }} /></div>
+    </>
+  )
+}
 
 export function ImprovisoPage() {
   // tudo menos a posição; a página inteira só re-renderiza na troca de compasso
   const s = useImproviso(useShallow(({ pos: _pos, ...rest }) => rest))
   const bar = useImproviso((st) => st.pos?.bar ?? -1)
   const lastBeat = useImproviso((st) => st.pos?.beat === 3)
-  const settings = useRef<HTMLDialogElement>(null)
 
   const custom = s.progId === 'custom'
   const songMode = s.progId === 'song' && !!s.song
@@ -47,7 +121,6 @@ export function ImprovisoPage() {
   const restriction = RESTRICTIONS.find((r) => r.id === s.restrictionId) ?? RESTRICTIONS[0]
   const typed = useMemo(() => parseProgression(s.customText), [s.customText])
   const typedOk = typed.chords.length > 0
-  // digitada vazia: mantém a de 12 compassos no braço, mas o play fica desabilitado
   // música: o acorde do tempo 1 de cada compasso + as trocas no meio dele
   const songBars = useMemo(() => {
     if (!songMode) return null
@@ -59,6 +132,7 @@ export function ImprovisoPage() {
       .filter((b) => b.length && b[0].beat === 0)
     return bars.length ? bars : null
   }, [songMode, s.song])
+  // digitada vazia: mantém a de 12 compassos no braço, mas o play fica desabilitado
   const chords = useMemo(
     () => (songBars ? songBars.map((b) => b[0].chord) : custom && typedOk ? typed.chords : realize(prog, s.key)),
     [songBars, custom, typedOk, typed, prog, s.key],
@@ -67,14 +141,15 @@ export function ImprovisoPage() {
   const keyPc = KEYS.indexOf(s.key)
   const pcs = useMemo(() => scalePcs(scale, keyPc), [scale, keyPc])
 
-  // a restrição "só box N" manda no foco; senão vale o desenho escolhido
+  // a restrição "só box N" manda no foco; senão vale o desenho escolhido. O braço é sempre inteiro:
+  // a box fica destacada e só as notas dela aparecem.
   const box = restriction.box ?? s.focusBox
-  const win = useMemo<[number, number] | null>(() => (box ? boxRange(scale, keyPc, box) : null), [box, scale, keyPc])
-  const only = useMemo(() => (restriction.box ? boxPositions(scale, keyPc, restriction.box) : null), [restriction.box, scale, keyPc])
+  const range = useMemo<[number, number] | null>(() => (box ? boxRange(scale, keyPc, box) : null), [box, scale, keyPc])
+  const only = useMemo(() => (box ? boxPositions(scale, keyPc, box) : null), [box, scale, keyPc])
   // notas-guia: um alvo por compasso dentro da região visível, em linha suave
   const guide = useMemo(
-    () => (s.guide ? guideLine(chords, win ? win[0] : 0, win ? win[1] : Math.min(12, s.maxFret)) : []),
-    [s.guide, chords, win, s.maxFret],
+    () => (s.guide ? guideLine(chords, range ? range[0] : 0, range ? range[1] : Math.min(12, s.maxFret)) : []),
+    [s.guide, chords, range, s.maxFret],
   )
 
   // configuração lida pelo motor a cada compasso: mudanças entram no próximo compasso
@@ -121,8 +196,8 @@ export function ImprovisoPage() {
   while (ahead < chords.length && chords[(i + ahead) % chords.length].symbol === now.symbol) ahead++
   const change = next.symbol !== now.symbol ? next : chords[(i + ahead) % chords.length]
   if (next.symbol !== now.symbol) ahead = 1
-  const counting = s.status === 'playing' && bar < 0
   const playing = s.status === 'playing'
+  const counting = playing && bar < 0
   // brilho no próximo acorde no último tempo antes da troca
   const showNext = playing && !counting && (coming ? coming.beat - songBeat === 1 : lastBeat) && next.symbol !== now.symbol
   // o alvo é do acorde do tempo 1; depois de uma troca no meio do compasso ele não vale mais
@@ -137,32 +212,66 @@ export function ImprovisoPage() {
     return m
   }, [target, nextTarget, showNext])
   const targetName = target ? now.notes[now.semitones.findIndex((x) => x % 12 === target.interval)] : ''
-  const bpm = (d: number) => s.set({ bpm: Math.min(180, Math.max(50, s.bpm + d)) })
   const progName = songMode ? s.song!.title : custom ? 'Progressão digitada' : prog.name
 
-  return (
-    <div className="stage">
-      <button type="button" className="summary" onClick={() => settings.current?.showModal()}>
-        <span>{progName} · {s.key} · {style.name} · {scale.name}</span>
-        <span className="summary-cta">Ajustes</span>
-      </button>
+  const laneLabels = useMemo(
+    () => chords.map((c, idx) => ({
+      name: [c.symbol, ...(changes?.[idx] ?? []).map((g) => g.chord.symbol)].join(' '),
+      sub: `compasso ${idx + 1}`,
+    })),
+    [chords, changes],
+  )
+  const midBarChange = coming && coming.chord.symbol !== now.symbol ? coming : null
+  // o player (em qualquer área) mostra o acorde da vez
+  useEffect(() => {
+    if (useImproviso.getState().now !== now.symbol) useImproviso.getState().set({ now: now.symbol })
+  }, [now.symbol])
 
-      <section className="now-next" aria-live="polite">
-        <div>
-          <div className="tag">{counting ? 'Contagem' : 'Agora'}</div>
+  return (
+    <div className="page">
+      <section className="stage" aria-live="polite">
+        <div className="card now-card">
+          <span className="tag">{counting ? 'Contagem' : 'Agora'}</span>
           {counting ? <CountIn /> : <div className="now-chord">{now.symbol}</div>}
+          <span className="muted mono">compasso {i + 1} de {chords.length}</span>
+          <Beats />
         </div>
-        <div className="next">
-          <div className="tag">Próxima troca</div>
+        <div className="card lane-card">
+          <div className="lane-head">
+            <span className="tag">{progName}</span>
+            <span className="tag">{s.key} · {style.name}</span>
+          </div>
+          <Lane labels={laneLabels} playing={playing} />
+        </div>
+        <div className="card next-card">
+          <span className="tag">Próxima troca</span>
           <div className="next-chord">{counting ? now.symbol : change.symbol}</div>
-          {!counting && change.symbol !== now.symbol && (
-            <div className="next-when">{coming ? `no tempo ${coming.beat + 1}` : ahead === 1 ? 'no próximo compasso' : `em ${ahead} compassos`}</div>
-          )}
+          {!counting && change.symbol !== now.symbol ? <NextWhen ahead={ahead} midBar={midBarChange} /> : <span className="next-when">mesmo acorde</span>}
         </div>
-        <BeatDots />
       </section>
 
-      <section className="board">
+      <section className="neck-band">
+        <div className="neck-tools">
+          <div className="segmented" role="group" aria-label="Região do braço">
+            {BOX_OPTIONS.map((n) => (
+              <button key={n} type="button" aria-pressed={box === n} disabled={!!restriction.box} onClick={() => s.set({ focusBox: n })}>
+                {n ? `Box ${n}` : 'Todo'}
+              </button>
+            ))}
+          </div>
+          <button type="button" className="chip" aria-pressed={s.guide} onClick={() => s.set({ guide: !s.guide })}>Alvos sugeridos</button>
+          <button type="button" className="chip" aria-pressed={s.onlyChord || !!restriction.onlyChord} disabled={!!restriction.onlyChord} onClick={() => s.set({ onlyChord: !s.onlyChord })}>
+            Só notas do acorde
+          </button>
+          <div className="segmented hide-phone" role="group" aria-label="Rótulos">
+            {(['graus', 'notas', 'nenhum'] as LabelMode[]).map((l) => (
+              <button key={l} type="button" aria-pressed={s.labels === l} onClick={() => s.set({ labels: l })}>
+                {l === 'graus' ? 'Graus' : l === 'notas' ? 'Notas' : 'Nenhum'}
+              </button>
+            ))}
+          </div>
+          <span className="muted mono hide-phone" style={{ marginLeft: 'auto', fontSize: 13 }}>{scale.name} de {s.key}</span>
+        </div>
         <Fretboard
           maxFret={s.maxFret}
           scale={pcs}
@@ -172,79 +281,32 @@ export function ImprovisoPage() {
           labels={s.labels}
           only={only}
           strings={restriction.strings}
-          window={win}
+          band={range}
           marks={marks}
         />
-        {target && (
-          <p className="guide-line">
-            <span className="guide-dot" /> Alvo: <b>{degreeName(target.interval) === '3' || degreeName(target.interval) === 'b3' ? '3ª' : '7ª'} de {now.symbol}</b> ({targetName}). Chegue nela no tempo 1.
-          </p>
-        )}
-        <div className="board-bar">
-          <div className="segmented small" role="group" aria-label="Região do braço">
-            {BOX_OPTIONS.map((n) => (
-              <button
-                key={n}
-                type="button"
-                aria-pressed={box === n}
-                disabled={!!restriction.box}
-                onClick={() => s.set({ focusBox: n })}
-              >
-                {n ? `Box ${n}` : 'Todo'}
-              </button>
-            ))}
-          </div>
-          <button type="button" className="chip" aria-pressed={s.guide} onClick={() => s.set({ guide: !s.guide })}>
-            Alvos sugeridos
-          </button>
+        <div className="neck-cap">
+          {target ? (
+            <span>
+              <span className="guide-dot" />Alvo: <b>{degreeName(target.interval) === '3' || degreeName(target.interval) === 'b3' ? '3ª' : '7ª'} de {now.symbol}</b> ({targetName}). Chegue nela no tempo 1.
+            </span>
+          ) : (
+            <span className="muted">{s.guide ? 'Sem alvo neste trecho.' : 'Alvos sugeridos desligados.'}</span>
+          )}
           <div className="legend">
             <span><i style={{ background: 'var(--root)' }} />Fundamental</span>
             <span><i style={{ background: 'var(--accent)' }} />Acorde</span>
             <span><i className="dot" />Escala</span>
+            <span><i className="tgt" />Alvo</span>
             <span><i className="ring" />Próximo</span>
           </div>
         </div>
       </section>
 
-      <section className="transport">
-        <div className="bpm-ctl">
-          <button type="button" onClick={() => bpm(-5)} aria-label="Diminuir andamento">−</button>
-          <span className="mono">{s.bpm}<small> bpm</small></span>
-          <button type="button" onClick={() => bpm(5)} aria-label="Aumentar andamento">+</button>
-        </div>
-        <button
-          className="play big"
-          type="button"
-          aria-pressed={playing}
-          disabled={s.status === 'loading' || (custom && !typedOk && !playing)}
-          onClick={togglePlay}
-        >
-          {s.status === 'loading' ? 'Carregando…' : playing ? 'Parar' : 'Tocar'}
-        </button>
-      </section>
-
-      <div className="bars" role="list" aria-label="Compassos">
-        {chords.map((c, idx) => (
-          <span key={idx} role="listitem" className={idx === bar ? 'on' : ''}>{c.symbol}{changes?.[idx]?.map((g) => ` ${g.chord.symbol}`).join('')}</span>
-        ))}
-      </div>
-
-      {restriction.id !== 'nenhuma' && (
-        <p className="rule-line">
-          <span className="tag">Restrição</span> {restriction.text}
-        </p>
-      )}
-
-      <dialog ref={settings} className="sheet" onClick={(e) => e.target === e.currentTarget && settings.current?.close()}>
-        <div className="sheet-body">
-          <div className="row-between">
-            <h2>Ajustes</h2>
-            <button type="button" className="close" onClick={() => settings.current?.close()} aria-label="Fechar">✕</button>
-          </div>
-
-          <fieldset>
-            <legend>Base</legend>
-            <label>
+      <div className="imp-bottom">
+        <section className="card stack-sm" aria-label="Base">
+          <span className="tag">Base</span>
+          <div className="base-grid">
+            <label className="wide">
               Progressão
               <select value={s.progId} onChange={(e) => chooseProg(e.target.value)}>
                 {PROGRESSIONS.map((p) => (
@@ -254,41 +316,38 @@ export function ImprovisoPage() {
                 {s.song && <option value="song">Música: {s.song.title}</option>}
               </select>
             </label>
+            <label>
+              {custom || songMode ? 'Tom da escala' : 'Tom'}
+              <select value={s.key} onChange={(e) => s.set({ key: e.target.value })}>
+                {KEYS.map((k) => (
+                  <option key={k}>{k}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Estilo
+              <select value={s.styleId} onChange={(e) => s.set({ styleId: e.target.value })}>
+                {STYLES.map((x) => (
+                  <option key={x.id} value={x.id}>{x.name}</option>
+                ))}
+              </select>
+            </label>
             {custom && (
-              <label>
+              <label className="full">
                 Acordes (1 por compasso; A7*4 repete 4 vezes)
                 <input className="text" value={s.customText} onChange={(e) => s.set({ customText: e.target.value })} spellCheck={false} autoCapitalize="off" />
                 {typed.invalid.length > 0 && <span className="error">Não reconheci: {typed.invalid.join(', ')}</span>}
                 {!typedOk && <span className="error">Digite pelo menos um acorde.</span>}
               </label>
             )}
-            <div className="grid-2">
-              <label>
-                {custom ? 'Tom da escala' : 'Tom'}
-                <select value={s.key} onChange={(e) => s.set({ key: e.target.value })}>
-                  {KEYS.map((k) => (
-                    <option key={k}>{k}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Estilo
-                <select value={s.styleId} onChange={(e) => s.set({ styleId: e.target.value })}>
-                  {STYLES.map((x) => (
-                    <option key={x.id} value={x.id}>{x.name}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <label>
-              Andamento <span className="mono">{s.bpm} bpm</span>
-              <input type="range" min={50} max={180} step={1} value={s.bpm} onChange={(e) => s.set({ bpm: +e.target.value })} />
+            <label className="wide">
+              Escala no braço
+              <select value={s.scaleId} onChange={(e) => s.set({ scaleId: e.target.value })}>
+                {SCALES.map((x) => (
+                  <option key={x.id} value={x.id}>{x.name}</option>
+                ))}
+              </select>
             </label>
-            <div className="checks">
-              <label><input type="checkbox" checked={s.countIn} onChange={(e) => s.set({ countIn: e.target.checked })} /> Contagem de entrada</label>
-              <label><input type="checkbox" checked={s.loop} onChange={(e) => s.set({ loop: e.target.checked })} /> Loop</label>
-              <label><input type="checkbox" checked={s.humanize} onChange={(e) => s.set({ humanize: e.target.checked })} /> Humanização</label>
-            </div>
             <label>
               Virada a cada
               <select value={s.fillEvery} onChange={(e) => s.set({ fillEvery: +e.target.value as 4 | 8 })}>
@@ -296,59 +355,47 @@ export function ImprovisoPage() {
                 <option value={8}>8 compassos</option>
               </select>
             </label>
-          </fieldset>
-
-          <fieldset>
-            <legend>Braço</legend>
             <label>
-              Escala
-              <select value={s.scaleId} onChange={(e) => s.set({ scaleId: e.target.value })}>
-                {SCALES.map((x) => (
-                  <option key={x.id} value={x.id}>{x.name}</option>
-                ))}
+              Braço até a casa
+              <select value={s.maxFret} onChange={(e) => s.set({ maxFret: +e.target.value })}>
+                <option value={12}>12</option>
+                <option value={15}>15</option>
+                <option value={17}>17</option>
               </select>
             </label>
-            <div className="grid-2">
-              <label>
-                Rótulos
-                <select value={s.labels} onChange={(e) => s.set({ labels: e.target.value as LabelMode })}>
-                  <option value="graus">Graus do acorde</option>
-                  <option value="notas">Nomes das notas</option>
-                  <option value="nenhum">Nenhum</option>
-                </select>
-              </label>
-              <label>
-                Braço todo até a casa
-                <select value={s.maxFret} onChange={(e) => s.set({ maxFret: +e.target.value })}>
-                  <option value={12}>12</option>
-                  <option value={15}>15</option>
-                  <option value={17}>17</option>
-                </select>
-              </label>
-            </div>
-            <div className="checks">
-              <label><input type="checkbox" checked={s.onlyChord} onChange={(e) => s.set({ onlyChord: e.target.checked })} /> Só notas do acorde</label>
-            </div>
-          </fieldset>
+            <label className="full">
+              Andamento <span className="mono" style={{ textTransform: 'none' }}>{s.bpm} bpm</span>
+              <input type="range" min={50} max={180} step={1} value={s.bpm} onChange={(e) => s.set({ bpm: +e.target.value })} />
+            </label>
+          </div>
+          <div className="checks">
+            <label><input type="checkbox" checked={s.countIn} onChange={(e) => s.set({ countIn: e.target.checked })} /> Contagem de entrada</label>
+            <label><input type="checkbox" checked={s.loop} onChange={(e) => s.set({ loop: e.target.checked })} /> Loop</label>
+            <label><input type="checkbox" checked={s.humanize} onChange={(e) => s.set({ humanize: e.target.checked })} /> Humanização</label>
+          </div>
+        </section>
 
-          <fieldset>
-            <legend>Restrição</legend>
-            <div className="rule-pick">
-              <select aria-label="Restrição" value={s.restrictionId} onChange={(e) => s.set({ restrictionId: e.target.value })}>
-                {RESTRICTIONS.map((r) => (
-                  <option key={r.id} value={r.id}>{r.text}</option>
-                ))}
-              </select>
-              <button type="button" className="chip" onClick={() => s.set({ restrictionId: drawRestriction(s.restrictionId).id })}>Sortear</button>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>Mixer</legend>
-            <Mixer mix={s.mix} onChange={s.setChannel} />
-          </fieldset>
-        </div>
-      </dialog>
+        <section className="card stack-sm" aria-label="Restrição e compassos">
+          <div className="row-between">
+            <span className="tag">Restrição</span>
+            <button type="button" className="chip" onClick={() => s.set({ restrictionId: drawRestriction(s.restrictionId).id })}>Sortear</button>
+          </div>
+          <select aria-label="Restrição" value={s.restrictionId} onChange={(e) => s.set({ restrictionId: e.target.value })}>
+            {RESTRICTIONS.map((r) => (
+              <option key={r.id} value={r.id}>{r.text}</option>
+            ))}
+          </select>
+          {restriction.id !== 'nenhuma' && <p className="rule">{restriction.text}</p>}
+          <span className="tag">Compassos</span>
+          <div className="bars-grid" role="list" aria-label="Compassos">
+            {chords.map((c, idx) => (
+              <span key={idx} role="listitem" className={playing && idx === bar % chords.length ? 'on' : ''}>
+                {c.symbol}{changes?.[idx]?.map((g) => ` ${g.chord.symbol}`).join('')}
+              </span>
+            ))}
+          </div>
+        </section>
+      </div>
     </div>
   )
 }

@@ -1,4 +1,6 @@
-# Treinador de Improviso
+# solonely.
+
+*Treino de improviso na guitarra: toque junto com as músicas da sua banda.*
 
 [![CI](https://github.com/depaula12/treinador-improviso/actions/workflows/ci.yml/badge.svg)](https://github.com/depaula12/treinador-improviso/actions/workflows/ci.yml)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
@@ -36,7 +38,15 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
 
 ## O que o app faz
 
+### Pensado para horas de treino
+- **Menu lateral fixo** (no celular, barra de ícones embaixo) e **player fixo** em todas as áreas:
+  tocar/parar, andamento, contagem, loop e mixer sempre à mão; a **barra de espaço** toca e para.
+- **Braço de ponta a ponta** em todas as telas, da casa 0 à 17: a box escolhida fica destacada e
+  só as notas dela aparecem. No celular o braço rola de lado e abre já na box.
+- Nada escondido em janelas: os ajustes de cada área ficam à vista.
+
 ### Improviso
+- Faixa da progressão andando até a linha "agora" (estilo Yousician), com a próxima troca e quanto falta.
 - Progressões prontas (blues de 12 normal e *quick change*, I–V–vi–IV, I–bVII–IV, i–bVII–bVI)
   ou digitadas (`Am*2 G F E7`).
 - Quatro estilos: **shuffle de blues**, **rock reto**, **slow blues 12/8** e **pop rock/balada**.

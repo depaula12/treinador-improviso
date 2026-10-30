@@ -16,6 +16,8 @@ interface ImprovisoState {
   /** progressão digitada (progId === 'custom') */
   customText: string
   song: LoadedSong | null
+  /** acorde da vez (o player mostra na "capa") */
+  now: string
   key: string
   styleId: string
   scaleId: string
@@ -43,6 +45,7 @@ export const useImproviso = create<ImprovisoState>((set) => ({
   progId: 'blues12',
   customText: 'Am*2 G F E7',
   song: null,
+  now: '',
   key: 'A',
   styleId: 'shuffle',
   scaleId: 'pentMin',

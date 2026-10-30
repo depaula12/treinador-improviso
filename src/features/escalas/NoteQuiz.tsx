@@ -55,8 +55,8 @@ export function NoteQuiz() {
   const mastered = cards.filter((c) => (quizStats[c.key]?.box ?? NEW_BOX) >= 4).length
 
   return (
-    <div className="stack">
-      <section className="panel quiz">
+    <>
+      <section className="card quiz">
         <div className="row-between">
           <span className="muted">Dominadas: {mastered} de {cards.length}</span>
           <label className="inline-check">
@@ -65,18 +65,19 @@ export function NoteQuiz() {
         </div>
         <p className="prompt">
           Onde está o <b>{noteLabel(card.pc)}</b> na <b>{STRING_NAME[card.string]}</b>?
+          <span className="prompt-sub">Clique na casa. Vale qualquer oitava até a casa {MAX_FRET}.</span>
         </p>
-        <p className="muted hint center">Clique na casa. Vale qualquer oitava até a casa {MAX_FRET}.</p>
+        {answered && (
+          <div className="feedback">
+            <p>{right ? 'Certo!' : `Não: essa casa é ${noteLabel(pcAt(pick.string, pick.fret))}${pick.string !== card.string ? ', e em outra corda' : ''}.`}</p>
+            <button type="button" className="play" onClick={next} autoFocus>Próxima</button>
+          </div>
+        )}
       </section>
 
-      <Fretboard maxFret={MAX_FRET} scale={NO_SCALE} chord={EMPTY} labels="nenhum" marks={marks} onPick={choose} />
-
-      {answered && (
-        <div className="feedback">
-          <p>{right ? 'Certo!' : `Não: essa casa é ${noteLabel(pcAt(pick.string, pick.fret))}${pick.string !== card.string ? ', e em outra corda' : ''}.`}</p>
-          <button type="button" className="play" onClick={next} autoFocus>Próxima</button>
-        </div>
-      )}
-    </div>
+      <section className="neck-band">
+        <Fretboard maxFret={MAX_FRET} scale={NO_SCALE} chord={EMPTY} labels="nenhum" marks={marks} onPick={choose} />
+      </section>
+    </>
   )
 }
