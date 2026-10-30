@@ -65,6 +65,11 @@ describe('tocar e salvar', () => {
     expect(bars[2]).toEqual([{ beat: 0, chord: 'F' }, { beat: 2, chord: 'C' }])
   })
 
+  it('o desenho escolhido vai junto para a base', () => {
+    const bars = toPlayBars([{ chord: 'C', beats: 2, midi: [48, 52, 55] }, { chord: 'G', beats: 2 }])
+    expect(bars[0]).toEqual([{ beat: 0, chord: 'C', midi: [48, 52, 55] }, { beat: 2, chord: 'G' }])
+  })
+
   it('vira música com as durações valendo e as seções preservadas', () => {
     const d = updateChord(doc(), { sec: 0, idx: 1 }, { beats: 2 })
     const song = compositionSong({ title: 'Teste', key: 'Am', bpm: 100, styleId: 'ballad', sections: [...d, newSection('Ponte')] })

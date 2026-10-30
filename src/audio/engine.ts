@@ -21,13 +21,17 @@ export interface ChannelState {
 }
 export type MixState = Record<Instrument, ChannelState>
 
+/** Acorde da base; `guitar` = notas MIDI do desenho escolhido para o violão (senão, o padrão). */
+export type PlayChord = ChordInfo & { guitar?: number[] | null }
+const guitarOf = (c: PlayChord) => (c.guitar?.length ? [...c.guitar].sort((a, b) => a - b) : guitarVoicing(c))
+
 export interface SongConfig {
-  chords: ChordInfo[]
+  chords: PlayChord[]
   /**
    * Trocas dentro do compasso (música com durações): por índice de compasso, os acordes que entram
    * depois do tempo 1, ex.: [{ beat: 2, chord: D }] num compasso que começa em G. Vazio = compasso inteiro.
    */
-  changes?: { beat: number; chord: ChordInfo }[][]
+  changes?: { beat: number; chord: PlayChord }[][]
   style: Style
   bpm: number
   loop: boolean
@@ -372,7 +376,7 @@ class Engine {
       isFill: bar % cfg.fillEvery === cfg.fillEvery - 1,
       isPhraseStart: bar % cfg.fillEvery === 0,
       pianoVoicing,
-      guitarVoicing: guitarVoicing(chord),
+      guitarVoicing: guitarOf(chord),
     }
     // troca no meio do compasso: o estilo gera o compasso para cada acorde e cada um fica só com
     // o seu trecho (notas cortadas na troca)
@@ -384,7 +388,7 @@ class Engine {
       parts.push({
         from: c.beat,
         to: changes[k + 1]?.beat ?? 4,
-        ctx: { ...ctx, chord: c.chord, prev: prev.chord, next: changes[k + 1]?.chord ?? chordAt(bar + 1), pianoVoicing: v, guitarVoicing: guitarVoicing(c.chord) },
+        ctx: { ...ctx, chord: c.chord, prev: prev.chord, next: changes[k + 1]?.chord ?? chordAt(bar + 1), pianoVoicing: v, guitarVoicing: guitarOf(c.chord) },
       })
     })
     const pitched = (inst: Pitched): PitchedNote[] =>

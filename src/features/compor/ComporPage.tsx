@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { engine, STYLES } from '../../audio/engine'
-import { mainShapes, findShapes } from '../../core/chord-shapes'
+
 import {
   DURATIONS, compositionSong, duplicateChord, insertChords, keyName, moveChord, newSection, playSequence,
-  removeChord, replaceChord, totalBars, transposeSections, updateChord, type CompSection, type Place,
+  removeChord, replaceChord, totalBars, transposeSections, updateChord, type CompChord, type CompSection, type Place,
 } from '../../core/compose-doc'
 import { movesFor, romanIn, sectionStarts, type Move } from '../../core/compose'
 import { keyLabel } from '../../core/progressions'
 import { toPlayBars } from '../../core/song'
 import { KEYS, parseChord } from '../../core/theory'
-import { matchQuality, voicingsFor } from '../../core/voicings'
+import { closeShapes, easyShape, handPos, shapeDistance, shapeMidi, shapeOptions } from '../../core/shape-choice'
+import type { Voicing } from '../../core/voicings'
 import { ChordDiagram } from '../../ui/ChordDiagram'
 import { togglePlay, useImproviso } from '../improviso/store'
 import { useSongs } from '../musicas/store'
@@ -23,13 +24,18 @@ interface Props {
   go: (area: 'improviso' | 'musicas') => void
 }
 
-/** Desenho mais simples do acorde: o do banco, senão a forma gerada mais natural. */
-function easyVoicing(sym: string) {
+/** O desenho que toca: o escolhido, senão o mais simples. */
+const fretsOf = (c: CompChord) => c.frets ?? easyShape(c.symbol)?.frets ?? null
+/** Desenho pronto para o diagrama a partir das casas (com os graus do acorde). */
+function voicingOf(sym: string, frets: (number | null)[]): Voicing | null {
+  const hit = shapeOptions(sym).find((v) => v.frets.join() === frets.join())
+  if (hit) return hit
   const c = parseChord(sym)
-  if (!c) return null
-  const q = matchQuality(c)
-  if (q) return voicingsFor(q.id, c.root)[0] ?? null
-  return mainShapes(findShapes(c))[0] ?? null
+  return c ? { quality: '', form: '5', rootPc: c.root, symbol: sym, frets, rootString: Math.max(0, frets.findIndex((f) => f !== null)) } : null
+}
+const midiOf = (c: CompChord) => {
+  const f = fretsOf(c)
+  return f ? shapeMidi(f) : null
 }
 
 const durLabel = (beats: number) => DURATIONS.find((d) => d.beats === beats)?.label ?? `${beats / 4}`
@@ -63,6 +69,43 @@ function ChordField({ label, placeholder, initial = '', onSubmit }: { label: str
       />
       <button type="submit" className="chip">{label}</button>
     </form>
+  )
+}
+
+/** Desenhos do acorde selecionado; marca o mais simples e o mais perto do acorde anterior. */
+function ShapePicker({ symbol, current, prev, onPick }: {
+  symbol: string
+  current: CompChord['frets']
+  prev: { symbol: string; frets: CompChord['frets'] } | null
+  onPick: (frets: (number | null)[]) => void
+}) {
+  // o mais simples primeiro; os outros na ordem do braço, da cabeça para o corpo
+  const opts = useMemo(() => {
+    const [first, ...rest] = shapeOptions(symbol)
+    return first ? [first, ...rest.sort((a, b) => handPos(a.frets) - handPos(b.frets))] : []
+  }, [symbol])
+  if (!opts.length) return null
+  const near = prev?.frets ? opts.reduce((b, v) => (shapeDistance(v.frets, prev.frets!) < shapeDistance(b.frets, prev.frets!) ? v : b)) : null
+  const where = (f: (number | null)[]) => {
+    const pressed = f.filter((x): x is number => x !== null && x > 0)
+    const lo = pressed.length ? Math.min(...pressed) : 0
+    return f.includes(0) || lo <= 1 ? '1ª posição' : `casa ${lo}`
+  }
+  return (
+    <div className="shape-choice">
+      <span className="tag" style={{ margin: 0 }}>Desenho de {symbol}</span>
+      <div className="shape-row">
+        {opts.map((v, i) => {
+          const notes = [i === 0 ? 'mais simples' : where(v.frets), v === near ? `perto do ${prev!.symbol}` : ''].filter(Boolean)
+          return (
+            <button key={v.frets.join()} type="button" className="shape-pick" aria-pressed={!!current && current.join() === v.frets.join()} onClick={() => onPick(v.frets)}>
+              <ChordDiagram voicing={v} labels="graus" hideName />
+              <small className={v === near ? 'near' : undefined}>{notes.join(' · ')}</small>
+            </button>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -150,11 +193,31 @@ export function ComporPage({ go }: Props) {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  async function listen(id: string, items: { symbol: string; beats?: number }[]) {
+  /** Desenho de uma cifra: o que ela já tem na composição, senão o mais simples. */
+  const shapeFor = (sym: string) => {
+    const c = all.find((x) => x.symbol === sym)
+    return c ? fretsOf(c) : easyShape(sym)?.frets ?? null
+  }
+  /** Mesmo desenho para todas as vezes que a cifra aparece (null = volta ao mais simples). */
+  const setShape = (sym: string, frets: CompChord['frets']) =>
+    set({ sections: sections.map((s) => ({ ...s, chords: s.chords.map((c) => (c.symbol === sym ? { ...c, frets } : c)) })) })
+  /** O acorde que toca antes (o primeiro de todos vem depois do último: a base dá a volta). */
+  function prevOf(p: Place) {
+    const i = sections.slice(0, p.sec).reduce((t, s) => t + s.chords.length, 0) + p.idx
+    const c = all.length > 1 ? all[(i - 1 + all.length) % all.length] : null
+    return c && c.symbol !== all[i].symbol ? { symbol: c.symbol, frets: fretsOf(c) } : null
+  }
+  function approximate() {
+    const pick = closeShapes(all.map((c) => c.symbol))
+    set({ sections: sections.map((s) => ({ ...s, chords: s.chords.map((c) => ({ ...c, frets: pick[c.symbol] ?? c.frets ?? null })) })) })
+  }
+
+  async function listen(id: string, items: { symbol: string; beats?: number; frets?: CompChord['frets'] }[]) {
     const cs = items.flatMap((x) => {
       const chord = parseChord(x.symbol)
+      const frets = x.frets ?? shapeFor(x.symbol)
       // ½ compasso = 0,6 s, 1 compasso = 1,2 s: a prévia mantém a proporção sem demorar
-      return chord ? [{ chord, sec: x.beats ? x.beats * 0.3 : 1.1 }] : []
+      return chord ? [{ chord, sec: x.beats ? x.beats * 0.3 : 1.1, midi: frets ? shapeMidi(frets) : null }] : []
     })
     if (!cs.length) return
     setPlaying(id)
@@ -162,7 +225,8 @@ export function ComporPage({ go }: Props) {
     window.setTimeout(() => setPlaying((p) => (p === id ? null : p)), dur * 1000)
   }
 
-  const baseBars = useMemo(() => toPlayBars(all.map((c) => ({ chord: c.symbol, beats: c.beats }))), [all.map((c) => `${c.symbol}:${c.beats}`).join()])
+  const shapesKey = all.map((c) => `${c.symbol}:${c.beats}:${c.frets?.join('.') ?? ''}`).join()
+  const baseBars = useMemo(() => toPlayBars(all.map((c) => ({ chord: c.symbol, beats: c.beats, midi: midiOf(c) }))), [shapesKey])
   /** A composição vira a base do Improviso (com durações, andamento, estilo e escala do tom). */
   function loadIntoBase() {
     if (!all.length) return false
@@ -376,6 +440,15 @@ export function ComporPage({ go }: Props) {
                       <button type="button" className="chip danger" title="Apagar (Delete)" onClick={() => remove(selected)}>apagar</button>
                     </div>
                     <ChordField key={selChord.id} label="trocar" placeholder="outra cifra" initial={selChord.symbol} onSubmit={(sym) => put(replaceChord(sections, selected, sym))} />
+                    <ShapePicker
+                      symbol={selChord.symbol}
+                      current={fretsOf(selChord)}
+                      prev={prevOf(selected)}
+                      onPick={(frets) => {
+                        setShape(selChord.symbol, frets)
+                        void listen('desenho', [{ symbol: selChord.symbol, frets }])
+                      }}
+                    />
                   </div>
                 )}
 
@@ -401,13 +474,36 @@ export function ComporPage({ go }: Props) {
 
           {unique.length > 0 && (
             <section className="card stack-sm" aria-label="Desenhos dos acordes">
-              <span className="tag" style={{ margin: 0 }}>Como tocar os acordes</span>
+              <div className="row-between">
+                <span className="tag" style={{ margin: 0 }}>Como tocar os acordes</span>
+                <div className="row">
+                  <button type="button" className="chip" title="Escolhe desenhos vizinhos no braço: a mão anda pouco e as vozes mudam pouco" onClick={approximate}>Aproximar os desenhos</button>
+                  {all.some((c) => c.frets) && <button type="button" className="link" onClick={() => set({ sections: sections.map((s) => ({ ...s, chords: s.chords.map((c) => ({ ...c, frets: null })) })) })}>mais simples</button>}
+                </div>
+              </div>
               <div className="diagrams">
-                {unique.map((c) => {
-                  const v = easyVoicing(c)
-                  return v ? <ChordDiagram key={c} voicing={{ ...v, symbol: c }} labels="graus" caption={romanIn(key, c)} /> : null
+                {unique.map((sym) => {
+                  const frets = shapeFor(sym)
+                  const v = frets ? voicingOf(sym, frets) : null
+                  if (!v) return null
+                  return (
+                    <button
+                      key={sym}
+                      type="button"
+                      className="diagram-btn"
+                      title="Clique para escolher outro desenho"
+                      onClick={() => {
+                        const sec = sections.findIndex((s) => s.chords.some((c) => c.symbol === sym))
+                        set({ cur: sec })
+                        setSel({ sec, idx: sections[sec].chords.findIndex((c) => c.symbol === sym) })
+                      }}
+                    >
+                      <ChordDiagram voicing={v} labels="graus" caption={romanIn(key, sym)} />
+                    </button>
+                  )
                 })}
               </div>
+              <p className="hint muted">A base e o "ouvir" tocam estes desenhos no violão. Clique num para trocar.</p>
             </section>
           )}
 

@@ -327,6 +327,14 @@ button { font-family: inherit; }
 .chip.danger { color: var(--root); }
 .chip:disabled { opacity: .4; cursor: not-allowed; }
 .bpm-input { width: 76px !important; }
+.shape-choice { display: grid; gap: 6px; flex-basis: 100%; min-width: 0; }
+.shape-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.shape-row .shape-pick { flex: none; width: 128px; }
+.shape-row .shape-pick .chord-diagram { width: 114px; }
+.shape-row small { font-size: 11px; color: var(--muted); line-height: 1.2; }
+.shape-row small.near { color: var(--next); }
+.diagram-btn { background: none; border: 1px solid transparent; border-radius: 12px; padding: 4px; cursor: pointer; color: var(--fg); }
+.diagram-btn:hover { border-color: var(--line); background: var(--panel-2); }
 .inline-label { display: flex; align-items: center; gap: 8px; }
 .inline-label select { width: auto; }
 .moves { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }

@@ -49,6 +49,8 @@ export interface TimedChord {
 export interface Segment {
   beat: number
   chord: string
+  /** desenho escolhido para o violão (notas MIDI), quando houver */
+  midi?: number[] | null
 }
 
 export interface FlatBar {
@@ -165,10 +167,10 @@ export function timedChords(song: Song): TimedChord[] {
 }
 
 /** Corta a sequência em compassos de 4 tempos (o acorde que atravessa a barra continua no seguinte). */
-export function toPlayBars(seq: { chord: string; beats: number }[]): Segment[][] {
+export function toPlayBars(seq: { chord: string; beats: number; midi?: number[] | null }[]): Segment[][] {
   const bars: Segment[][] = []
   let at = 0
-  for (const { chord, beats } of seq) {
+  for (const { chord, beats, midi } of seq) {
     let left = beats
     while (left > 0) {
       const bar = Math.floor(at / 4)
@@ -176,7 +178,7 @@ export function toPlayBars(seq: { chord: string; beats: number }[]): Segment[][]
       bars[bar] ??= []
       const segs = bars[bar]
       // mesmo acorde seguido no mesmo compasso: um trecho só
-      if (!(segs.length && segs[segs.length - 1].chord === chord)) segs.push({ beat, chord })
+      if (!(segs.length && segs[segs.length - 1].chord === chord)) segs.push(midi?.length ? { beat, chord, midi } : { beat, chord })
       const take = Math.min(left, 4 - beat)
       at += take
       left -= take

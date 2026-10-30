@@ -133,7 +133,7 @@ export function ImprovisoPage() {
     const bars = s.song!.bars
       .map((b) => b.flatMap((g) => {
         const chord = parseChord(g.chord)
-        return chord ? [{ beat: g.beat, chord }] : []
+        return chord ? [{ beat: g.beat, chord: g.midi ? { ...chord, guitar: g.midi } : chord }] : []
       }))
       .filter((b) => b.length && b[0].beat === 0)
     return bars.length ? bars : null
