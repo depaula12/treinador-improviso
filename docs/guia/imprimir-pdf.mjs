@@ -42,7 +42,7 @@ try {
   await sleep(4000) // fontes do Google e imagens
   await send('Runtime.evaluate', { expression: 'document.fonts.ready', awaitPromise: true })
   const footer = `<div style="width:100%;font:8px sans-serif;color:#8a8f96;text-align:center;padding:0 15mm">
-    Guia do Treinador de Improviso · treinador-improviso.vercel.app · <span class="pageNumber"></span>/<span class="totalPages"></span></div>`
+    Guia do solonely. · treinador-improviso.vercel.app · <span class="pageNumber"></span>/<span class="totalPages"></span></div>`
   const r = await send('Page.printToPDF', {
     printBackground: true,
     preferCSSPageSize: true,

@@ -8,13 +8,15 @@
 ![Tone.js](https://img.shields.io/badge/áudio-Tone.js-f2a03d)
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-orange)
 
-### ▶ [Teste agora: treinador-improviso.vercel.app](https://treinador-improviso.vercel.app)
+### ▶ [Teste agora: treinador-improviso.vercel.app](https://treinador-improviso.vercel.app) · 📘 [Guia do iniciante (PDF)](docs/guia/guia-do-iniciante.pdf)
 
 **Uma banda de apoio no navegador para guitarristas praticarem improviso, acordes e escalas.**
 A base toca com bateria, baixo, piano e violão de verdade (samples), e o braço da guitarra mostra,
 compasso a compasso, para onde mirar: a escala, as notas do acorde da vez e a próxima troca.
 Com a guitarra ligada (interface USB ou microfone), o app **ouve o que você toca**: afina, reconhece
-notas e acordes e, na Jam livre, sugere os próximos acordes e as notas-alvo em tempo real.
+notas e acordes, confere se você acertou o alvo e, na Jam livre, sugere os próximos acordes em tempo real.
+Também dá para **colar as cifras do repertório da banda**, **compor** progressões pelo efeito (em
+Pop/Rock, Blues ou Bossa/Jazz) e treinar acordes num quiz com centenas de perguntas.
 
 ![Tela de improviso no desktop](docs/screenshots/improviso-desktop.png)
 
@@ -167,6 +169,16 @@ Você toca livre; o app escuta e acompanha:
 ### No celular
 
 <p align="center"><img src="docs/screenshots/mobile.png" alt="Telas no celular" width="620"></p>
+
+## Guia do iniciante
+
+O [**guia em PDF**](docs/guia/guia-do-iniciante.pdf) (37 páginas) ensina a usar o app e a teoria por trás
+dele, do zero: notas no braço, intervalos e graus, acordes (tríades, tétrades, extensões, inversões),
+escalas, modos e arpejos, campo harmônico, **harmonia para compor** (funções, cadências, empréstimo
+modal, dominantes secundários, ii–V–I, substituto trítono), ritmo e levadas e notas-alvo. Cada parte
+de teoria tem **exercícios com gabarito** e o treino correspondente no app, e o guia termina com um
+plano de evolução em 4 fases e uma rotina de 2 horas por dia. Ele é gerado por
+[`docs/guia/gerar-guia.mjs`](docs/guia/gerar-guia.mjs) (diagramas calculados pela afinação, sem desenho à mão).
 
 ## Destaques técnicos
 
