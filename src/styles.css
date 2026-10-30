@@ -309,6 +309,24 @@ button { font-family: inherit; }
 .compose-sec { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; }
 .compose-sec.cur { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, var(--panel-2)); }
 .compose-cell { cursor: default; }
+/* um compasso = 2 colunas: ½ ocupa 1, 2 compassos ocupam 4 */
+.comp-cell { position: relative; cursor: grab; }
+.comp-cell:active { cursor: grabbing; }
+.comp-cell > span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.comp-cell.long { font-size: 14px; letter-spacing: -.01em; }
+.comp-cell[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--panel-2)); }
+.comp-cell.drop-before::before, .drop-end {
+  content: ''; position: absolute; left: -5px; top: 4px; bottom: 4px; width: 3px; border-radius: 2px; background: var(--next);
+}
+.drop-end { position: relative; left: 0; top: 0; bottom: 0; min-height: 46px; align-self: center; }
+.comp-tools { cursor: default; }
+.comp-sel { font: 700 22px var(--f-display); min-width: 48px; }
+.chord-field { display: flex; gap: 6px; align-items: center; }
+.chord-field input.text { width: 190px; }
+.chord-field input.text.bad { border-color: var(--root); }
+.chip.danger { color: var(--root); }
+.chip:disabled { opacity: .4; cursor: not-allowed; }
+.bpm-input { width: 76px !important; }
 .inline-label { display: flex; align-items: center; gap: 8px; }
 .inline-label select { width: auto; }
 .moves { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
@@ -507,6 +525,12 @@ button { font-family: inherit; }
   .next-chord { font-size: 40px; }
   .imp-bottom, .two-pane, .three, .dec-top, .jam-top, .tuner-split, .ex-top, .compose { grid-template-columns: minmax(0, 1fr); }
   .compose > aside { position: static; order: -1; }
+  /* no celular as opções deslizam de lado: a progressão fica logo abaixo */
+  .compose .moves { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 80%; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; }
+  .compose .move { scroll-snap-align: start; }
+  .chord-field input.text { width: 100%; min-width: 0; }
+  .chord-field { flex: 1; }
+  .comp-cell.long { font-size: 12.5px; letter-spacing: -.02em; }
   .base-grid, .cfg-row, .editor-head { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cells { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .options.diagrams { grid-template-columns: repeat(2, minmax(0, 1fr)); }

@@ -167,26 +167,29 @@ class Engine {
   }
 
   /**
-   * Prévia curta: toca os acordes com o violão, um a cada `secEach` segundos, fora do Transport
-   * (não mexe na configuração da base). Para a base ou o exercício que estiver tocando.
-   * Devolve a duração em segundos.
+   * Prévia curta: toca os acordes com o violão, fora do Transport (não mexe na configuração da
+   * base). Cada um soa `sec` segundos (padrão 1,1) com o desenho `midi` (padrão: o da base).
+   * Para a base ou o exercício que estiver tocando. Devolve a duração em segundos.
    */
-  async previewChords(chords: ChordInfo[], mix: MixState, secEach = 1.1): Promise<number> {
+  async previewChords(items: { chord: ChordInfo; sec?: number; midi?: number[] | null }[], mix: MixState): Promise<number> {
     await this.start(mix)
     if (this.mode) this.stop()
     this.exSampler.releaseAll()
     const now = Tone.now() + 0.08
     this.gate.gain.cancelScheduledValues(now)
     this.gate.gain.setValueAtTime(1, now)
-    chords.forEach((c, i) => {
-      const t = now + i * secEach
+    let t = now
+    for (const it of items) {
+      const sec = it.sec ?? 1.1
       // batida para baixo, uma corda por vez (como no estilo)
-      guitarVoicing(c).sort((a, b) => a - b).forEach((m, j) => {
+      const notes = [...(it.midi?.length ? it.midi : guitarVoicing(it.chord))].sort((a, b) => a - b)
+      notes.forEach((m, j) => {
         const off = j * 0.018
-        this.exSampler.triggerAttackRelease(Tone.Frequency(m, 'midi').toNote(), secEach * 0.95 - off, t + off, 0.7 - j * 0.04)
+        this.exSampler.triggerAttackRelease(Tone.Frequency(m, 'midi').toNote(), sec * 0.95 - off, t + off, 0.7 - j * 0.04)
       })
-    })
-    return chords.length * secEach
+      t += sec
+    }
+    return t - now
   }
 
   /**

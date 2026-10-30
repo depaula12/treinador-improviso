@@ -1,18 +1,16 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-
-export interface ComposeSection {
-  name: string
-  /** um acorde por compasso */
-  chords: string[]
-}
+import { fromV1, newSection, type CompSection } from '../../core/compose-doc'
 
 interface ComposeState {
   root: number
   minor: boolean
-  sections: ComposeSection[]
+  sections: CompSection[]
   /** seção em que as opções entram */
   cur: number
+  bpm: number
+  /** estilo da base (bateria, baixo, piano) */
+  styleId: string
   set: (patch: Partial<Omit<ComposeState, 'set'>>) => void
 }
 
@@ -22,10 +20,21 @@ export const useCompose = create<ComposeState>()(
     (set) => ({
       root: 9,
       minor: true,
-      sections: [{ name: 'Verso', chords: [] }],
+      sections: [newSection('Verso')],
       cur: 0,
+      bpm: 90,
+      styleId: 'ballad',
       set: (patch) => set(patch),
     }),
-    { name: 'compor-v1' },
+    {
+      name: 'compor-v1',
+      version: 2,
+      // v1: cada seção era uma lista de cifras, um compasso cada
+      migrate: (old, version) => {
+        const s = (old ?? {}) as Record<string, unknown>
+        if (version < 2 && Array.isArray(s.sections)) s.sections = fromV1(s.sections as { name: string; chords: string[] }[])
+        return s as unknown as ComposeState
+      },
+    },
   ),
 )
