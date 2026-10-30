@@ -7,6 +7,7 @@ import {
   type Chroma,
   type TrackerOptions,
 } from '../core/chroma'
+import { NoteOnsets, type NoteEvent } from '../core/onset'
 import { GuitarPitch, levels, NoteTracker, type NoteReading } from '../core/pitch'
 
 export interface InputFrame {
@@ -21,9 +22,13 @@ export interface InputFrame {
   chroma: Chroma | null
   /** os 3 melhores palpites da última leitura (para mostrar alternativas) */
   guesses: ChordGuess[]
+  /** nota que começou neste quadro (uma por palhetada ou troca de nota), ou null */
+  onset: NoteEvent | null
 }
 
 const SIZE = 4096 // ~85 ms a 48 kHz: cabe vários períodos do Mi grave (82 Hz)
+// volume para achar a palhetada: só o fim do bloco (~21 ms), senão o ataque fica "borrado"
+const ATTACK_SIZE = 1024
 // acordes: janela longa (~340 ms) para separar notas vizinhas no grave (Mi e Fá a 82/87 Hz)
 const CHORD_FFT = 16384
 // abaixo disso não tenta ler acorde (só ruído/fim da nota)
@@ -84,6 +89,8 @@ export class AudioInput {
     const buf = new Float32Array(SIZE)
     const det = new GuitarPitch(SIZE)
     const track = new NoteTracker()
+    const onsets = new NoteOnsets()
+    const recent = buf.subarray(SIZE - ATTACK_SIZE)
     const sr = ctx.sampleRate
 
     const spec = ctx.createAnalyser()
@@ -104,7 +111,9 @@ export class AudioInput {
       const now = performance.now()
       analyser.getFloatTimeDomainData(buf)
       const lv = levels(buf)
-      const note: NoteReading | null = track.push(det.detect(buf, sr, track.midi), now)
+      const raw = det.detect(buf, sr, onsets.midi ?? track.midi)
+      const note: NoteReading | null = track.push(raw, now)
+      const onset = onsets.push(raw, levels(recent).rms, now)
       // acorde a ~15 leituras/s (a FFT grande é mais cara que a detecção de nota)
       if (frame++ % 4 === 0) {
         if (lv.rms > CHORD_MIN_DB) {
@@ -120,7 +129,7 @@ export class AudioInput {
           chord = chords.push(null, now)
         }
       }
-      onFrame({ ...lv, note, chord, chroma, guesses })
+      onFrame({ ...lv, note, chord, chroma, guesses, onset })
       this.raf = requestAnimationFrame(tick)
     }
     tick()

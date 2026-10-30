@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, type ReactNode } from 'react'
 import { allPositions, degreeName, fretFractions, INLAYS } from '../core/fretboard-model'
 import { posKey } from '../core/scales'
 import { KEYS, type ChordInfo } from '../core/theory'
+import type { HeardMark } from './heard'
 
 export type LabelMode = 'graus' | 'notas' | 'nenhum'
 
@@ -26,6 +27,8 @@ interface Props {
   onPick?: (string: number, fret: number) => void
   /** faixa destacada no braço inteiro (a box escolhida), [primeira, última casa] */
   band?: [number, number] | null
+  /** notas que você tocou: pulsam por cima de tudo com a cor do veredito */
+  heard?: HeardMark[]
 }
 
 export interface Mark {
@@ -45,7 +48,7 @@ const noteName = (chord: ChordInfo, pc: number) => {
  * Hierarquia: notas do acorde grandes e coloridas; escala em pontos pequenos e discretos.
  */
 // memo: só redesenha quando as props mudam (troca de acorde, brilho no tempo 4)
-export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, onlyChord, labels = 'graus', only, strings, window: win, marks, onPick, band }: Props) {
+export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, onlyChord, labels = 'graus', only, strings, window: win, marks, onPick, band, heard }: Props) {
   const focus = !!win
   const a = win ? win[0] : 0
   const b = win ? win[1] : maxFret
@@ -165,6 +168,19 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
       )
     })
 
+  // o que você tocou: anel com a cor do veredito, nome da nota e um halo que some sozinho (CSS)
+  const heardEls = (heard ?? [])
+    .filter((m) => m.fret >= a && m.fret <= b)
+    .map((m) => (
+      <g key={`heard${m.id}`} className={`fb-heard t-${m.tone}`} transform={`translate(${mid(m.fret)} ${y(m.string)})`}>
+        <g className="pop">
+          <circle r={big + 16} className="halo" />
+          <circle r={big + 3} className="ring" strokeWidth={focus ? 3.5 : 5} />
+          <text y={labDy} textAnchor="middle" className={`${labCls} hl`}>{m.label}</text>
+        </g>
+      </g>
+    ))
+
   // celular: o braço inteiro rola de lado; mantém a box à vista
   const wrap = useRef<HTMLDivElement>(null)
   const bandX = band && !focus ? (band[0] === 0 ? 0 : wire(band[0] - 1)) / W : null
@@ -206,6 +222,7 @@ export const Fretboard = memo(function Fretboard({ maxFret, scale, chord, next, 
         {scaleEls}
         {chordEls}
         {markEls}
+        {heardEls}
         {hits}
       </svg>
     </div>

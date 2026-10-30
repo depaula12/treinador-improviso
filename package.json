@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "node scripts/e2e-jam.mjs",
-    "e2e:placar": "node scripts/e2e-placar.mjs"
+    "e2e:placar": "node scripts/e2e-placar.mjs",
+    "e2e:escalas": "node scripts/e2e-escalas.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.7",

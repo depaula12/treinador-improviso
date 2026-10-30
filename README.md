@@ -63,8 +63,10 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
   "só cordas 1 e 2"…
 - Escala no braço à escolha (inclusive modos e arpejos) ou **acompanhando o acorde**: mixolídio no 7,
   dórico no m7, menor natural na tônica menor.
-- **Placar de notas-alvo**: com a guitarra ligada, o app confere o tempo 1 de cada compasso (no alvo,
-  outra nota do acorde ou fora).
+- **O app ouve cada nota que você toca**: com a guitarra ligada, cada palhetada (inclusive a mesma nota
+  repetida, ligados e slides) **pulsa no braço** com a cor do veredito: verde no alvo, amarelo nota do
+  acorde, azul escala, rosa fora. Uma trilha mostra as últimas notas, e o placar dá a % de notas dentro
+  e quantos compassos você pousou no alvo no tempo 1.
 - Mixer (bateria, baixo, piano, violão), contagem de entrada, loop, virada a cada 4 ou 8 compassos.
 
 ### Compor
@@ -141,6 +143,10 @@ por cima de uma base genérica do YouTube. Faltam três coisas:
   **grupos de 3 e de 4**, **terças** e **percorrer os boxes** (sobe um, desce o seguinte, atravessando o braço).
 - Ritmo em semínimas, colcheias, tercinas ou semicolcheias; opção de ouvir cada nota no violão.
 - Exibição para memorizar: tudo, **só as tônicas** ou **esconder e revelar**.
+- **Conferido pelo áudio**: no metrônomo, cada nota da sequência fica verde (certa), amarela (fora do
+  tempo ou outra oitava) ou vermelha (errada ou faltou), com a nota da volta e o atraso médio; no modo
+  **espera por você**, a próxima nota só acende quando você acerta a atual. **Speed trainer**: com 90% ou
+  mais o bpm sobe sozinho.
 - **Onde está a nota?**: quiz clicando no braço ou **tocando a nota** ("onde está o Lá na 3ª corda?"), com repetição espaçada.
 - **Treinos salvos**: combinações favoritas viram o plano da semana.
 
@@ -214,6 +220,7 @@ indicadores de tempo re-renderizam; o braço só redesenha na troca de acorde.
 | Etapa | Como |
 |---|---|
 | Nota | Método de McLeod (`pitchy`) limitado à faixa da guitarra, com **histerese**: clareza 0,9 para começar uma nota e 0,6 para mantê-la enquanto a corda perde força; mediana contra saltos de oitava |
+| Cada nota tocada | **Detector de ataque**: salto de volume nos últimos ~21 ms do sinal (palhetada) ou troca de altura confirmada em 2 leituras (ligado, slide); salto de oitava sem ataque é descartado. Uma nota por palhetada em ~35 ms |
 | Acorde | Espectro de 16 384 pontos → energia das 12 notas (picos com interpolação e **compressão**) → comparação com os moldes de 9 tipos × 12 fundamentais; power chord só sem 3ª |
 | Estabilidade | O acorde atual só é trocado por um claramente mais provável, depois de um tempo mínimo configurável; média móvel do espectro |
 | Tom | Perfis de **Krumhansl-Kessler** sobre os acordes tocados, com dica de tônica (o acorde que abre e o que mais repousa) |
@@ -289,7 +296,7 @@ do quiz de acordes e de cifra rolando no tempo.
 | Teoria musical | tonal |
 | Detecção de nota | pitchy (McLeod) + Web Audio `AnalyserNode` |
 | Estado | Zustand (com persistência local) |
-| Testes | Vitest (660 testes) + GitHub Actions |
+| Testes | Vitest (673 testes) + GitHub Actions; ponta a ponta com microfone falso no navegador (Jam, placar e Escalas) |
 | Dados | Tudo local no navegador; sem backend |
 | Deploy | Vercel (publica a cada push em `main`) |
 
@@ -301,6 +308,8 @@ npm run dev        # desenvolvimento
 npm test           # testes
 npm run build      # versão final (depois: npm run preview)
 npm run e2e        # com o preview rodando: Jam livre num navegador headless com microfone simulado
+npm run e2e:placar # placar por nota do Improviso (idem)
+npm run e2e:escalas # Escalas conferidas, modo "espera por você" (MODE=metronomo para o metrônomo)
 ```
 
 > No PowerShell do Windows, se o `npm` acusar "execução de scripts desabilitada", use `npm.cmd`

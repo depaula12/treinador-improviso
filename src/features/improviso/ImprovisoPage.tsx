@@ -1,5 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { addScore, EMPTY_SCORE, played, scoreDownbeat, type DownbeatResult, type HeardNote, type Score } from '../../core/feedback'
+import {
+  addScore, addTally, EMPTY_SCORE, EMPTY_TALLY, judgeNote, placeNote, played, scoreDownbeat, tallyInside, tallyTotal,
+  type DownbeatResult, type HeardNote, type NoteTally, type Score,
+} from '../../core/feedback'
+import { NoteTrail, spellPc, ToneBar, useHeard } from '../../ui/heard'
+import { keyUsesFlats } from '../../core/song'
 import { ListenChip, useGuitarInput } from '../../ui/InputPanel'
 import { useShallow } from 'zustand/react/shallow'
 import { engine, STYLES } from '../../audio/engine'
@@ -161,12 +166,34 @@ export function ImprovisoPage() {
 
   // ---------- placar de notas-alvo: o app ouve a guitarra e confere o tempo 1 de cada compasso ----------
   const heard = useRef<HeardNote[]>([])
+  // cada nota tocada: acende no braço com a cor do veredito e entra no placar por nota
+  const lit = useHeard()
+  const [tally, setTally] = useState<NoteTally>(EMPTY_TALLY)
+  const lastPlace = useRef<{ string: number; fret: number } | null>(null)
   const io = useGuitarInput((f) => {
-    if (!f?.note) return
-    const t = performance.now() / 1000
-    heard.current.push({ midi: f.note.midi, t })
-    // só os últimos 3 s interessam
-    while (heard.current.length && heard.current[0].t < t - 3) heard.current.shift()
+    if (!f) return
+    if (f.note) {
+      const t = performance.now() / 1000
+      heard.current.push({ midi: f.note.midi, t })
+      // só os últimos 3 s interessam
+      while (heard.current.length && heard.current[0].t < t - 3) heard.current.shift()
+    }
+    const e = f.onset
+    if (!e) return
+    // (a função roda depois do render: vale o acorde, o alvo e a escala da vez)
+    const pc = e.midi % 12
+    const verdict = judgeNote(pc, {
+      targetPc: target ? target.midi % 12 : null,
+      chordPcs: now.semitones.map((x) => (now.root + x) % 12),
+      scalePcs: shownPcs,
+    })
+    const place = placeNote(e.midi, { band: range, prev: lastPlace.current, maxFret: s.maxFret })
+    if (place) {
+      lastPlace.current = place
+      const ci = now.semitones.findIndex((x) => (now.root + x) % 12 === pc)
+      lit.add({ id: e.id, ...place, tone: verdict, label: ci >= 0 ? now.notes[ci] : spellPc(pc, keyUsesFlats(keyShort(s.key, s.keyMinor))) })
+    }
+    if (s.status === 'playing' && bar >= 0) setTally((t) => addTally(t, verdict))
   })
   const [score, setScore] = useState<Score>(EMPTY_SCORE)
   const [lastHit, setLastHit] = useState<DownbeatResult | null>(null)
@@ -344,6 +371,7 @@ export function ImprovisoPage() {
           strings={restriction.strings}
           band={range}
           marks={marks}
+          heard={io.active ? lit.marks : undefined}
         />
         <div className="neck-cap">
           {target ? (
@@ -362,22 +390,48 @@ export function ImprovisoPage() {
           </div>
         </div>
         {io.active && (
-          <div className="neck-cap" aria-live="polite">
-            {!s.guide ? (
-              <span className="muted">Ligue os alvos sugeridos para contar o placar.</span>
-            ) : played(score) + score.silencio === 0 ? (
-              <span className="muted">{playingNow ? 'Pouse na nota-alvo no tempo 1 de cada compasso.' : 'Toque a base: o placar confere o tempo 1 de cada compasso.'}</span>
-            ) : (
-              <span className="score">
-                Placar:
-                <span className="alvo"><b>{score.alvo}</b> no alvo</span>
-                <span><b>{score.acorde}</b> em outra nota do acorde</span>
-                <span className="fora"><b>{score.fora}</b> fora</span>
-                <span className="muted">({played(score)} compassos tocados{score.silencio ? `, ${score.silencio} em silêncio` : ''})</span>
-                {lastHit && lastHit !== 'silencio' && <span className={`last-hit ${lastHit}`}>{lastHit === 'alvo' ? 'no alvo!' : lastHit === 'acorde' ? 'nota do acorde' : 'fora'}</span>}
+          <div className="card listen-panel" aria-live="polite">
+            <div className="big-pct">
+              {tallyTotal(tally) ? (
+                <>
+                  <b className={tallyInside(tally) >= 85 ? '' : tallyInside(tally) >= 65 ? 'mid' : 'low'}>{tallyInside(tally)}%</b>
+                  <small>das {tallyTotal(tally)} notas dentro da escala ou do acorde</small>
+                </>
+              ) : (
+                <>
+                  <b className="mid">—</b>
+                  <small>{playingNow ? 'Improvise: cada nota acende no braço.' : 'Toque a base e improvise: o placar conta cada nota.'}</small>
+                </>
+              )}
+            </div>
+            <ToneBar
+              parts={[
+                { tone: 'alvo', n: tally.alvo, label: 'no alvo' },
+                { tone: 'acorde', n: tally.acorde, label: 'do acorde' },
+                { tone: 'escala', n: tally.escala, label: 'da escala' },
+                { tone: 'fora', n: tally.fora, label: 'fora' },
+              ]}
+            />
+            <div className="downbeat">
+              <span className="tag">Alvo no tempo 1</span>
+              {!s.guide ? (
+                <span className="muted">Ligue os alvos sugeridos.</span>
+              ) : played(score) ? (
+                <span>
+                  <b className="mono">{score.alvo}</b> de {played(score)} compassos{' '}
+                  {lastHit && lastHit !== 'silencio' && <span className={`last-hit ${lastHit}`}>{lastHit === 'alvo' ? 'no alvo!' : lastHit === 'acorde' ? 'nota do acorde' : 'fora'}</span>}
+                </span>
+              ) : (
+                <span className="muted">Pouse na bolinha branca quando o compasso começar.</span>
+              )}
+            </div>
+            <NoteTrail items={lit.trail} empty="As notas que você tocar aparecem aqui, com o veredito de cada uma." />
+            <div className="row-end">
+              <span className="muted hint">
+                <span className="t-alvo dot-key" /> alvo · <span className="t-acorde dot-key" /> nota do acorde · <span className="t-escala dot-key" /> escala · <span className="t-fora dot-key" /> fora
               </span>
-            )}
-            <button type="button" className="link" onClick={() => { setScore(EMPTY_SCORE); setLastHit(null) }}>zerar placar</button>
+              <button type="button" className="link" onClick={() => { setScore(EMPTY_SCORE); setLastHit(null); setTally(EMPTY_TALLY); lit.clear() }}>zerar placar</button>
+            </div>
           </div>
         )}
       </section>

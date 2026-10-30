@@ -146,6 +146,15 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   (`Lang`: pop/blues/jazz, `colorize`), base do Compor = progId 'song' com id 'compor'
   (`LoadedSong.strums`, `Segment.midi` → `PlayChord.guitar` no motor); `audio/styles/bossa.ts` e
   `audio/styles/strums.ts` (8 levadas, `SongConfig.strums` troca só o violão).
+- **Branch ouvido-por-nota** (aguardando aprovação): `core/onset.ts` (NoteOnsets: um evento por
+  palhetada/troca de nota; ataque = salto de 6 dB nos últimos 1024 samples), `InputFrame.onset`;
+  `core/feedback.ts` ganhou judgeNote/placeNote (casa dentro do box ou perto da anterior), judgeStep
+  (certo/tempo/oitava/errado/faltou, janela proporcional ao passo), stepScore, nextBpm. `ui/heard.tsx`
+  (useHeard, NoteTrail, ToneBar, spellPc) + prop `heard` do Fretboard (anel que pulsa, cores --hit-*).
+  Improviso: painel `.listen-panel` (% dentro, barra por veredito, alvo no tempo 1, trilha). Escalas:
+  "Conferir o que eu toco", modos No metrônomo | Espera por você (`pace`), speed trainer (`autoBpm`),
+  DETECT_LAG 45 ms descontado no tempo. `engine.previewNote`. `npm run e2e:escalas` (MODE=metronomo).
+  Falta validar com a guitarra: ajustar jumpDb/DETECT_LAG/janela se contar notas a mais ou a menos.
 - Prints com Edge headless: sempre `--mute-audio` e fechar o headless no fim (ele toca nas caixas do usuário).
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),

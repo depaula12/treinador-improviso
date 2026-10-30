@@ -4,6 +4,8 @@ import type { ExerciseId } from '../../core/exercises'
 import { grade, type CardStat, type Grade } from '../acordes/leitner'
 
 export type Display = 'tudo' | 'fundamentais' | 'esconder'
+/** no metrônomo (o app confere o tempo) ou esperando você acertar cada nota */
+export type Pace = 'metronomo' | 'espera'
 
 /** O que define um treino; é o que vai para as predefinições. */
 export interface TrainConfig {
@@ -25,11 +27,14 @@ export interface Preset {
 
 interface EscalasState extends TrainConfig {
   countIn: boolean
+  pace: Pace
+  /** speed trainer: sobe o bpm depois de uma volta com 90% ou mais (desce abaixo de 70%) */
+  autoBpm: boolean
   presets: Preset[]
   /** quiz "onde está a nota" */
   quizStats: Record<string, CardStat>
   onlyScaleNotes: boolean
-  set: (patch: Partial<TrainConfig & { countIn: boolean; onlyScaleNotes: boolean }>) => void
+  set: (patch: Partial<TrainConfig & { countIn: boolean; onlyScaleNotes: boolean; pace: Pace; autoBpm: boolean }>) => void
   savePreset: (name: string) => void
   loadPreset: (id: string) => void
   deletePreset: (id: string) => void
@@ -59,6 +64,8 @@ export const useEscalas = create<EscalasState>()(
       bpm: 70,
       sound: true,
       countIn: true,
+      pace: 'metronomo',
+      autoBpm: false,
       presets: [],
       quizStats: {},
       onlyScaleNotes: true,

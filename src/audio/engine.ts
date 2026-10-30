@@ -224,6 +224,17 @@ class Engine {
     return t - now
   }
 
+  /** Uma nota curta no violão (confirma o acerto no modo "espera por você"). Não para nada. */
+  async previewNote(midi: number, mix: MixState, sec = 0.6) {
+    await this.start(mix)
+    const now = Tone.now() + 0.02
+    if (!this.mode) {
+      this.gate.gain.cancelScheduledValues(now)
+      this.gate.gain.setValueAtTime(1, now)
+    }
+    this.exSampler.triggerAttackRelease(Tone.Frequency(midi, 'midi').toNote(), sec, now, 0.55)
+  }
+
   /** Metrônomo + nota da vez, em loop. Interrompe a base do Improviso, se estiver tocando. */
   playExercise(o: ExerciseConfig) {
     if (!o.notes.length) return
