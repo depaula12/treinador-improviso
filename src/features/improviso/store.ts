@@ -9,6 +9,8 @@ export interface LoadedSong {
   title: string
   /** compassos com as trocas (tempo 0–3 em que cada acorde entra) */
   bars: Segment[][]
+  /** levada do violão por compasso (área Compor); null = a do estilo */
+  strums?: (string | null)[]
 }
 
 interface ImprovisoState {

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { engine, STYLES } from '../../audio/engine'
+import { STRUMS, strumById } from '../../audio/styles/strums'
 
 import {
-  DURATIONS, compositionSong, duplicateChord, insertChords, keyName, moveChord, newSection, playSequence,
+  DURATIONS, barStrums, compositionSong, duplicateChord, insertChords, keyName, moveChord, newSection, playSequence,
   removeChord, replaceChord, totalBars, transposeSections, updateChord, type CompChord, type CompSection, type Place,
 } from '../../core/compose-doc'
 import { colorize, LANGS, movesFor, romanIn, sectionStarts, type Move } from '../../core/compose'
@@ -228,26 +229,33 @@ export function ComporPage({ go }: Props) {
 
   const shapesKey = all.map((c) => `${c.symbol}:${c.beats}:${c.frets?.join('.') ?? ''}`).join()
   const baseBars = useMemo(() => toPlayBars(all.map((c) => ({ chord: c.symbol, beats: c.beats, midi: midiOf(c) }))), [shapesKey])
+  const baseStrums = barStrums(sections)
+  function setStrum(i: number, strum: string | null) {
+    set({ sections: sections.map((x, k) => (k === i ? { ...x, strum } : x)) })
+    if (strum && isBase) useImproviso.getState().setChannel('guitar', { on: true })
+  }
   /** A composição vira a base do Improviso (com durações, andamento, estilo e escala do tom). */
   function loadIntoBase() {
     if (!all.length) return false
     useImproviso.getState().set({
       progId: 'song',
-      song: { id: BASE_ID, title: 'Sua composição', bars: baseBars },
+      song: { id: BASE_ID, title: 'Sua composição', bars: baseBars, strums: baseStrums },
       key: KEYS[root],
       keyMinor: minor,
       scaleId: minor ? 'pentMin' : 'pentMaj',
       bpm,
       styleId,
     })
+    // escolheu levada de violão: o violão precisa estar ligado para ouvir
+    if (baseStrums.some(Boolean)) useImproviso.getState().setChannel('guitar', { on: true })
     return true
   }
   // já é a base: mexer aqui muda o que está tocando (entra no próximo compasso)
   useEffect(() => {
     const imp = useImproviso.getState()
     if (imp.progId !== 'song' || imp.song?.id !== BASE_ID || !all.length) return
-    imp.set({ song: { id: BASE_ID, title: 'Sua composição', bars: baseBars }, bpm, styleId, key: KEYS[root], keyMinor: minor })
-  }, [baseBars, bpm, styleId, root, minor])
+    imp.set({ song: { id: BASE_ID, title: 'Sua composição', bars: baseBars, strums: baseStrums }, bpm, styleId, key: KEYS[root], keyMinor: minor })
+  }, [baseBars, baseStrums.join(), bpm, styleId, root, minor])
   const isBase = useImproviso((s) => s.progId === 'song' && s.song?.id === BASE_ID)
   const basePlaying = useImproviso((s) => s.status !== 'idle') && isBase
 
@@ -360,6 +368,16 @@ export function ComporPage({ go }: Props) {
                     onFocus={() => set({ cur: i })}
                   />
                   <div className="row" onClick={(e) => e.stopPropagation()}>
+                    <select
+                      className="strum-select"
+                      aria-label={`Levada do violão em ${s.name}`}
+                      title={strumById(s.strum)?.how ?? 'O violão toca a levada do estilo da base'}
+                      value={s.strum ?? ''}
+                      onChange={(e) => setStrum(i, e.target.value || null)}
+                    >
+                      <option value="">violão: do estilo</option>
+                      {STRUMS.map((st) => <option key={st.id} value={st.id}>violão: {st.name}</option>)}
+                    </select>
                     {s.chords.length > 0 && <button type="button" className="link" onClick={() => listen(`sec${i}`, s.chords)}>{playing === `sec${i}` ? 'tocando…' : 'ouvir'}</button>}
                     {s.chords.length > 0 && (
                       <button
@@ -585,7 +603,11 @@ export function ComporPage({ go }: Props) {
                 })}
               </div>
             )}
-            <p className="muted hint">{LANGS.find((l) => l.id === lang)!.hint}</p>
+            <p className="muted hint">
+              {LANGS.find((l) => l.id === lang)!.hint}
+              {lang === 'jazz' && styleId !== 'bossa' && <> <button type="button" className="link" onClick={() => set({ styleId: 'bossa' })}>Usar a base de Bossa nova</button></>}
+              {lang === 'blues' && styleId !== 'shuffle' && styleId !== 'slow128' && <> <button type="button" className="link" onClick={() => set({ styleId: 'shuffle' })}>Usar a base de Shuffle</button></>}
+            </p>
           </div>
         </aside>
       </div>

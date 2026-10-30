@@ -120,6 +120,19 @@ export const playSequence = (sections: CompSection[]) => sections.flatMap((s) =>
 /** Total em compassos (½ conta meio). */
 export const totalBars = (sections: CompSection[]) => playSequence(sections).reduce((t, c) => t + c.beats, 0) / 4
 
+/** Levada do violão de cada compasso tocado: a da seção em que o compasso começa. */
+export function barStrums(sections: CompSection[]): (string | null)[] {
+  const out: (string | null)[] = []
+  let at = 0
+  for (const s of sections) {
+    for (const c of s.chords) {
+      for (let b = Math.ceil(at / 4); b * 4 < at + c.beats; b++) out[b] ??= s.strum ?? null
+      at += c.beats
+    }
+  }
+  return out
+}
+
 /** A composição vira uma música da área Músicas: um acorde por compasso da grade, com as durações marcadas. */
 export function compositionSong(o: { title: string; key: string; bpm: number; styleId: string; sections: CompSection[] }, now = Date.now()): Song {
   const sections = o.sections.filter((s) => s.chords.length)

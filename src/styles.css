@@ -328,6 +328,7 @@ button { font-family: inherit; }
 .chip.color-btn { color: var(--next); border-color: color-mix(in srgb, var(--next) 45%, var(--line)); }
 .chip:disabled { opacity: .4; cursor: not-allowed; }
 .bpm-input { width: 76px !important; }
+.strum-select { width: auto; min-height: 30px; padding: 3px 8px; font-size: 13px; }
 .shape-choice { display: grid; gap: 6px; flex-basis: 100%; min-width: 0; }
 .shape-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
 .shape-row .shape-pick { flex: none; width: 128px; }

@@ -144,6 +144,7 @@ export function ImprovisoPage() {
     [songBars, custom, typedOk, typed, prog, s.key],
   )
   const changes = useMemo(() => songBars?.map((b) => b.slice(1)), [songBars])
+  const strums = songMode ? s.song!.strums : undefined
   const keyPc = KEYS.indexOf(s.key)
   const pcs = useMemo(() => scalePcs(scale, keyPc), [scale, keyPc])
 
@@ -188,8 +189,8 @@ export function ImprovisoPage() {
 
   // configuração lida pelo motor a cada compasso: mudanças entram no próximo compasso
   useEffect(() => {
-    engine.config = { chords, changes, style, bpm: s.bpm, loop: s.loop, countIn: s.countIn, fillEvery: s.fillEvery }
-  }, [chords, changes, style, s.bpm, s.loop, s.countIn, s.fillEvery])
+    engine.config = { chords, changes, strums, style, bpm: s.bpm, loop: s.loop, countIn: s.countIn, fillEvery: s.fillEvery }
+  }, [chords, changes, strums, style, s.bpm, s.loop, s.countIn, s.fillEvery])
   useEffect(() => engine.setBpm(s.bpm), [s.bpm])
   useEffect(() => engine.setMix(s.mix), [s.mix])
   useEffect(() => engine.setHumanize(s.humanize), [s.humanize])

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  compositionSong, duplicateChord, fromV1, insertChords, moveChord, newChord, newSection, playSequence,
+  barStrums, compositionSong, duplicateChord, fromV1, insertChords, moveChord, newChord, newSection, playSequence,
   removeChord, replaceChord, totalBars, transposeSections, updateChord, type CompSection,
 } from './compose-doc'
 import { timedChords, toPlayBars } from './song'
@@ -63,6 +63,17 @@ describe('tocar e salvar', () => {
     expect(bars[0]).toEqual([{ beat: 0, chord: 'Am' }])
     expect(bars[1]).toEqual([{ beat: 0, chord: 'Am' }])
     expect(bars[2]).toEqual([{ beat: 0, chord: 'F' }, { beat: 2, chord: 'C' }])
+  })
+
+  it('levada de cada compasso: a da seção em que ele começa', () => {
+    const d = doc()
+    d[0].strum = 'dedilhado'
+    d[1].strum = 'rock'
+    let e = updateChord(d, { sec: 0, idx: 3 }, { beats: 2 }) // verso termina no meio do compasso 4
+    expect(barStrums(e)).toEqual(['dedilhado', 'dedilhado', 'dedilhado', 'dedilhado', 'rock', 'rock'])
+    e = updateChord(d, { sec: 1, idx: 1 }, { beats: 8 })
+    expect(barStrums(e)).toEqual(['dedilhado', 'dedilhado', 'dedilhado', 'dedilhado', 'rock', 'rock', 'rock'])
+    expect(barStrums(doc())).toEqual([null, null, null, null, null, null])
   })
 
   it('o desenho escolhido vai junto para a base', () => {

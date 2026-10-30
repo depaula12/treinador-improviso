@@ -4,9 +4,11 @@ import { DrumKit } from './drums'
 import { setHumanize, strumGap, timing, velocity } from './humanize'
 import { createSampler, createSamplers } from './samplers'
 import { ballad } from './styles/ballad'
+import { bossa } from './styles/bossa'
 import { rock } from './styles/rock'
 import { shuffle } from './styles/shuffle'
 import { slow128 } from './styles/slow128'
+import { strumById } from './styles/strums'
 import type { BarContext, DrumPiece, PitchedNote, Style } from './styles/types'
 import { guitarVoicing, voiceLead } from './voicing'
 
@@ -33,6 +35,8 @@ export interface SongConfig {
    */
   changes?: { beat: number; chord: PlayChord }[][]
   style: Style
+  /** levada do violão por compasso (id de STRUMS); vazio ou null = a do estilo */
+  strums?: (string | null)[]
   bpm: number
   loop: boolean
   countIn: boolean
@@ -46,7 +50,7 @@ export interface Position {
   beat: number
 }
 
-export const STYLES: Style[] = [shuffle, rock, slow128, ballad]
+export const STYLES: Style[] = [shuffle, rock, slow128, ballad, bossa]
 
 export interface ExerciseConfig {
   bpm: number
@@ -391,11 +395,13 @@ class Engine {
         ctx: { ...ctx, chord: c.chord, prev: prev.chord, next: changes[k + 1]?.chord ?? chordAt(bar + 1), pianoVoicing: v, guitarVoicing: guitarOf(c.chord) },
       })
     })
+    const strum = strumById(cfg.strums?.[((bar % n) + n) % n])
+    const gen = (inst: Pitched, c: BarContext) => (inst === 'guitar' && strum ? strum.guitar(c) : cfg.style[inst](c))
     const pitched = (inst: Pitched): PitchedNote[] =>
       parts.length === 1
-        ? cfg.style[inst](ctx)
+        ? gen(inst, ctx)
         : parts.flatMap((p, k) => {
-            const all = cfg.style[inst](p.ctx)
+            const all = gen(inst, p.ctx)
             const inside = all.filter((x) => x.beat >= p.from && x.beat < p.to).map((x) => ({ ...x, dur: Math.min(x.dur, p.to - x.beat) }))
             if (k === 0 || inside.some((x) => x.beat === p.from)) return inside
             // o padrão não ataca bem na troca (ex.: piano em mínimas e troca no tempo 4):
