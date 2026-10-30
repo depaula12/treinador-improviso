@@ -26,7 +26,7 @@ function Gauge({ cents }: { cents: number | null }) {
       <svg className="gauge" viewBox="0 0 400 226" role="img" aria-label={cents === null ? 'Sem nota' : `${cents} cents`}>
         <path d="M40 200 A160 160 0 0 1 360 200" fill="none" stroke="var(--panel-3)" strokeWidth="18" strokeLinecap="round" />
         <path d={`M${z0.x} ${z0.y} A160 160 0 0 1 ${z1.x} ${z1.y}`} fill="none" stroke="var(--good)" strokeWidth="18" />
-        <g fontFamily="IBM Plex Mono" fontSize="14" fill="var(--muted)" textAnchor="middle">
+        <g fontFamily="Fraunces, Georgia, serif" fontSize="14" fill="var(--muted)" textAnchor="middle">
           <text x="40" y="222">−50</text>
           <text x="200" y="26">0</text>
           <text x="360" y="222">+50</text>
