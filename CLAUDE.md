@@ -137,8 +137,8 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
 - Git: um `git push` travou sem erro uma vez; enviar com limite de tempo (job + Wait-Job 60 s).
 - Publicado na Vercel: https://treinador-improviso.vercel.app (conta depaula12, projeto
   depaula12s-projects/treinador-improviso). Créditos CC BY dos samples no rodapé do app.
-  Ligação Git→Vercel (deploy automático a cada push) depende do usuário no painel; enquanto não
-  existir, publicar com `npx --yes vercel@latest --prod --yes` depois do push.
+  Repositório já conectado à Vercel (o próprio `vercel --prod` ligou): cada push em main publica
+  sozinho em produção. Não precisa publicar à mão.
 - Escalas guarda config/presets/quiz em localStorage (`escalas-v1`); migrar para Dexie com Progresso.
 - Progresso dos acordes está em localStorage; migrar para Dexie junto com a área Progresso.
 
