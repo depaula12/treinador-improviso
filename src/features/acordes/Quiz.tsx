@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { FORM_LABEL, formulaName, qualityById } from '../../core/voicings'
+import { chordMatches } from '../../core/feedback'
 import { ChordDiagram } from '../../ui/ChordDiagram'
+import { ListenChip, useGuitarInput } from '../../ui/InputPanel'
 import { drawWeighted, NEW_BOX, type Grade } from './leitner'
 import { makeQuestion, type Card, type Question } from './quiz-model'
 import { useAcordes } from './store'
 
 // múltipla escolha: acertar em até 4 s conta como "rápido"
 const FAST_MS = 4000
+// cronometrado (mão no braço, conferido pelo áudio): até 5 s é "rápido"
+const TIMED_FAST_MS = 5000
 
 const typing = (e: KeyboardEvent) => !!(e.target as HTMLElement).closest('input, textarea, select')
 
@@ -55,7 +59,8 @@ export function Quiz({ cards, emptyMsg }: { cards: Card[]; emptyMsg: string }) {
   }
 
   function grade(g: Grade) {
-    record(q!.card.key, g)
+    // o áudio já deu a nota desta pergunta: só passa para a próxima
+    if (heardMs === null) record(q!.card.key, g)
     next()
   }
 
@@ -63,6 +68,25 @@ export function Quiz({ cards, emptyMsg }: { cards: Card[]; emptyMsg: string }) {
     setElapsed(performance.now() - started.current)
     setRevealed(true)
   }
+
+  // cronometrado conferido pelo áudio: quando o acorde ouvido é o pedido, o app para o relógio e dá a nota
+  const [heardMs, setHeardMs] = useState<number | null>(null)
+  const audioRef = useRef({ q, revealed, mode })
+  audioRef.current = { q, revealed, mode }
+  const io = useGuitarInput((f) => {
+    const a = audioRef.current
+    const sym = f?.chord?.symbol
+    if (!sym || a.mode !== 'cronometrado' || !a.q || a.revealed) return
+    if (!chordMatches(sym, a.q.symbol)) return
+    const ms = performance.now() - started.current
+    audioRef.current = { ...a, revealed: true }
+    setElapsed(ms)
+    setRevealed(true)
+    setHeardMs(ms)
+    record(a.q.card.key, ms <= TIMED_FAST_MS ? 'rapido' : 'lento')
+    window.setTimeout(() => keys.current.next(), 1800)
+  })
+  useEffect(() => setHeardMs(null), [q])
 
   // atalhos de teclado (lidos por ref: o listener é registrado uma vez)
   const keys = useRef({ choose, next, grade, reveal, q, picked, revealed, mode })
@@ -111,8 +135,16 @@ export function Quiz({ cards, emptyMsg }: { cards: Card[]; emptyMsg: string }) {
             <span className="prompt-sub">{q.card.form !== 'aberto' ? formLabel.toLowerCase() : 'forma aberta'}</span>
           </p>
           <div className={`timer mono${elapsed > 8000 ? ' late' : ''}`}>{(elapsed / 1000).toFixed(1)} s</div>
+          <div className="row" style={{ justifyContent: 'center' }}>
+            <ListenChip io={io} label="Conferir pelo áudio" />
+          </div>
           {!revealed ? (
-            <button type="button" className="play" style={{ justifySelf: 'center' }} onClick={reveal}>Revelar</button>
+            <button type="button" className="play" style={{ justifySelf: 'center' }} onClick={reveal}>{io.active ? 'Revelar (desisti)' : 'Revelar'}</button>
+          ) : heardMs !== null ? (
+            <>
+              <p className="heard">Ouvi {q.symbol} em {(heardMs / 1000).toFixed(1)} s: {heardMs <= TIMED_FAST_MS ? 'rápido!' : 'certo, mas lento'}. Próximo em instantes…</p>
+              <div className="diagrams">{q.voicing && <ChordDiagram voicing={q.voicing} caption={formLabel} />}</div>
+            </>
           ) : (
             <>
               <div className="diagrams">{q.voicing && <ChordDiagram voicing={q.voicing} caption={formLabel} />}</div>
@@ -124,7 +156,9 @@ export function Quiz({ cards, emptyMsg }: { cards: Card[]; emptyMsg: string }) {
             </>
           )}
           <p className="keys-hint">
-            Teclado: <span className="kbd">Enter</span> revela · <span className="kbd">1</span> <span className="kbd">2</span> <span className="kbd">3</span> dão a nota
+            {io.active
+              ? 'Toque o acorde e deixe soar: o app confere o acorde (não a posição no braço).'
+              : <>Teclado: <span className="kbd">Enter</span> revela · <span className="kbd">1</span> <span className="kbd">2</span> <span className="kbd">3</span> dão a nota</>}
           </p>
         </>
       ) : (

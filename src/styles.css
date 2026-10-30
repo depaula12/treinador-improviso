@@ -401,6 +401,17 @@ button { font-family: inherit; }
 .meter-msg.hot { color: var(--root); }
 .meter-msg.low, .meter-msg.off { color: var(--muted); }
 .stability { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 14px; }
+.listen { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.listen .chip[aria-pressed="true"] { background: var(--good); border-color: var(--good); color: #06170b; }
+.score { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 14px; }
+.score b { font-family: var(--f-mono); }
+.score .alvo { color: var(--good); }
+.score .fora { color: var(--root); }
+.last-hit { padding: 1px 8px; border-radius: 999px; font: 600 12px var(--f-display); letter-spacing: .08em; text-transform: uppercase; background: var(--panel-3); }
+.last-hit.alvo { background: var(--good); color: #06170b; }
+.last-hit.acorde { background: var(--accent); color: var(--on-accent); }
+.last-hit.fora { background: var(--root); color: #1a0705; }
+.heard { color: var(--good); font-weight: 600; text-align: center; }
 .stability .hold { min-width: 170px; }
 
 .jam-top { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 12px; }

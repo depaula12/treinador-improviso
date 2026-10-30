@@ -111,6 +111,22 @@ interface PanelProps {
   children?: ReactNode
 }
 
+/**
+ * Botão compacto "ouvir a guitarra", para telas em que a entrada é um extra (placar do Improviso,
+ * quizzes conferidos pelo áudio): liga/desliga, mostra qual entrada está ouvindo e os erros.
+ */
+export function ListenChip({ io, label }: { io: ReturnType<typeof useGuitarInput>; label: string }) {
+  return (
+    <span className="listen">
+      <button type="button" className="chip" aria-pressed={!!io.active} onClick={() => (io.active ? io.stop() : void io.start())}>
+        {io.active ? `● ${label}` : label}
+      </button>
+      {io.active && <span className="muted hint">ouvindo: {io.active}</span>}
+      {io.error && <span className="error">{io.error}</span>}
+    </span>
+  )
+}
+
 /** Faixa compacta no topo: entrada, Ativar/Desligar, medidor de nível, ajustes extras e mensagens. */
 export function InputPanel({ io, peak, children }: PanelProps) {
   return (

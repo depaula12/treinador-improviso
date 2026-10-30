@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { SCALES, scalePcs } from '../../core/scales'
 import { KEYS, type ChordInfo } from '../../core/theory'
+import { fretOnString } from '../../core/feedback'
 import { Fretboard, type Mark } from '../../ui/Fretboard'
+import { ListenChip, useGuitarInput } from '../../ui/InputPanel'
 import { drawWeighted, NEW_BOX, type Grade } from '../acordes/leitner'
 import { fretsOf, noteCards, noteLabel, pcAt, STRING_NAME, type NoteCard } from './note-quiz'
 import { useEscalas } from './store'
@@ -34,6 +36,20 @@ export function NoteQuiz() {
   // novo sorteio quando a escala ou o filtro mudam
   useEffect(next, [cards])
 
+  // responder tocando: a nota ouvida (firme por 2 leituras seguidas) vale como clique na casa dela
+  // na corda pedida; nota que não dá nessa corda é ignorada (tocou em outra corda ou oitava)
+  const live = useRef({ card, pick, choose: (_s: number, _f: number) => {} })
+  const lastMidi = useRef<number | null>(null)
+  const io = useGuitarInput((f) => {
+    const midi = f?.note?.midi ?? null
+    const stable = midi !== null && midi === lastMidi.current
+    lastMidi.current = midi
+    const { card: c, pick: p, choose: ch } = live.current
+    if (!stable || !c || p) return
+    const fret = fretOnString(midi!, c.string, MAX_FRET)
+    if (fret !== null) ch(c.string, fret)
+  })
+
   if (!card) return null
   const answered = pick !== null
   const right = answered && pick.string === card.string && pcAt(pick.string, pick.fret) === card.pc
@@ -45,6 +61,8 @@ export function NoteQuiz() {
     const g: Grade = !ok ? 'errei' : performance.now() - started.current <= FAST_MS ? 'rapido' : 'lento'
     recordQuiz(card.key, g)
   }
+
+  live.current = { card, pick, choose }
 
   const marks: Mark[] = []
   if (answered) {
@@ -65,8 +83,13 @@ export function NoteQuiz() {
         </div>
         <p className="prompt">
           Onde está o <b>{noteLabel(card.pc)}</b> na <b>{STRING_NAME[card.string]}</b>?
-          <span className="prompt-sub">Clique na casa. Vale qualquer oitava até a casa {MAX_FRET}.</span>
+          <span className="prompt-sub">
+            {io.active ? 'Toque a nota nessa corda (até a casa ' + MAX_FRET + ').' : `Clique na casa ou toque na guitarra. Vale qualquer oitava até a casa ${MAX_FRET}.`}
+          </span>
         </p>
+        <div className="row" style={{ justifyContent: 'center' }}>
+          <ListenChip io={io} label="Responder tocando" />
+        </div>
         {answered && (
           <div className="feedback">
             <p>{right ? 'Certo!' : `Não: essa casa é ${noteLabel(pcAt(pick.string, pick.fret))}${pick.string !== card.string ? ', e em outra corda' : ''}.`}</p>

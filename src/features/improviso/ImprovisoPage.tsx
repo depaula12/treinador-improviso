@@ -1,4 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { addScore, EMPTY_SCORE, played, scoreDownbeat, type DownbeatResult, type HeardNote, type Score } from '../../core/feedback'
+import { ListenChip, useGuitarInput } from '../../ui/InputPanel'
 import { useShallow } from 'zustand/react/shallow'
 import { engine, STYLES } from '../../audio/engine'
 import { degreeName } from '../../core/fretboard-model'
@@ -156,6 +158,34 @@ export function ImprovisoPage() {
     [s.guide, chords, range, s.maxFret],
   )
 
+  // ---------- placar de notas-alvo: o app ouve a guitarra e confere o tempo 1 de cada compasso ----------
+  const heard = useRef<HeardNote[]>([])
+  const io = useGuitarInput((f) => {
+    if (!f?.note) return
+    const t = performance.now() / 1000
+    heard.current.push({ midi: f.note.midi, t })
+    // só os últimos 3 s interessam
+    while (heard.current.length && heard.current[0].t < t - 3) heard.current.shift()
+  })
+  const [score, setScore] = useState<Score>(EMPTY_SCORE)
+  const [lastHit, setLastHit] = useState<DownbeatResult | null>(null)
+  const playingNow = s.status === 'playing'
+  useEffect(() => {
+    if (!io.active || !playingNow || bar < 0 || !s.guide) return
+    // esta posição chega na hora em que o tempo 1 sai na caixa de som
+    const downbeat = performance.now() / 1000
+    const idx = bar % chords.length
+    const tg = guide[idx]
+    const ch = chords[idx]
+    const chordPcs = ch.semitones.map((x) => (ch.root + x) % 12)
+    const id = window.setTimeout(() => {
+      const r = scoreDownbeat(heard.current, downbeat, tg ? tg.midi % 12 : null, chordPcs)
+      setScore((sc) => addScore(sc, r))
+      setLastHit(r)
+    }, 360)
+    return () => window.clearTimeout(id)
+  }, [bar, io.active, playingNow])
+
   // configuração lida pelo motor a cada compasso: mudanças entram no próximo compasso
   useEffect(() => {
     engine.config = { chords, changes, style, bpm: s.bpm, loop: s.loop, countIn: s.countIn, fillEvery: s.fillEvery }
@@ -299,6 +329,7 @@ export function ImprovisoPage() {
               </button>
             ))}
           </div>
+          <ListenChip io={io} label="Placar: ouvir minha guitarra" />
           <span className="muted mono hide-phone" style={{ marginLeft: 'auto', fontSize: 13 }}>{scaleLabel} · tom {keyShort(s.key, s.keyMinor)}</span>
         </div>
         <Fretboard
@@ -329,6 +360,25 @@ export function ImprovisoPage() {
             <span><i className="ring" />Próximo</span>
           </div>
         </div>
+        {io.active && (
+          <div className="neck-cap" aria-live="polite">
+            {!s.guide ? (
+              <span className="muted">Ligue os alvos sugeridos para contar o placar.</span>
+            ) : played(score) + score.silencio === 0 ? (
+              <span className="muted">{playingNow ? 'Pouse na nota-alvo no tempo 1 de cada compasso.' : 'Toque a base: o placar confere o tempo 1 de cada compasso.'}</span>
+            ) : (
+              <span className="score">
+                Placar:
+                <span className="alvo"><b>{score.alvo}</b> no alvo</span>
+                <span><b>{score.acorde}</b> em outra nota do acorde</span>
+                <span className="fora"><b>{score.fora}</b> fora</span>
+                <span className="muted">({played(score)} compassos tocados{score.silencio ? `, ${score.silencio} em silêncio` : ''})</span>
+                {lastHit && lastHit !== 'silencio' && <span className={`last-hit ${lastHit}`}>{lastHit === 'alvo' ? 'no alvo!' : lastHit === 'acorde' ? 'nota do acorde' : 'fora'}</span>}
+              </span>
+            )}
+            <button type="button" className="link" onClick={() => { setScore(EMPTY_SCORE); setLastHit(null) }}>zerar placar</button>
+          </div>
+        )}
       </section>
 
       <div className="imp-bottom">
