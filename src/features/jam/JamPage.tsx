@@ -150,7 +150,7 @@ export function JamPage() {
         )}
         <div className="legend center-legend">
           <span><i style={{ background: 'var(--root)' }} />Fundamental</span>
-          <span><i style={{ background: 'var(--accent)' }} />Notas do acorde</span>
+          <span><i style={{ background: 'var(--tone)' }} />Notas do acorde</span>
           <span><i className="dot" />{scale.name}{key ? ` de ${KEYS[key.root]}` : ''}</span>
         </div>
       </section>

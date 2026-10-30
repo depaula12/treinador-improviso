@@ -149,6 +149,15 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   ±15%). Song.timing {beats, sequence, bpm} + useTiming; vale só se `sequence` = grade atual.
   timedChords/toPlayBars (core/song.ts) cortam em compassos; motor usa `SongConfig.changes`
   (trocas em qualquer tempo, notas cortadas na troca). Sem marcação: 1 compasso por acorde.
+- **Nome do app: solonely.** (logo em minúsculas com ponto limão). Repositório e URL da Vercel
+  continuam treinador-improviso por enquanto.
+- **Visual "estúdio suíço"** (escolhido pelo usuário entre 6 protótipos; o layout F): preto #0d0d0d,
+  branco quente, um limão #e8ff3a de destaque; Archivo Black (acordes/títulos, só peso 400),
+  Archivo (texto), JetBrains Mono (rótulos/números). Cores do braço com significado:
+  --root limão, --tone cinza claro, --target laranja (alvo e anel do próximo), --bad vermelho.
+  Etapa 1 feita: tokens, fontes, menu em links sublinhados, botões/chips, anel dos 4 tempos no
+  Improviso. Próximas etapas: Músicas, Acordes, Escalas, Jam, Afinador e celular, uma por vez
+  (substitui o plano antigo de Tailwind + Radix).
 - Próximo: validar Músicas com as cifras do repertório (Iris, From the Start, Put Your Records On,
   You Know I'm No Good, I Want You Back) e a Jam livre; depois seguir `docs/plano.md` (v0.2 Músicas → v0.3 Treino do dia
   + Progresso → v0.4 quiz pelo áudio → v0.5 placar de notas-alvo).
