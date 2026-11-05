@@ -4,6 +4,7 @@ import { ALL_OF, DEFAULT_SET, makeQuestion, MODE_HINT, MODE_NAME, toggleItem, ty
 import { blocksFor, dateKey, earLabel, type EarMode, type EarPreset } from '../../core/plano'
 import { useHoje } from '../hoje/store'
 import { useImproviso } from '../improviso/store'
+import { Panel } from '../../ui/Panel'
 import { useOuvido } from './store'
 
 const MODES: EarMode[] = ['int', 'acorde', 'grau', 'campo']
@@ -94,14 +95,11 @@ export function OuvidoPage() {
       </div>
 
       {planned.length > 0 && (
-        <section className="card hj-plan-chips" aria-label="Do plano de hoje">
-          <span className="tag" style={{ margin: 0 }}>Do plano de hoje</span>
-          <div className="chips">
-            {planned.map((p, i) => (
-              <button key={i} type="button" className="chip" aria-pressed={same(p, preset)} onClick={() => choose(p)}>{earLabel(p)}</button>
-            ))}
-          </div>
-        </section>
+        <Panel id="ouvido-plano" title="Do plano de hoje" bodyClass="chips" summary={planned.map(earLabel).join(' · ')}>
+          {planned.map((p, i) => (
+            <button key={i} type="button" className="chip" aria-pressed={same(p, preset)} onClick={() => choose(p)}>{earLabel(p)}</button>
+          ))}
+        </Panel>
       )}
 
       <div className="ear-grid">
@@ -136,8 +134,7 @@ export function OuvidoPage() {
           )}
         </section>
 
-        <aside className="card stack-sm">
-          <span className="tag">Placar</span>
+        <Panel id="ouvido-placar" title="Placar" summary={pct === null ? '—' : `${pct}% · ${session.c} de ${session.t}`}>
           <div className="ear-score">
             <b className={pct === null ? '' : pct >= 85 ? '' : pct >= 65 ? 'mid' : 'low'}>{pct === null ? '—' : `${pct}%`}</b>
             <small className="muted">{session.c} de {session.t} nesta sessão</small>
@@ -150,7 +147,7 @@ export function OuvidoPage() {
           ))}
           {worst.length > 0 && <p className="muted hint" style={{ margin: 0 }}>Mais errados: {worst.map(([k, n]) => `${k} (${n})`).join(', ')}</p>}
           <button type="button" className="link" style={{ justifySelf: 'start' }} onClick={() => setSession({ c: 0, t: 0, miss: {} })}>zerar sessão</button>
-        </aside>
+        </Panel>
       </div>
 
       <details className="card more">

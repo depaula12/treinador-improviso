@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Panel } from '../../ui/Panel'
 import { STYLES } from '../../audio/engine'
 import { parseCifra } from '../../core/cifra'
 import {
@@ -204,9 +205,14 @@ function SongEditor({ song, go }: { song: Song } & Props) {
     setTapping(true)
   }
 
+  const playBtn = (
+    <button type="button" className="play" onClick={playHere} disabled={status === 'loading'}>
+      {status === 'loading' && isLoaded ? 'Carregando…' : playing ? 'Parar' : 'Tocar a cifra'}
+    </button>
+  )
   return (
     <div className="stack">
-      <section className="card stack-sm">
+      <Panel id="musicas-editor" title="Música" summary={`${song.title} · ${soundingKey(song)} · ${song.bpm} bpm`} minExtra={playBtn}>
         <div className="editor-head">
           <label>Título<input className="text" value={song.title} onChange={(e) => update({ ...song, title: e.target.value })} /></label>
           <label>Artista<input className="text" value={song.artist} onChange={(e) => update({ ...song, artist: e.target.value })} /></label>
@@ -240,9 +246,7 @@ function SongEditor({ song, go }: { song: Song } & Props) {
         )}
         <div className="row-between">
           <div className="row">
-            <button type="button" className="play" onClick={playHere} disabled={status === 'loading'}>
-              {status === 'loading' && isLoaded ? 'Carregando…' : playing ? 'Parar' : 'Tocar a cifra'}
-            </button>
+            {playBtn}
             <button type="button" className="btn" onClick={() => { loadIntoImproviso(song); go('improviso') }}>Improvisar sobre ela</button>
             <button type="button" className="btn" onClick={() => { useAcordes.getState().set({ songId: song.id }); go('acordes') }}>Treinar os acordes dela</button>
           </div>
@@ -267,7 +271,7 @@ function SongEditor({ song, go }: { song: Song } & Props) {
           {timingOn && ' · os números embaixo dos acordes são a duração em tempos (4 = um compasso)'} ·{' '}
           <button type="button" className="link" onClick={() => confirm(`Apagar "${song.title}"?`) && void remove(song.id)}>apagar música</button>
         </p>
-      </section>
+      </Panel>
 
       {nowChord && (
         <section className="card roll" aria-live="polite">

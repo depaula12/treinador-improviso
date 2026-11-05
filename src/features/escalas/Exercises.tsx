@@ -9,6 +9,7 @@ import { KEYS, type ChordInfo } from '../../core/theory'
 import { Fretboard, type Mark } from '../../ui/Fretboard'
 import { spellPc, TONE_LABEL, useHeard, type HitTone } from '../../ui/heard'
 import { ListenChip, useGuitarInput } from '../../ui/InputPanel'
+import { Panel } from '../../ui/Panel'
 import { usePlayerSlot } from '../../ui/player-slot'
 import { useImproviso } from '../improviso/store'
 import { useHoje } from '../hoje/store'
@@ -284,7 +285,7 @@ export function Exercises() {
 
   return (
     <>
-      <section className="card stack-sm">
+      <Panel id="escalas-treino" title="Treino" summary={`${scale.name} · ${s.key} · ${ex.name} · ${s.boxes.length ? `box ${s.boxes.join(', ')}` : 'sem box'} · ${s.bpm} bpm`}>
         <div className="cfg-row">
           <label>
             Escala
@@ -357,9 +358,9 @@ export function Exercises() {
           </div>
           <Presets />
         </details>
-      </section>
+      </Panel>
 
-      <section className="card check-bar" aria-label="Conferir pelo áudio">
+      <Panel id="escalas-ouvir" title="Conferir pelo áudio" bodyClass="check-bar" summary={io.active ? `ouvindo${last ? ` · última volta ${last.score}%` : ''}` : 'guitarra desligada'}>
         <ListenChip io={io} label="Conferir o que eu toco" />
         <div className="segmented small" role="group" aria-label="Andamento">
           {(['metronomo', 'espera'] as Pace[]).map((p) => (
@@ -391,7 +392,7 @@ export function Exercises() {
             </small>
           </span>
         )}
-      </section>
+      </Panel>
 
       <div className="ex-top">
         <section className="card stack-sm" aria-label="Sequência">

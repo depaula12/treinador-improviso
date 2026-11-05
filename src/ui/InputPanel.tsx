@@ -1,3 +1,4 @@
+import { Panel } from './Panel'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AudioInput, guessGuitarInput, listInputs, type InputFrame } from '../audio/input'
 import { trackerOptions, useInputSettings } from '../audio/input-settings'
@@ -129,10 +130,21 @@ export function ListenChip({ io, label }: { io: ReturnType<typeof useGuitarInput
 
 /** Faixa compacta no topo: entrada, Ativar/Desligar, medidor de nível, ajustes extras e mensagens. */
 export function InputPanel({ io, peak, children }: PanelProps) {
+  const toggle = (
+    <button type="button" className="play" aria-pressed={!!io.active} onClick={() => (io.active ? io.stop() : void io.start())}>
+      {io.active ? 'Desligar' : 'Ativar'}
+    </button>
+  )
   return (
-    <section className="card input-strip" aria-label="Entrada de áudio">
+    <Panel
+      id="entrada-audio"
+      title="Entrada de áudio"
+      bodyClass="input-strip"
+      summary={io.error ? io.error : io.active ? `ouvindo: ${io.active}` : 'desligada'}
+      minExtra={toggle}
+    >
       <label>
-        Entrada de áudio
+        Dispositivo
         <select
           value={io.deviceId}
           onChange={(e) => {
@@ -146,9 +158,7 @@ export function InputPanel({ io, peak, children }: PanelProps) {
           ))}
         </select>
       </label>
-      <button type="button" className="play" aria-pressed={!!io.active} onClick={() => (io.active ? io.stop() : void io.start())}>
-        {io.active ? 'Desligar' : 'Ativar'}
-      </button>
+      {toggle}
       <LevelMeter peak={peak} />
       <div className="extra">{children}</div>
       <div className="msgs">
@@ -163,6 +173,6 @@ export function InputPanel({ io, peak, children }: PanelProps) {
           </p>
         )}
       </div>
-    </section>
+    </Panel>
   )
 }

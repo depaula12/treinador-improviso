@@ -359,6 +359,16 @@ button { font-family: inherit; }
 
 /* ===================== Acordes ===================== */
 .three { display: grid; grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(200px, 240px); gap: 14px; align-items: start; }
+/* Acordes com painel minimizado: a barra recolhida sobe e a pergunta ganha a largura */
+@media (min-width: 761px) {
+  .three.cfg-min, .three.prog-min { grid-template-areas: "a c" "b c"; }
+  .three.cfg-min:not(.prog-min) { grid-template-columns: minmax(0, 1fr) minmax(200px, 240px); grid-template-areas: "a c" "b c"; }
+  .three.prog-min:not(.cfg-min) { grid-template-columns: minmax(220px, 260px) minmax(0, 1fr); grid-template-areas: "a c" "a b"; }
+  .three.cfg-min.prog-min { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "a c" "b b"; }
+  .three.cfg-min > :nth-child(1), .three.prog-min > :nth-child(1) { grid-area: a; }
+  .three.cfg-min > :nth-child(2), .three.prog-min > :nth-child(2) { grid-area: b; }
+  .three.cfg-min > :nth-child(3), .three.prog-min > :nth-child(3) { grid-area: c; }
+}
 .cfg { display: grid; gap: 14px; }
 .quiz { display: grid; gap: 14px; }
 .prompt { font-size: 1.2rem; margin: 0; text-align: center; }
@@ -607,7 +617,8 @@ button { font-family: inherit; }
 .tone-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--hit); margin-right: 5px; }
 .tone-legend b { color: var(--fg); font-weight: 600; }
 
-.listen-panel { margin: 4px var(--pad) 10px; display: grid; grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px 22px; align-items: center; }
+.listen-wrap { margin: 4px var(--pad) 10px; }
+.listen-panel { display: grid; grid-template-columns: auto minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px 22px; align-items: center; }
 .listen-panel .big-pct { display: grid; justify-items: start; line-height: 1; }
 .listen-panel .big-pct b { font: 700 44px/1 var(--f-display); color: var(--hit-good); }
 .listen-panel .big-pct b.mid { color: var(--hit-near); }
@@ -625,7 +636,7 @@ button { font-family: inherit; }
 .dot-key { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--hit); vertical-align: 0; }
 
 /* ===================== Escalas conferidas ===================== */
-.check-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 16px; }
+.check-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .check-bar .check-msg { flex: 1 1 260px; }
 .inline-check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; }
 .loop-score { display: inline-grid; justify-items: end; line-height: 1.05; margin-left: auto; }
@@ -685,8 +696,9 @@ details.more:not(.card) { border-top: 1px solid var(--line); padding-top: 10px; 
 .hj-nums > div > small { font-size: 12px; }
 .hj-bar { height: 6px; border-radius: 4px; background: var(--panel-3); overflow: hidden; }
 .hj-bar i { display: block; height: 100%; background: var(--accent); border-radius: 4px; transition: width .3s; }
-.hj-targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.hj-targets .card { padding: 10px 14px; }
+.hj-targets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 20px; }
+.hj-target { display: grid; gap: 2px; }
+.hj-target .tag { margin: 0; }
 .hj-targets b { font: 600 1rem/1.3 var(--f-display); }
 .hj-blocks { display: grid; gap: 8px; }
 .hj-group { font-size: 1.05rem; margin: 10px 0 2px; display: flex; gap: 10px; align-items: baseline; }
@@ -792,11 +804,8 @@ textarea.text { font: 400 15px var(--f-body); color: var(--fg); background: var(
   .hj-nums { gap: 14px; }
   .hj-nums > div { min-width: 70px; }
   .hj-goals { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  .hj-targets { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .hj-targets .card { display: grid; grid-template-columns: 82px minmax(0, 1fr); align-items: baseline; gap: 8px; border-radius: 0; border-top: 0; padding: 7px 12px; }
-  .hj-targets .card .tag { margin: 0; }
-  .hj-targets .card:first-child { border-top: 1px solid var(--line); border-radius: 14px 14px 0 0; }
-  .hj-targets .card:last-child { border-radius: 0 0 14px 14px; }
+  .hj-targets { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .hj-target { grid-template-columns: 82px minmax(0, 1fr); align-items: baseline; gap: 8px; }
   .hj-day .muted { white-space: nowrap; }
   .hj-day b { font-size: 1.15rem; }
   .hj-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -809,3 +818,16 @@ textarea.text { font: 400 15px var(--f-body); color: var(--fg); background: var(
   .hj-chart { height: 110px; gap: 2px; }
   .ear-answers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* ===================== painéis minimizáveis (ui/Panel.tsx) ===================== */
+.panel-min { display: grid; gap: 12px; align-content: start; }
+.panel-min.is-min { gap: 0; padding-top: 10px; padding-bottom: 10px; }
+.pm-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pm-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; background: none; border: 0; padding: 0; margin: 0; color: inherit; cursor: pointer; text-align: left; font: inherit; }
+.pm-title { margin: 0; white-space: nowrap; }
+.pm-sum { min-width: 0; flex: 1; color: var(--fg); font-size: .92rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-chev { width: 18px; height: 18px; margin-left: auto; flex: none; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transform: rotate(180deg); transition: transform .15s; }
+.is-min .pm-chev { transform: none; }
+.pm-toggle:hover .pm-chev, .pm-toggle:hover .pm-title { stroke: var(--fg); color: var(--fg); }
+.pm-body { min-width: 0; }
+.pm-head .play { min-height: 32px; padding: 4px 14px; }

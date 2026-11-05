@@ -159,6 +159,11 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   com roteiro do dia, timer, "Abrir" que configura a área, faixa de treino (`TrainBanner`), Plano com
   testes de saída e Progresso; área Ouvido; menu em grupos e "Mais" no celular; "Mais ajustes"
   recolhido em Improviso e Escalas. Store `hoje-v1`, área em `ui/nav.ts`.
+  Painéis minimizáveis (`ui/Panel.tsx`, estado em localStorage `paineis-v1`, resumo de uma linha quando
+  recolhido, `minExtra` mantém o controle essencial à mão): Treino e Conferir (Escalas), Base e Placar
+  (Improviso), Configurar e Progresso (Acordes, a pergunta ganha a largura), Entrada de áudio, Música
+  (editor), Alvos do sprint, Do plano de hoje e Placar (Ouvido), notas ouvidas (Afinador). Card novo de
+  configuração deve usar `Panel`.
 - Prints com Edge headless: sempre `--mute-audio` e fechar o headless no fim (ele toca nas caixas do usuário).
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),

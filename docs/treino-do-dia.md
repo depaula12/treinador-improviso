@@ -34,6 +34,8 @@ Regra do projeto: mudança visual grande em branch, mostrar prints e só juntar 
   máxima, checks, restrição e compassos. Escalas: à vista escala, tom, exercício, desenhos;
   ritmo, mostrar, checks e treinos salvos recolhidos.
 
+- Painéis minimizáveis (`ui/Panel.tsx`) nas configurações de cada página; ver CLAUDE.md.
+
 ## Falta
 - Aprovação do usuário (prints em `docs/screenshots/hoje-*.png`, `ouvido.png`,
   `improviso-treino.png`, `mobile-hoje.png`) e merge na main.

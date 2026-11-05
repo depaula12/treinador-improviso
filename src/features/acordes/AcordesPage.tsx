@@ -4,6 +4,7 @@ import { songChords } from '../../core/song'
 import { KEYS } from '../../core/theory'
 import { qualityById } from '../../core/voicings'
 import { useSongs } from '../musicas/store'
+import { Panel, usePanels } from '../../ui/Panel'
 import { Decoder } from './Decoder'
 import { NEW_BOX } from './leitner'
 import { buildItems, LEVELS, QUESTION_LABEL, SHAPE_TYPES, songTargets, type Item, type QuestionType, type QuizMode } from './quiz-model'
@@ -42,7 +43,7 @@ function Progress({ items }: { items: Item[] }) {
     .sort((a, b) => stats[a.key].box - stats[b.key].box || stats[a.key].right / stats[a.key].seen - stats[b.key].right / stats[b.key].seen)
     .slice(0, 5)
   return (
-    <section className="card stack-sm" aria-label="Progresso">
+    <Panel id="acordes-progresso" title="Progresso" summary={`${mastered} de ${items.length} dominados`}>
       <div>
         <span className="tag">Dominados</span>
         <div className="stat-big">{mastered} <small>de {items.length}</small></div>
@@ -72,11 +73,13 @@ function Progress({ items }: { items: Item[] }) {
         O que você erra ou demora aparece mais vezes. Fica salvo neste aparelho.{' '}
         <button type="button" className="link" onClick={() => confirm('Zerar o progresso dos acordes?') && resetStats()}>Zerar progresso</button>
       </p>
-    </section>
+    </Panel>
   )
 }
 
 export function AcordesPage() {
+  const cfgMin = usePanels((p) => !!p.collapsed['acordes-config'])
+  const progMin = usePanels((p) => !!p.collapsed['acordes-progresso'])
   const [view, setView] = useState<'consultar' | 'treinar'>('treinar')
   const { mode, qualities, kinds, level, mixTypes, sessionLen, songId, set } = useAcordes()
   const { songs, load } = useSongs()
@@ -106,8 +109,8 @@ export function AcordesPage() {
       {view === 'consultar' ? (
         <Decoder />
       ) : (
-        <div className="three">
-          <section className="card cfg" aria-label="Configurar o treino">
+        <div className={`three${cfgMin ? ' cfg-min' : ''}${progMin ? ' prog-min' : ''}`}>
+          <Panel id="acordes-config" title="Configurar o treino" bodyClass="cfg" summary={`${level ? `Nível ${level}` : 'Personalizado'} · ${mode === 'misturado' ? 'Misturado' : QUESTION_LABEL[mode].split(' (')[0]}${song ? ` · ${song.title}` : ''}`}>
             <div className="field">
               <span className="tag">Nível</span>
               <div className="segmented" role="group" aria-label="Nível">
@@ -196,7 +199,7 @@ export function AcordesPage() {
               </select>
             </label>
             <p className="hint muted">{items.length} perguntas possíveis com esta escolha.</p>
-          </section>
+          </Panel>
 
           <Quiz
             items={items}

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Panel } from '../../ui/Panel'
 import type { InputFrame } from '../../audio/input'
 import { positionsOf } from '../../core/pitch'
 import { parseChord, type ChordInfo } from '../../core/theory'
@@ -83,11 +84,10 @@ function ChordView({ frame }: { frame: InputFrame | null }) {
           <div className="mono muted">{info ? info.notes.join('  ') : frame ? 'Toque um acorde e deixe soar' : 'Entrada desligada'}</div>
           {alts.length > 0 && chord && <div className="muted hint">Também pode ser: {alts.map((a) => a.symbol).join(' ou ')}</div>}
         </section>
-        <section className="card stack-sm">
-          <span className="tag" style={{ margin: 0 }}>Notas que o app está ouvindo</span>
+        <Panel id="afinador-chroma" title="Notas que o app está ouvindo" summary={chord ? chord.symbol : '—'}>
           <ChromaBars chroma={frame?.chroma ?? null} chord={chord} />
           <ChordStability />
-        </section>
+        </Panel>
       </div>
       <section className="neck-band">
         <div className="neck-cap"><span className="tag">Notas do acorde no braço</span></div>

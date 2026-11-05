@@ -14,6 +14,7 @@ import { keyLabel, keyShort, parseProgression, progressionFor, PROGRESSIONS, rea
 import { AUTO_SCALE, boxPositions, boxRange, chordScale, SCALES, scalePcs } from '../../core/scales'
 import { KEYS, parseChord, type ChordInfo } from '../../core/theory'
 import { Fretboard, type LabelMode, type Mark } from '../../ui/Fretboard'
+import { Panel } from '../../ui/Panel'
 import { drawRestriction, RESTRICTIONS } from './restrictions'
 import { useHoje } from '../hoje/store'
 import { useImproviso } from './store'
@@ -400,7 +401,7 @@ export function ImprovisoPage() {
           </div>
         </div>
         {io.active && (
-          <div className="card listen-panel" aria-live="polite">
+          <Panel id="improviso-placar" title="Placar" className="listen-wrap" bodyClass="listen-panel" summary={tallyTotal(tally) ? `${tallyInside(tally)}% das ${tallyTotal(tally)} notas dentro${played(score) ? ` · ${score.alvo} de ${played(score)} alvos` : ''}` : 'ouvindo'}>
             <div className="big-pct">
               {tallyTotal(tally) ? (
                 <>
@@ -442,13 +443,12 @@ export function ImprovisoPage() {
               </span>
               <button type="button" className="link" onClick={() => { setScore(EMPTY_SCORE); setLastHit(null); setTally(EMPTY_TALLY); lit.clear() }}>zerar placar</button>
             </div>
-          </div>
+          </Panel>
         )}
       </section>
 
       <div className="imp-bottom">
-        <section className="card stack-sm" aria-label="Base">
-          <span className="tag">Base</span>
+        <Panel id="improviso-base" title="Base" summary={`${progName} · ${keyShort(s.key, s.keyMinor)} · ${style.name} · ${s.bpm} bpm`}>
           <div className="base-grid">
             <label className="wide">
               Progressão
@@ -502,7 +502,7 @@ export function ImprovisoPage() {
               <input type="range" min={50} max={180} step={1} value={s.bpm} onChange={(e) => s.set({ bpm: +e.target.value })} />
             </label>
           </div>
-        </section>
+        </Panel>
 
         <details className="card more imp-more">
           <summary>

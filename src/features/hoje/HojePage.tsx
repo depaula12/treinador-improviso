@@ -6,6 +6,7 @@ import {
 import {
   blockMinutes, clock, dayMinutes, earTotals, journal, lastDays, plannedMinutes, series, shortDate, streak, type DayLog,
 } from '../../core/progresso'
+import { Panel } from '../../ui/Panel'
 import { openBlock } from './open'
 import { useHoje } from './store'
 import { pauseTimer, resetTimer, startTimer, useTimerLeft } from './timer'
@@ -87,11 +88,11 @@ function Today() {
       </section>
 
       {sprint && (
-        <section className="hj-targets" aria-label="Alvos do sprint">
-          <div className="card"><span className="tag">Música</span><b>{sprint.alvo.musica}</b></div>
-          <div className="card"><span className="tag">Conceito</span><b>{sprint.alvo.conceito}</b></div>
-          <div className="card"><span className="tag">Técnica</span><b>{sprint.alvo.tecnica}</b></div>
-        </section>
+        <Panel id="hoje-alvos" title="Alvos do sprint" bodyClass="hj-targets" summary={`${sprint.alvo.musica} · ${sprint.alvo.conceito} · ${sprint.alvo.tecnica}`}>
+          <div className="hj-target"><span className="tag">Música</span><b>{sprint.alvo.musica}</b></div>
+          <div className="hj-target"><span className="tag">Conceito</span><b>{sprint.alvo.conceito}</b></div>
+          <div className="hj-target"><span className="tag">Técnica</span><b>{sprint.alvo.tecnica}</b></div>
+        </Panel>
       )}
 
       <section className="hj-blocks" aria-label="Roteiro do dia">
