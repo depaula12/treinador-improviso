@@ -173,6 +173,25 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   Escrever as lições ~2 sprints à frente do usuário; todo conteúdo novo passa por `licoes.test.ts`
   (resposta entre as opções, tabelas conferidas com a teoria, posições no braço conferidas pela afinação).
   Piano ainda sem lições (perguntar ao usuário).
+- **Rodada da auditoria** (relatório do Fable, 5 nov 2026, `docs/` não guarda o PDF): Improviso persistido
+  (`improviso-v1`, partialize sem status/pos/now; música reconciliada com o Dexie em `reconcileImproviso`).
+  Cifra brasileira em `core/cifra-br.ts` (`parseBody`/`needsBr`; parseChord usa a leitura estruturada para
+  parênteses, +, -, barra de extensão, j7, e quando o tonal troca a fundamental; 7(13) sem 9ª implícita;
+  `chordWarning` para 7+; dobrados simplificados nas notas); tabela de 98 símbolos em `cifra-br.test.ts`;
+  `parseCifra` devolve `unknown` e `noChord` (N.C. ainda não vira compasso de silêncio: falta suporte no
+  motor). `chordScale` pela função no tom (+ lídio, frígio, lócrio, frígio dominante; andaluza em 'auto').
+  Backup (`core/backup.ts`, `features/dados`: Seus dados, exportar/importar, lembrete em Hoje, `backup-v1`).
+  `ui/errors.tsx` (ErrorBoundary por área + global, `log-v1`), `ui/Dialog.tsx` (confirmDialog/promptDialog/
+  chooseDialog: nada de prompt()/confirm() do navegador), `ui/toast.tsx`. Histórico por área (`installNavHistory`).
+  Som em etapas: `engine.start(mix, 'base')` espera bateria+baixo; piano/violão (buffers compartilhados com o
+  violão dos exercícios) entram depois; `playNote` pula instrumento ainda não carregado; anel de progresso
+  (`engine.progress`, `onProgress`), `engine.onError` → toast. Samples com cache immutable de 1 ano: **se
+  trocar um sample, mude o nome do arquivo**. Fraunces servida em `public/fonts` (OFL). Manifest + ícones
+  (app instalável). Entrada de áudio genérica, lembra o último dispositivo (`entrada-v1.deviceLabel`).
+  Depois: service worker (offline), N.C. como silêncio, gravação de takes, placar de fraseado, revisão por
+  dias nos quizzes, AudioWorklet, tema claro.
+- QA ponta a ponta usado na rodada da auditoria: recarregar em cada área, importar cifra BR, tocar,
+  voltar, erro forçado (música com `sections: null` no IndexedDB), exportar → limpar → importar.
 - Prints com Edge headless: sempre `--mute-audio` e fechar o headless no fim (ele toca nas caixas do usuário).
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),

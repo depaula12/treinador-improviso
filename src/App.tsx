@@ -40,6 +40,8 @@ const LABEL: Record<Area, string> = {
   hoje: 'Hoje', improviso: 'Improviso', escalas: 'Escalas', acordes: 'Acordes', ouvido: 'Ouvido', teoria: 'Teoria',
   musicas: 'Músicas', compor: 'Compor', jam: 'Jam livre', afinador: 'Afinador',
 }
+const DADOS_ICON = icon(<><ellipse cx="12" cy="6" rx="7" ry="3" /><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" /></>)
+
 /** menu lateral em grupos */
 const GROUPS: { name: string | null; areas: Area[] }[] = [
   { name: null, areas: ['hoje'] },
@@ -88,7 +90,7 @@ export function App() {
         {/* atribuição exigida pelas licenças CC BY dos samples (ver public/samples/LICENSES.md) */}
         <footer className="side-foot credits">
           <button type="button" className="nav-btn dados-btn" onClick={() => useDados.getState().set(true)}>
-            icon(<><ellipse cx="12" cy="6" rx="7" ry="3" /><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" /></>)
+            {DADOS_ICON}
             <span>Seus dados</span>
           </button>
           Samples: Salamander Grand Piano (Alexander Holm, CC BY 3.0) · FluidR3_GM (Frank Wen, CC BY 3.0) ·
@@ -110,7 +112,7 @@ export function App() {
               <div className="nav-head">App</div>
               <div className="more-grid">
                 <button type="button" className="nav-btn" onClick={() => { setMore(false); useDados.getState().set(true) }}>
-                  icon(<><ellipse cx="12" cy="6" rx="7" ry="3" /><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" /></>)
+                  {DADOS_ICON}
                   <span>Seus dados</span>
                 </button>
               </div>
