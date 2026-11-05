@@ -10,6 +10,7 @@ import { ImprovisoPage } from './features/improviso/ImprovisoPage'
 import { JamPage } from './features/jam/JamPage'
 import { MusicasPage } from './features/musicas/MusicasPage'
 import { OuvidoPage } from './features/ouvido/OuvidoPage'
+import { TeoriaPage } from './features/teoria/TeoriaPage'
 import { useNav, type Area } from './ui/nav'
 import { Player } from './ui/Player'
 
@@ -22,19 +23,20 @@ const ICONS: Record<Area, ReactNode> = {
   escalas: icon(<path d="M3 18l5-5 4 3 9-10" />),
   acordes: icon(<><rect x="5" y="3" width="14" height="18" rx="2" /><path d="M9 3v18M14 3v18M5 9h14M5 14h14" /></>),
   ouvido: icon(<><path d="M6 10a6 6 0 1 1 11 3.3c-.9 1.3-2 2-2 3.7a3 3 0 0 1-5.6 1.5" /><path d="M9 10a3 3 0 0 1 6 0" /></>),
+  teoria: icon(<><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z" /><path d="M4 21V5M8 7h7M8 11h5" /></>),
   musicas: icon(<path d="M4 6h16M4 12h16M4 18h10" />),
   compor: icon(<><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>),
   jam: icon(<path d="M12 3v18M7 8v8M17 6v12M3 11v2M21 10v4" />),
   afinador: icon(<><path d="M4 16a8 8 0 0 1 16 0" /><path d="M12 16l4-6" /></>),
 }
 const LABEL: Record<Area, string> = {
-  hoje: 'Hoje', improviso: 'Improviso', escalas: 'Escalas', acordes: 'Acordes', ouvido: 'Ouvido',
+  hoje: 'Hoje', improviso: 'Improviso', escalas: 'Escalas', acordes: 'Acordes', ouvido: 'Ouvido', teoria: 'Teoria',
   musicas: 'Músicas', compor: 'Compor', jam: 'Jam livre', afinador: 'Afinador',
 }
 /** menu lateral em grupos */
 const GROUPS: { name: string | null; areas: Area[] }[] = [
   { name: null, areas: ['hoje'] },
-  { name: 'Praticar', areas: ['improviso', 'escalas', 'acordes', 'ouvido'] },
+  { name: 'Praticar', areas: ['improviso', 'escalas', 'acordes', 'ouvido', 'teoria'] },
   { name: 'Repertório', areas: ['musicas', 'compor'] },
   { name: 'Ferramentas', areas: ['jam', 'afinador'] },
 ]
@@ -104,6 +106,7 @@ export function App() {
         {area === 'acordes' && <AcordesPage />}
         {area === 'escalas' && <EscalasPage />}
         {area === 'ouvido' && <OuvidoPage />}
+        {area === 'teoria' && <TeoriaPage />}
         {area === 'jam' && <JamPage />}
         {area === 'afinador' && <AfinadorPage />}
       </main>

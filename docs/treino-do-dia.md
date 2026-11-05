@@ -36,7 +36,10 @@ Regra do projeto: mudança visual grande em branch, mostrar prints e só juntar 
 
 - Painéis minimizáveis (`ui/Panel.tsx`) nas configurações de cada página; ver CLAUDE.md.
 
+- Lições de teoria dentro do app (área Teoria, `core/licoes`): semana zero e sprints 1–3.
+
 ## Falta
+- Próximas lições: sprint 4 (formação de acordes, tríades) e 5 (campo harmônico, acorde emprestado) antes de 7 dez.
 - Aprovação do usuário (prints em `docs/screenshots/hoje-*.png`, `ouvido.png`,
   `improviso-treino.png`, `mobile-hoje.png`) e merge na main.
 - Depois: sincronizar PC/celular (Supabase, login Google; local primeiro).

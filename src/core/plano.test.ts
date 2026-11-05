@@ -72,12 +72,13 @@ describe('roteiro do dia', () => {
     expect(total('2026-11-10')).toBe(240)
     expect(new Set(bs.map((b) => b.group))).toEqual(new Set(['A', 'B']))
   })
-  it('a teoria alterna conforme o dia da semana', () => {
-    const th = (k: string) => blocksFor(d(k)).find((b) => b.id === 'teoria')!.lines[0]
-    expect(th('2026-11-09')).toBe(SPRINTS[0].teoria[0]) // seg
-    expect(th('2026-11-10')).toBe(SPRINTS[0].teoria[1]) // ter
-    expect(th('2026-11-11')).toBe(SPRINTS[0].teoria[2]) // qua
-    expect(th('2026-11-12')).toBe(SPRINTS[0].teoria[0]) // qui
+  it('a teoria alterna conforme o dia da semana (com a lição quando existe)', () => {
+    const tb = (k: string) => blocksFor(d(k)).find((b) => b.id === 'teoria')!
+    expect(tb('2026-11-09').licao).toBe('s1-0') // seg: tarefa 0
+    expect(tb('2026-11-10').licao).toBe('s1-1') // ter: tarefa 1
+    expect(tb('2026-11-11').lines[0]).toBe(SPRINTS[0].teoria[2]) // qua: quiz, sem lição
+    expect(tb('2026-11-11').area).toBe('acordes')
+    expect(tb('2026-11-12').licao).toBe('s1-0') // qui
   })
   it('domingo é leve; no 7º dia grava o meio do sprint e no 14º faz o teste', () => {
     expect(blocksFor(d('2026-11-15')).map((b) => b.id)).toContain('meio')

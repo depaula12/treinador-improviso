@@ -4,6 +4,8 @@
  * Os blocos que usam o app trazem a configuração pronta (`tec`, `imp`): "Abrir" aplica e leva à área.
  */
 
+import { lessonFor } from './licoes'
+
 export type ExerciseId = 'subir-descer' | 'grupos3' | 'grupos4' | 'tercas' | 'percorrer'
 
 /** configuração da área Escalas para o bloco de técnica */
@@ -43,7 +45,7 @@ export interface EarPreset {
 }
 
 /** área do app aonde o bloco leva */
-export type AreaId = 'hoje' | 'improviso' | 'musicas' | 'compor' | 'acordes' | 'escalas' | 'ouvido' | 'jam' | 'afinador'
+export type AreaId = 'hoje' | 'improviso' | 'musicas' | 'compor' | 'acordes' | 'escalas' | 'ouvido' | 'teoria' | 'jam' | 'afinador'
 
 export interface Sprint {
   n: number
@@ -458,6 +460,8 @@ export interface Block {
   /** presets do treino de ouvido */
   ear?: EarPreset[]
   guia?: boolean
+  /** lição de teoria do app (core/licoes) */
+  licao?: string
   log?: LogKind
 }
 
@@ -479,7 +483,11 @@ export function blocksFor(date: Date): Block[] {
   if (n === 0) return diagnosticBlocks()
   const s = SPRINTS[n - 1]
   if (date.getDay() === 0) return sundayBlocks(s, day, date)
-  const th = s.teoria[THEORY_OF_WEEKDAY[date.getDay()] ?? 0]
+  const ti = THEORY_OF_WEEKDAY[date.getDay()] ?? 0
+  const th = s.teoria[ti]
+  const licao = lessonFor(n, ti)?.id
+  // sem lição: quiz vai para a área dele; exercícios do guia viram a revisão da área Teoria
+  const thArea: AreaId | undefined = licao ? 'teoria' : th.includes('Escalas') ? 'escalas' : th.includes('Quiz') ? 'acordes' : /guia/.test(th) ? 'teoria' : undefined
   return [
     { id: 'aquec', title: 'Aquecimento e afinação', min: 15, group: 'A', area: 'afinador',
       lines: ['Afine no Afinador.', 'Cromático 1-2-3-4 nas 6 cordas, devagar, mão relaxada.', 'Alongue punhos e dedos antes e depois.'] },
@@ -487,8 +495,8 @@ export function blocksFor(date: Date): Block[] {
       lines: [s.tec.txt, 'O bpm só sobe quando 90% sai limpo. Com a guitarra ligada, toda volta com 90% ou mais registra o bpm sozinha.'] },
     { id: 'ouvido', title: 'Ouvido', min: 30, group: 'A', area: 'ouvido', ear: s.ear,
       lines: [`20 min no treino de ouvido: ${s.ear.map(earLabel).join(' · ')}.`, `10 min tirando de ouvido: ${s.ouvidoTxt}`] },
-    { id: 'teoria', title: 'Teoria aplicada', min: 25, group: 'A', guia: true, area: th.includes('Quiz') ? 'acordes' : undefined,
-      lines: [th, 'Toda teoria termina no braço: depois de ler, toque o que leu.'] },
+    { id: 'teoria', title: 'Teoria aplicada', min: 25, group: 'A', guia: true, licao, area: thArea,
+      lines: [licao ? `Lição: ${lessonFor(n, ti)!.title}.` : th, licao ? 'Leia, ouça os exemplos, toque o que leu e responda as perguntas do fim. O que errar volta na revisão nos dias seguintes.' : 'Toda teoria termina no braço: depois de ler, toque o que leu.'] },
     { id: 'piano', title: 'Piano', min: 30, group: 'A',
       lines: [s.piano, 'No teclado você enxerga escalas e acordes. Use isso para entender o que toca na guitarra.'] },
     { id: 'rep', title: 'Repertório', min: 50, group: 'B', area: 'musicas',
@@ -525,7 +533,8 @@ function diagnosticBlocks(): Block[] {
       lines: ['20 perguntas de intervalos ascendentes, todos. Não treine antes: é para medir.'] },
     { id: 'd-acordes', title: 'Teste de acordes', min: 15, area: 'acordes', lines: ['Quiz de Acordes, nível 1, sessão de 20. Anote a %.'] },
     { id: 'd-rep', title: 'Gravar Something Like Olivia', min: 20, lines: ['Toque e grave inteira. Marque os 3 trechos mais sujos: eles são o repertório do sprint 1.'] },
-    { id: 'd-guia', title: 'Ler o guia do iniciante', min: 40, guia: true, lines: ['As partes de notas no braço e de intervalos. Não precisa decorar: é para saber o que vem.'] },
+    { id: 'd-guia', title: 'Primeira lição de teoria', min: 40, guia: true, licao: 's0-0', area: 'teoria',
+      lines: ['Lição: o braço da guitarra, cordas, casas e os nomes das notas. Depois, se sobrar tempo, adiante a primeira lição do sprint 1 (notas nas cordas 6 e 5).'] },
     { id: 'd-piano', title: 'Piano: ponto de partida', min: 20, lines: ['Anote o que você já sabe tocar no piano e ache todas as notas Dó do teclado.'] },
     { id: 'd-livre', title: 'Prática livre', min: 90, log: 'close', lines: ['O resto do tempo é livre até segunda, quando começa o sprint 1. Explore as áreas do solonely.'] },
   ]

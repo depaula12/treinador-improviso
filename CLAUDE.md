@@ -164,6 +164,15 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   (Improviso), Configurar e Progresso (Acordes, a pergunta ganha a largura), Entrada de áudio, Música
   (editor), Alvos do sprint, Do plano de hoje e Placar (Ouvido), notas ouvidas (Afinador). Card novo de
   configuração deve usar `Panel`.
+  **Lições de teoria** (opção B, pedida pelo usuário: estudar só pelo app): `core/licoes/` (tipos, ajuda com
+  sons/tabelas/perguntas sorteadas, `fase1.ts` com s0-0 e as tarefas conceituais dos sprints 1–3),
+  `Block.licao` no bloco de teoria (`lessonFor(sprint, tarefa)`), área **Teoria** (`features/teoria`:
+  lista, leitor com texto, braço, "Ouça" via `engine.playEar`, "Na guitarra", perguntas no fim e revisão
+  espaçada das erradas 1/2/4/8 dias, store `teoria-v1`). Terminar as perguntas marca o bloco do dia.
+  Tarefa de teoria sem lição: Quiz vai para Acordes/Escalas; "exercícios do guia" vão para a revisão.
+  Escrever as lições ~2 sprints à frente do usuário; todo conteúdo novo passa por `licoes.test.ts`
+  (resposta entre as opções, tabelas conferidas com a teoria, posições no braço conferidas pela afinação).
+  Piano ainda sem lições (perguntar ao usuário).
 - Prints com Edge headless: sempre `--mute-audio` e fechar o headless no fim (ele toca nas caixas do usuário).
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),

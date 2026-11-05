@@ -4,7 +4,7 @@ import type { AreaId } from '../core/plano'
 /** Área aberta. Fica num store para o Treino do dia poder levar a uma área ("Abrir"). */
 export type Area = AreaId
 
-const AREA_IDS: Area[] = ['hoje', 'improviso', 'musicas', 'compor', 'acordes', 'escalas', 'ouvido', 'jam', 'afinador']
+const AREA_IDS: Area[] = ['hoje', 'improviso', 'musicas', 'compor', 'acordes', 'escalas', 'ouvido', 'teoria', 'jam', 'afinador']
 
 function initial(): Area {
   // #acordes no endereço abre direto na área (link direto)

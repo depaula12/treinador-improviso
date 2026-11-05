@@ -3,6 +3,7 @@ import { go } from '../../ui/nav'
 import { useEscalas } from '../escalas/store'
 import { useImproviso } from '../improviso/store'
 import { useOuvido } from '../ouvido/store'
+import { useTeoria } from '../teoria/store'
 import { useHoje } from './store'
 
 export function applyTec(c: TecCfg) {
@@ -41,6 +42,7 @@ export function openBlock(date: string, b: Block) {
   if (b.tec) applyTec(b.tec)
   if (b.imp) applyImp(b.imp)
   if (b.ear?.length) useOuvido.getState().set({ preset: b.ear[0] })
+  if (b.area === 'teoria') useTeoria.getState().set({ open: b.licao ?? null })
   useHoje.getState().setActive({ date, blockId: b.id, area: b.area, title: b.title, hint: b.lines[0] ?? '' })
   go(b.area)
 }

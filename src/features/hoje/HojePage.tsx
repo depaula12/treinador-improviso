@@ -158,7 +158,7 @@ function BlockCard({ dateK, b, day }: { dateK: string; b: Block; day: DayLog | u
 
 const AREA_NAME: Record<string, string> = {
   improviso: 'Improviso', escalas: 'Escalas', acordes: 'Acordes', ouvido: 'Ouvido', musicas: 'Músicas',
-  afinador: 'Afinador', compor: 'Compor', jam: 'Jam', hoje: 'Hoje',
+  afinador: 'Afinador', teoria: 'a lição', compor: 'Compor', jam: 'Jam', hoje: 'Hoje',
 }
 
 /** o que o app registrou sozinho neste bloco */
