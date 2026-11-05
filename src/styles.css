@@ -1,5 +1,14 @@
 /* solonely. — tema escuro "palco": fundo quase preto, âmbar de válvula como destaque.
    Layout: menu lateral fixo + conteúdo que rola + player fixo embaixo; braço de ponta a ponta. */
+/* Fraunces servida pelo próprio app (latin com acentos, eixos opsz/wght/SOFT/WONK; OFL em /fonts/OFL.txt):
+   sem pedido a outro site, sem bloquear a abertura e funcionando sem internet depois da 1ª visita */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url(/fonts/fraunces-latin.woff2) format('woff2-variations'), url(/fonts/fraunces-latin.woff2) format('woff2');
+}
 :root {
   --bg: #121212;
   --panel: #1b1b1c;
