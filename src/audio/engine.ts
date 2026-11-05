@@ -224,6 +224,25 @@ class Engine {
     return t - now
   }
 
+  /**
+   * Treino de ouvido: toca uma lista de notas com hora (segundos desde o início) no violão,
+   * fora do Transport. Para a base ou o exercício. Devolve a duração em segundos.
+   */
+  async playEar(events: { midi: number; t: number; dur: number; vel: number }[], mix: MixState): Promise<number> {
+    await this.start(mix)
+    if (this.mode) this.stop()
+    this.exSampler.releaseAll()
+    const now = Tone.now() + 0.08
+    this.gate.gain.cancelScheduledValues(now)
+    this.gate.gain.setValueAtTime(1, now)
+    let end = 0
+    for (const e of events) {
+      this.exSampler.triggerAttackRelease(Tone.Frequency(e.midi, 'midi').toNote(), e.dur, now + e.t, e.vel)
+      end = Math.max(end, e.t + e.dur)
+    }
+    return end
+  }
+
   /** Uma nota curta no violão (confirma o acerto no modo "espera por você"). Não para nada. */
   async previewNote(midi: number, mix: MixState, sec = 0.6) {
     await this.start(mix)

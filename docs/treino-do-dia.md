@@ -17,31 +17,24 @@ Regra do projeto: mudança visual grande em branch, mostrar prints e só juntar 
 - Testes: `core/plano.test.ts` (datas, ids válidos de escala/progressão/estilo/restrição,
   roteiro) e `core/ear.test.ts`.
 
-## Falta (desenho combinado)
-1. `features/hoje/store.ts` (zustand persist `hoje-v1`): `days[dateKey]` = blocos {done, min},
-   bpm, dentro, alvo, rating, travou, rec, ear{modo: {c,t}}; `exits[sprint][i]`;
-   `active` (bloco aberto numa área); `timer` {date, blockId, total, endAt|null, left}.
-2. `features/hoje/HojePage.tsx`: cabeçalho (sprint, fase, dia, min feitos / plano, sequência),
-   três alvos do sprint, blocos com check, timer (um por vez, bipe no fim, wake lock) e
-   "Abrir": aplica `tec` em `useEscalas.set` ou `imp` em `useImproviso.set`, marca `active` e
-   chama `go(area)`. Registro do fim do dia (nota 1–5, gravei, o que travou).
-   Abas internas: Hoje · Plano (metas, fases, sprints com teste de saída marcável) · Progresso
-   (minutos 28 dias, bpm, ouvido, % dentro, diário).
-3. `features/hoje/TrainBanner.tsx`: faixa no topo da área quando `active.area === area`:
-   título do bloco, a instrução curta, timer, "Concluir" e "Voltar para Hoje".
-4. Registro automático: em `Exercises.finishLoop`, volta com 90%+ grava o maior bpm do dia;
-   no Improviso, `tally`/`score` gravam `dentro` (com 20+ notas) e `alvo` (com 4+ compassos).
-5. `features/ouvido/OuvidoPage.tsx` + `engine.playEar(events, mix)` (igual a `playShapes`,
-   usando o `exSampler`): presets do sprint em chips, modo/conjunto à mão, placar da sessão e
-   do dia gravado em `days[hoje].ear`.
-6. Navegação: áreas novas `hoje` (padrão) e `ouvido`; menu lateral em grupos
-   (Hoje · Praticar: Improviso, Escalas, Acordes, Ouvido · Repertório: Músicas, Compor ·
-   Ferramentas: Jam livre, Afinador). No celular, barra com Hoje, Improviso, Escalas, Músicas
-   e "Mais" (folha com o resto).
-7. Menos poluição: no Improviso, deixar à vista progressão, tom, estilo e andamento; escala,
-   virada, braço até a casa, checks, restrição e compassos num "Mais ajustes" recolhido.
-   Em Escalas, à vista escala, tom, exercício e desenhos; ritmo, mostrar, checks e treinos
-   salvos recolhidos. CSS novo com prefixo `hj-` (classes `.timer`, `.feedback`, `.cfg`,
-   `.empty` já existem).
-8. CLAUDE.md: atualizar o contexto do usuário (4 h/dia, plano de 24 sprints, metas de
-   guitarra, piano e ouvido; o foco antigo era blues/rock da banda com prazo jan/2027).
+## Feito (continuação, 5 nov 2026)
+- `core/progresso.ts` (+ teste): minutos do dia (timer ou o planejado ao marcar), sequência
+  (30 min ou metade do plano valem o dia; hoje em aberto não quebra), últimos 28 dias, séries de
+  bpm/dentro/alvo, ouvido por modo, diário.
+- `features/hoje/store.ts` (`hoje-v1`), `timer.ts` (um timer por vez, persiste, bipe + vibração,
+  wake lock; minutos entram no bloco ao pausar/terminar), `open.ts` ("Abrir" aplica `tec`/`imp`/`ear`),
+  `HojePage.tsx` (abas Hoje · Plano · Progresso, navegar entre dias), `TrainBanner.tsx`.
+- `ui/nav.ts`: área num store (`go` de qualquer lugar). Área padrão = `hoje`.
+- Registro automático: volta de Escalas com 90%+ → `logBpm`; placar do Improviso → `dentro`
+  (20+ notas) e `alvo` (4+ compassos).
+- Ouvido: `features/ouvido` + `engine.playEar`. Abre no conjunto do plano do dia, a menos que
+  o usuário tenha escolhido outro no mesmo dia (`pickedOn`). Teclas 1–9 respondem, Enter = próxima.
+- Menu em grupos; celular com Hoje, Improviso, Escalas, Músicas e "Mais" (folha).
+- Improviso: à vista progressão, tom, estilo, andamento; "Mais ajustes" com escala, virada, casa
+  máxima, checks, restrição e compassos. Escalas: à vista escala, tom, exercício, desenhos;
+  ritmo, mostrar, checks e treinos salvos recolhidos.
+
+## Falta
+- Aprovação do usuário (prints em `docs/screenshots/hoje-*.png`, `ouvido.png`,
+  `improviso-treino.png`, `mobile-hoje.png`) e merge na main.
+- Depois: sincronizar PC/celular (Supabase, login Google; local primeiro).

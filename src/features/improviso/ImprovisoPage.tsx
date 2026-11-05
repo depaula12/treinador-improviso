@@ -15,6 +15,7 @@ import { AUTO_SCALE, boxPositions, boxRange, chordScale, SCALES, scalePcs } from
 import { KEYS, parseChord, type ChordInfo } from '../../core/theory'
 import { Fretboard, type LabelMode, type Mark } from '../../ui/Fretboard'
 import { drawRestriction, RESTRICTIONS } from './restrictions'
+import { useHoje } from '../hoje/store'
 import { useImproviso } from './store'
 
 interface Change {
@@ -213,6 +214,15 @@ export function ImprovisoPage() {
     }, 360)
     return () => window.clearTimeout(id)
   }, [bar, io.active, playingNow])
+
+  // Treino do dia: o placar registra sozinho (% dentro com 20+ notas, alvos com 4+ compassos)
+  useEffect(() => {
+    if (tallyTotal(tally) >= 20) useHoje.getState().logImp('dentro', tallyInside(tally))
+  }, [tally])
+  useEffect(() => {
+    const n = played(score)
+    if (n >= 4) useHoje.getState().logImp('alvo', (score.alvo / n) * 100)
+  }, [score])
 
   // configuração lida pelo motor a cada compasso: mudanças entram no próximo compasso
   useEffect(() => {
@@ -487,69 +497,79 @@ export function ImprovisoPage() {
                 {!typedOk && <span className="error">Digite pelo menos um acorde.</span>}
               </label>
             )}
-            <label className="wide">
-              Escala no braço
-              <select value={s.scaleId} onChange={(e) => s.set({ scaleId: e.target.value })}>
-                <option value={AUTO_SCALE}>Acompanha o acorde (mixolídio no 7, dórico no m7…)</option>
-                <optgroup label="Escalas">
-                  {SCALES.filter((x) => !x.id.startsWith('arp')).map((x) => (
-                    <option key={x.id} value={x.id}>{x.name}</option>
-                  ))}
-                </optgroup>
-                <optgroup label="Arpejos">
-                  {SCALES.filter((x) => x.id.startsWith('arp')).map((x) => (
-                    <option key={x.id} value={x.id}>{x.name}</option>
-                  ))}
-                </optgroup>
-              </select>
-            </label>
-            <label>
-              Virada a cada
-              <select value={s.fillEvery} onChange={(e) => s.set({ fillEvery: +e.target.value as 4 | 8 })}>
-                <option value={4}>4 compassos</option>
-                <option value={8}>8 compassos</option>
-              </select>
-            </label>
-            <label>
-              Braço até a casa
-              <select value={s.maxFret} onChange={(e) => s.set({ maxFret: +e.target.value })}>
-                <option value={12}>12</option>
-                <option value={15}>15</option>
-                <option value={17}>17</option>
-              </select>
-            </label>
             <label className="full">
               Andamento <span className="mono" style={{ textTransform: 'none' }}>{s.bpm} bpm</span>
               <input type="range" min={50} max={180} step={1} value={s.bpm} onChange={(e) => s.set({ bpm: +e.target.value })} />
             </label>
           </div>
-          <div className="checks">
-            <label><input type="checkbox" checked={s.countIn} onChange={(e) => s.set({ countIn: e.target.checked })} /> Contagem de entrada</label>
-            <label><input type="checkbox" checked={s.loop} onChange={(e) => s.set({ loop: e.target.checked })} /> Loop</label>
-            <label><input type="checkbox" checked={s.humanize} onChange={(e) => s.set({ humanize: e.target.checked })} /> Humanização</label>
-          </div>
         </section>
 
-        <section className="card stack-sm" aria-label="Restrição e compassos">
-          <div className="row-between">
-            <span className="tag">Restrição</span>
-            <button type="button" className="chip" onClick={() => s.set({ restrictionId: drawRestriction(s.restrictionId).id })}>Sortear</button>
+        <details className="card more imp-more">
+          <summary>
+            Mais ajustes
+            <span className="muted">{scaleLabel}{restriction.id !== 'nenhuma' ? ` · ${restriction.text}` : ''}</span>
+          </summary>
+          <div className="more-body">
+            <div className="base-grid">
+              <label className="wide">
+                Escala no braço
+                <select value={s.scaleId} onChange={(e) => s.set({ scaleId: e.target.value })}>
+                  <option value={AUTO_SCALE}>Acompanha o acorde (mixolídio no 7, dórico no m7…)</option>
+                  <optgroup label="Escalas">
+                    {SCALES.filter((x) => !x.id.startsWith('arp')).map((x) => (
+                      <option key={x.id} value={x.id}>{x.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Arpejos">
+                    {SCALES.filter((x) => x.id.startsWith('arp')).map((x) => (
+                      <option key={x.id} value={x.id}>{x.name}</option>
+                    ))}
+                  </optgroup>
+                </select>
+              </label>
+              <label>
+                Virada a cada
+                <select value={s.fillEvery} onChange={(e) => s.set({ fillEvery: +e.target.value as 4 | 8 })}>
+                  <option value={4}>4 compassos</option>
+                  <option value={8}>8 compassos</option>
+                </select>
+              </label>
+              <label>
+                Braço até a casa
+                <select value={s.maxFret} onChange={(e) => s.set({ maxFret: +e.target.value })}>
+                  <option value={12}>12</option>
+                  <option value={15}>15</option>
+                  <option value={17}>17</option>
+                </select>
+              </label>
+            </div>
+            <div className="checks">
+              <label><input type="checkbox" checked={s.countIn} onChange={(e) => s.set({ countIn: e.target.checked })} /> Contagem de entrada</label>
+              <label><input type="checkbox" checked={s.loop} onChange={(e) => s.set({ loop: e.target.checked })} /> Loop</label>
+              <label><input type="checkbox" checked={s.humanize} onChange={(e) => s.set({ humanize: e.target.checked })} /> Humanização</label>
+            </div>
+            <div className="stack-sm">
+              <div className="row-between">
+                <span className="tag">Restrição</span>
+                <button type="button" className="chip" onClick={() => s.set({ restrictionId: drawRestriction(s.restrictionId).id })}>Sortear</button>
+              </div>
+              <select aria-label="Restrição" value={s.restrictionId} onChange={(e) => s.set({ restrictionId: e.target.value })}>
+                {RESTRICTIONS.map((r) => (
+                  <option key={r.id} value={r.id}>{r.text}</option>
+                ))}
+              </select>
+              {restriction.id !== 'nenhuma' && <p className="rule">{restriction.text}</p>}
+              <span className="tag">Compassos</span>
+              <div className="bars-grid" role="list" aria-label="Compassos">
+                {chords.map((c, idx) => (
+                  <span key={idx} role="listitem" className={playing && idx === bar % chords.length ? 'on' : ''}>
+                    {c.symbol}{changes?.[idx]?.map((g) => ` ${g.chord.symbol}`).join('')}
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
-          <select aria-label="Restrição" value={s.restrictionId} onChange={(e) => s.set({ restrictionId: e.target.value })}>
-            {RESTRICTIONS.map((r) => (
-              <option key={r.id} value={r.id}>{r.text}</option>
-            ))}
-          </select>
-          {restriction.id !== 'nenhuma' && <p className="rule">{restriction.text}</p>}
-          <span className="tag">Compassos</span>
-          <div className="bars-grid" role="list" aria-label="Compassos">
-            {chords.map((c, idx) => (
-              <span key={idx} role="listitem" className={playing && idx === bar % chords.length ? 'on' : ''}>
-                {c.symbol}{changes?.[idx]?.map((g) => ` ${g.chord.symbol}`).join('')}
-              </span>
-            ))}
-          </div>
-        </section>
+        </details>
       </div>
     </div>
   )

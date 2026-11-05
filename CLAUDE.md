@@ -2,9 +2,9 @@
 
 Web app para guitarristas praticarem improviso, acordes e escalas. É genérico, para qualquer pessoa,
 mas permite carregar as músicas do próprio repertório (setlist) como base de treino.
-Usuário principal: guitarrista intermediário, foco em blues e rock, com prazo apertado (jan/2027).
-Ele precisa praticar logo: priorizar versões úteis e pequenas a features completas.
-Rotina: ~2 h de prática por dia, dedicado à banda até jul/2027. Usa o Cuvave Cube Baby como
+Usuário principal: guitarrista intermediário. Rotina de 4 h/dia seguindo o plano de 12 meses dentro do
+app (24 sprints de 2 semanas, 9 nov 2026 → out 2027; metas de guitarra, piano e ouvido; `core/plano.ts`).
+O foco antigo era blues/rock da banda com prazo jan/2027. Priorizar versões úteis e pequenas. Usa o Cuvave Cube Baby como
 pedaleira e interface USB (é o mesmo aparelho da entrada de áudio da v2).
 Site público: talvez, se ficar bom. Não é prioridade, mas manter licenças em ordem e nada de
 conteúdo de terceiros embutido, para não fechar essa porta.
@@ -155,6 +155,10 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   "Conferir o que eu toco", modos No metrônomo | Espera por você (`pace`), speed trainer (`autoBpm`),
   DETECT_LAG 45 ms descontado no tempo. `engine.previewNote`. `npm run e2e:escalas` (MODE=metronomo).
   Falta validar com a guitarra: ajustar jumpDb/DETECT_LAG/janela se contar notas a mais ou a menos.
+- **Branch treino-do-dia** (aguardando aprovação; ver `docs/treino-do-dia.md`): área Hoje (padrão)
+  com roteiro do dia, timer, "Abrir" que configura a área, faixa de treino (`TrainBanner`), Plano com
+  testes de saída e Progresso; área Ouvido; menu em grupos e "Mais" no celular; "Mais ajustes"
+  recolhido em Improviso e Escalas. Store `hoje-v1`, área em `ui/nav.ts`.
 - Prints com Edge headless: sempre `--mute-audio` e fechar o headless no fim (ele toca nas caixas do usuário).
 - Escalas: exercícios (subir/descer, grupos 3 e 4, terças, percorrer boxes) com metrônomo e nota
   acesa, exibição tudo/só tônicas/esconder, quiz "onde está a nota" (clique no braço, Leitner),

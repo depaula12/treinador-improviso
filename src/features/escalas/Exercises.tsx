@@ -11,6 +11,7 @@ import { spellPc, TONE_LABEL, useHeard, type HitTone } from '../../ui/heard'
 import { ListenChip, useGuitarInput } from '../../ui/InputPanel'
 import { usePlayerSlot } from '../../ui/player-slot'
 import { useImproviso } from '../improviso/store'
+import { useHoje } from '../hoje/store'
 import { useEscalas, type Display, type Pace } from './store'
 
 const NO_SCALE: number[] = []
@@ -119,6 +120,8 @@ export function Exercises() {
     const st = useEscalas.getState()
     const to = st.autoBpm ? nextBpm(st.bpm, score) : st.bpm
     setLast({ score, avgMs, bpm: st.bpm, bpmTo: to !== st.bpm ? to : undefined })
+    // Treino do dia: volta limpa (90%+) registra o bpm do dia
+    if (score >= 90) useHoje.getState().logBpm(st.bpm)
     if (to !== st.bpm) st.set({ bpm: to })
   }
 
@@ -314,28 +317,6 @@ export function Exercises() {
               ))}
             </select>
           </label>
-          <label>
-            Ritmo
-            <select value={s.perBeat} disabled={wait} onChange={(e) => s.set({ perBeat: +e.target.value as 1 | 2 | 3 | 4 })}>
-              {PER_BEAT.map((p) => (
-                <option key={p.v} value={p.v}>{p.label}</option>
-              ))}
-            </select>
-          </label>
-          <div>
-            <div className="tag">Mostrar</div>
-            <div className="segmented small" role="group" aria-label="Exibição">
-              {(['tudo', 'fundamentais', 'esconder'] as Display[]).map((d) => (
-                <button key={d} type="button" aria-pressed={s.display === d} onClick={() => { s.set({ display: d }); setReveal(false) }}>
-                  {d === 'tudo' ? 'Tudo' : d === 'fundamentais' ? 'Tônicas' : 'Esconder'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="checks" style={{ flexDirection: 'column', gap: 4 }}>
-            <label><input type="checkbox" checked={s.sound} onChange={(e) => s.set({ sound: e.target.checked })} /> Tocar as notas</label>
-            <label><input type="checkbox" checked={s.countIn} disabled={wait} onChange={(e) => s.set({ countIn: e.target.checked })} /> Contagem</label>
-          </div>
         </div>
         <div className="row-between">
           <div className="row">
@@ -348,6 +329,34 @@ export function Exercises() {
           </div>
           <span className="muted hint">{ex.hint} {seq.length} notas por volta.</span>
         </div>
+        <details className="more">
+          <summary>Mais ajustes <span className="muted">{PER_BEAT.find((p) => p.v === s.perBeat)?.label} · {s.display === 'tudo' ? 'mostra tudo' : s.display === 'fundamentais' ? 'só tônicas' : 'escondido'}</span></summary>
+          <div className="cfg-row more-body">
+            <label>
+              Ritmo
+              <select value={s.perBeat} disabled={wait} onChange={(e) => s.set({ perBeat: +e.target.value as 1 | 2 | 3 | 4 })}>
+                {PER_BEAT.map((p) => (
+                  <option key={p.v} value={p.v}>{p.label}</option>
+                ))}
+              </select>
+            </label>
+            <div>
+              <div className="tag">Mostrar</div>
+              <div className="segmented small" role="group" aria-label="Exibição">
+                {(['tudo', 'fundamentais', 'esconder'] as Display[]).map((d) => (
+                  <button key={d} type="button" aria-pressed={s.display === d} onClick={() => { s.set({ display: d }); setReveal(false) }}>
+                    {d === 'tudo' ? 'Tudo' : d === 'fundamentais' ? 'Tônicas' : 'Esconder'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="checks" style={{ flexDirection: 'column', gap: 4 }}>
+              <label><input type="checkbox" checked={s.sound} onChange={(e) => s.set({ sound: e.target.checked })} /> Tocar as notas</label>
+              <label><input type="checkbox" checked={s.countIn} disabled={wait} onChange={(e) => s.set({ countIn: e.target.checked })} /> Contagem</label>
+            </div>
+          </div>
+          <Presets />
+        </details>
       </section>
 
       <section className="card check-bar" aria-label="Conferir pelo áudio">
@@ -452,7 +461,6 @@ export function Exercises() {
         </div>
       </section>
 
-      <Presets />
     </>
   )
 }
@@ -460,7 +468,7 @@ export function Exercises() {
 function Presets() {
   const { presets, savePreset, loadPreset, deletePreset } = useEscalas()
   return (
-    <section className="card row-between">
+    <section className="row-between presets-row">
       <div className="presets">
         <span className="tag" style={{ margin: 0 }}>Treinos salvos</span>
         {presets.length === 0 ? (
