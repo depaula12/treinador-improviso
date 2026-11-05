@@ -886,3 +886,21 @@ textarea.text { font: 400 15px var(--f-body); color: var(--fg); background: var(
 }
 .import-warn { border-left: 3px solid var(--hit-near); background: color-mix(in srgb, var(--hit-near) 10%, var(--panel)); border-radius: 8px; padding: 8px 12px; font-size: .92rem; }
 .import-warn ul { margin: 4px 0 0; padding-left: 18px; }
+
+/* ===================== janelas (ui/Dialog.tsx, Seus dados) ===================== */
+.dlg-back { position: fixed; inset: 0; z-index: 60; background: rgb(0 0 0 / .6); display: grid; place-items: center; padding: 16px; }
+.dlg { width: min(520px, 100%); max-height: calc(100dvh - 32px); overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; display: grid; gap: 12px; box-shadow: 0 24px 60px rgb(0 0 0 / .6); }
+.dlg h2 { font-size: 1.3rem; }
+.dlg-body { margin: 0; line-height: 1.5; }
+.dlg-body p { margin: 0 0 6px; }
+.dlg-body ul { margin: 4px 0 8px; padding-left: 18px; }
+.dlg-input { text-transform: none; letter-spacing: 0; font: 500 .9rem var(--f-body); color: var(--muted); }
+.dlg-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.btn.danger { border-color: color-mix(in srgb, var(--root) 60%, var(--line)); color: var(--root); }
+.dados-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dados-msg { margin: 0; padding: 8px 12px; border-radius: 8px; font-size: .92rem; }
+.dados-msg.ok { background: color-mix(in srgb, var(--hit-good) 14%, var(--panel)); }
+.dados-msg.no { background: color-mix(in srgb, var(--hit-bad) 14%, var(--panel)); }
+.dados-btn { margin: 0 -8px 10px; width: calc(100% + 16px); }
+.hj-backup { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; border-color: color-mix(in srgb, var(--hit-near) 45%, var(--line)); padding: 10px 14px; }
+.hj-backup p { margin: 0; font-size: .92rem; }

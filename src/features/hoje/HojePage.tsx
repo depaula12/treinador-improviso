@@ -7,6 +7,9 @@ import {
   blockMinutes, clock, dayMinutes, earTotals, journal, lastDays, plannedMinutes, series, shortDate, streak, type DayLog,
 } from '../../core/progresso'
 import { Panel } from '../../ui/Panel'
+import { backupDue } from '../../core/backup'
+import { exportAll, lastBackupAt, useDados } from '../dados/dados'
+import { useSongs } from '../musicas/store'
 import { openBlock } from './open'
 import { useHoje } from './store'
 import { pauseTimer, resetTimer, startTimer, useTimerLeft } from './timer'
@@ -50,9 +53,21 @@ function Today() {
   const plan = plannedMinutes(date)
   const seq = streak(days, fromKey(realToday))
   const shift = (d: number) => setKey(dateKey(addDays(date, d)))
+  useDados((s) => s.tick)
+  const songCount = useSongs((s) => s.songs.length)
+  const remind = backupDue(lastBackupAt(), Object.keys(days).length >= 3 || songCount > 0)
 
   return (
     <>
+      {remind && (
+        <section className="card hj-backup" role="status">
+          <p>{lastBackupAt() ? 'Seu último backup tem mais de duas semanas.' : 'Seu progresso fica só neste navegador.'} Um backup leva um clique e evita perder semanas de registro.</p>
+          <div className="row">
+            <button type="button" className="link" onClick={() => useDados.getState().set(true)}>saiba mais</button>
+            <button type="button" className="btn" onClick={() => void exportAll()}>Exportar agora</button>
+          </div>
+        </section>
+      )}
       <section className="card hj-head">
         <div className="hj-day">
           <button type="button" className="icon-btn" aria-label="Dia anterior" onClick={() => shift(-1)}>‹</button>

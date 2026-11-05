@@ -14,6 +14,9 @@ import { OuvidoPage } from './features/ouvido/OuvidoPage'
 import { TeoriaPage } from './features/teoria/TeoriaPage'
 import { useNav, type Area } from './ui/nav'
 import { Player } from './ui/Player'
+import { DialogHost } from './ui/Dialog'
+import { DadosPanel } from './features/dados/DadosPanel'
+import { useDados } from './features/dados/dados'
 
 const icon = (d: ReactNode) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>{d}</svg>
@@ -78,6 +81,10 @@ export function App() {
         </button>
         {/* atribuição exigida pelas licenças CC BY dos samples (ver public/samples/LICENSES.md) */}
         <footer className="side-foot credits">
+          <button type="button" className="nav-btn dados-btn" onClick={() => useDados.getState().set(true)}>
+            icon(<><ellipse cx="12" cy="6" rx="7" ry="3" /><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" /></>)
+            <span>Seus dados</span>
+          </button>
           Samples: Salamander Grand Piano (Alexander Holm, CC BY 3.0) · FluidR3_GM (Frank Wen, CC BY 3.0) ·
           MuldjordKit (Lars Muldjord / FreePats, CC BY 4.0).{' '}
           <a href="/samples/LICENSES.md" target="_blank" rel="noreferrer">Licenças</a>
@@ -93,6 +100,15 @@ export function App() {
                 <div className="more-grid">{g.areas.filter((a) => !PHONE.includes(a)).map((a) => navBtn(a))}</div>
               </div>
             ))}
+            <div className="more-group">
+              <div className="nav-head">App</div>
+              <div className="more-grid">
+                <button type="button" className="nav-btn" onClick={() => { setMore(false); useDados.getState().set(true) }}>
+                  icon(<><ellipse cx="12" cy="6" rx="7" ry="3" /><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6" /></>)
+                  <span>Seus dados</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -115,6 +131,8 @@ export function App() {
       </main>
 
       <Player />
+      <DadosPanel />
+      <DialogHost />
     </div>
   )
 }
