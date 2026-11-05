@@ -931,3 +931,4 @@ textarea.text { font: 400 15px var(--f-body); color: var(--fg); background: var(
 .err-card p { margin: 0; }
 .err-msg { font-size: .85rem; word-break: break-word; }
 .err-log ul { margin: 8px 0; padding-left: 18px; display: grid; gap: 4px; font-size: .85rem; word-break: break-word; }
+.tuner-note .enh { font-size: .38em; color: var(--muted); margin-left: .25em; font-weight: 500; }

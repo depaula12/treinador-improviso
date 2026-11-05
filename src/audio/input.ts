@@ -41,11 +41,16 @@ export async function listInputs(): Promise<MediaDeviceInfo[]> {
 }
 
 /**
- * Acha a interface da guitarra pelo nome (o Cube Baby aparece como "Linha (USB-Audio)").
+ * Acha a entrada da guitarra: primeiro a última escolhida (pelo nome), depois uma que pareça
+ * interface de áudio (USB, "Linha", "Line", "Interface", "Instrument"…).
  * Antes da permissão os nomes vêm vazios: aí não há como saber e devolve undefined.
  */
-export function guessGuitarInput(devices: MediaDeviceInfo[]): MediaDeviceInfo | undefined {
-  return devices.find((d) => /usb|cube|linha|line|interface/i.test(d.label))
+export function guessGuitarInput(devices: MediaDeviceInfo[], remembered = ''): MediaDeviceInfo | undefined {
+  if (remembered) {
+    const same = devices.find((d) => d.label && d.label === remembered)
+    if (same) return same
+  }
+  return devices.find((d) => /usb|linha|line|interface|instrument|guitar|cube|focusrite|scarlett|irig|behringer|presonus/i.test(d.label))
 }
 
 /**

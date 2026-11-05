@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { soundingKey, timedChords, toPlayBars, type Song } from '../../core/song'
 import { KEYS } from '../../core/theory'
 import { useImproviso } from '../improviso/store'
+import { toast } from '../../ui/toast'
 import { db } from './db'
 
 interface SongsState {
@@ -42,7 +43,10 @@ export const useSongs = create<SongsState>((set, get) => ({
   remove: async (id) => {
     set((s) => ({ songs: s.songs.filter((x) => x.id !== id), openId: s.openId === id ? null : s.openId }))
     const imp = useImproviso.getState()
-    if (imp.song?.id === id) imp.set({ song: null, ...(imp.progId === 'song' ? { progId: 'blues12' } : {}) })
+    if (imp.song?.id === id) {
+      if (imp.progId === 'song') toast('A música estava no Improviso: a base voltou para o Blues de 12.')
+      imp.set({ song: null, ...(imp.progId === 'song' ? { progId: 'blues12' } : {}) })
+    }
     try {
       await db.songs.delete(id)
     } catch {

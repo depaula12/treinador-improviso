@@ -97,6 +97,9 @@ function ChordView({ frame }: { frame: InputFrame | null }) {
   )
 }
 
+/** notas pretas com os dois nomes: quem pensa em Lá maior lê C♯, quem pensa em Fá lê D♭ */
+const ENH: Record<number, [string, string]> = { 1: ['C♯', 'D♭'], 3: ['D♯', 'E♭'], 6: ['F♯', 'G♭'], 8: ['G♯', 'A♭'], 10: ['A♯', 'B♭'] }
+
 export function AfinadorPage() {
   const [mode, setMode] = useState<'nota' | 'acorde'>('nota')
   const [frame, setFrame] = useState<InputFrame | null>(null)
@@ -128,8 +131,9 @@ export function AfinadorPage() {
               <div className={`tuner-note${inTune ? ' ok' : ''}`}>
                 {note ? (
                   <>
-                    {note.name}
+                    {ENH[note.midi % 12]?.[0] ?? note.name}
                     <small>{note.octave}</small>
+                    {ENH[note.midi % 12] && <span className="enh">/ {ENH[note.midi % 12][1]}</span>}
                   </>
                 ) : (
                   <span className="muted">—</span>

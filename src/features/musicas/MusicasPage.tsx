@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { confirmDialog } from '../../ui/Dialog'
+import { toast } from '../../ui/toast'
 import { Panel } from '../../ui/Panel'
 import { chordWarning } from '../../core/theory'
 import { STYLES } from '../../audio/engine'
@@ -95,6 +97,7 @@ function Importer({ onDone, canCancel }: { onDone: (id: string | null) => void; 
     if (!parsed || !bars) return
     const song = songFromCifra(parsed)
     await save(song)
+    toast(parsed.unknown.length ? `"${song.title || 'Música'}" salva. ${parsed.unknown.length} ${parsed.unknown.length === 1 ? 'acorde ficou' : 'acordes ficaram'} de fora: confira na grade.` : `"${song.title || 'Música'}" salva no repertório`)
     onDone(song.id)
   }
 
@@ -285,7 +288,7 @@ function SongEditor({ song, go }: { song: Song } & Props) {
         <p className="hint muted">
           Acordes: <span className="mono">{songChords(song).join('  ')}</span>
           {timingOn && ' · os números embaixo dos acordes são a duração em tempos (4 = um compasso)'} ·{' '}
-          <button type="button" className="link" onClick={() => confirm(`Apagar "${song.title}"?`) && void remove(song.id)}>apagar música</button>
+          <button type="button" className="link" onClick={async () => (await confirmDialog({ title: `Apagar "${song.title}"?`, body: 'A música, a grade e os tempos marcados saem do repertório. Se tiver um backup, dá para recuperar.', ok: 'Apagar', danger: true })) && void remove(song.id)}>apagar música</button>
         </p>
       </Panel>
 

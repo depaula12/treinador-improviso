@@ -88,6 +88,13 @@ C   N.C.   G   (N.C.)`)
     expect(p.sections[0].bars).toEqual([['C'], ['G']])
     expect(p.noChord).toEqual([{ section: 'Intro', bar: 2 }, { section: 'Intro', bar: 3 }])
   })
+  it('texto sem acordes não ganha título nem artista', () => {
+    const p = parseCifra(`Isto é só uma letra
+sem nenhum acorde aqui
+lá lá lá`)
+    expect(p.sections).toEqual([])
+    expect([p.title, p.artist]).toEqual(['', ''])
+  })
   it('palavras da letra não viram aviso', () => {
     const p = parseCifra(`[Verso]
 Am   Das   G   Bem   F

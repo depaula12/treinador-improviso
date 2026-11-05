@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { confirmDialog } from '../../ui/Dialog'
 import { KIND_LABEL, type ShapeKind } from '../../core/chord-bank'
 import { songChords } from '../../core/song'
 import { KEYS } from '../../core/theory'
@@ -71,7 +72,7 @@ function Progress({ items }: { items: Item[] }) {
       </div>
       <p className="foot">
         O que você erra ou demora aparece mais vezes. Fica salvo neste aparelho.{' '}
-        <button type="button" className="link" onClick={() => confirm('Zerar o progresso dos acordes?') && resetStats()}>Zerar progresso</button>
+        <button type="button" className="link" onClick={async () => (await confirmDialog({ title: 'Zerar o progresso dos acordes?', body: 'As caixas e estatísticas de cada acorde voltam ao começo.', ok: 'Zerar', danger: true })) && resetStats()}>Zerar progresso</button>
       </p>
     </Panel>
   )

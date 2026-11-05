@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { confirmDialog, promptDialog } from '../../ui/Dialog'
+import { toast } from '../../ui/toast'
 import { engine, type StepPos } from '../../audio/engine'
 import { buildExercise, EXERCISES, type ExerciseId } from '../../core/exercises'
 import { judgeStep, nextBpm, placeNote, stepScore, type HeardNote, type StepVerdict } from '../../core/feedback'
@@ -482,7 +484,7 @@ function Presets() {
           presets.map((p) => (
             <span key={p.id} className="preset">
               <button type="button" className="chip" onClick={() => loadPreset(p.id)}>{p.name}</button>
-              <button type="button" className="preset-del" aria-label={`Apagar ${p.name}`} onClick={() => confirm(`Apagar "${p.name}"?`) && deletePreset(p.id)}>×</button>
+              <button type="button" className="preset-del" aria-label={`Apagar ${p.name}`} onClick={async () => (await confirmDialog({ title: `Apagar o treino "${p.name}"?`, ok: 'Apagar', danger: true })) && deletePreset(p.id)}>×</button>
             </span>
           ))
         )}
@@ -490,9 +492,12 @@ function Presets() {
       <button
         type="button"
         className="btn"
-        onClick={() => {
-          const name = prompt('Nome do treino (ex.: "Segunda: pentatônica box 1–2")')
-          if (name?.trim()) savePreset(name.trim())
+        onClick={async () => {
+          const name = await promptDialog({ title: 'Salvar este treino', label: 'Nome do treino', placeholder: 'Segunda: pentatônica box 1–2' })
+          if (name) {
+            savePreset(name)
+            toast(`Treino "${name}" salvo`)
+          }
         }}
       >
         + Salvar este treino

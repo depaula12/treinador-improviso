@@ -13,7 +13,7 @@ function LevelMeter({ peak }: { peak: number }) {
   // −60 dB … 0 dB → 0–100%
   const pct = (db: number) => Math.max(0, Math.min(100, ((db + 60) / 60) * 100))
   const state = peak > -3 ? 'hot' : peak >= GOOD_LO ? 'good' : peak > -60 ? 'low' : 'off'
-  const msg = { hot: 'Alto demais: abaixe o volume', good: 'Nível bom', low: 'Baixo: suba o volume do Cube Baby', off: 'Sem sinal' }[state]
+  const msg = { hot: 'Alto demais: abaixe o volume', good: 'Nível bom', low: 'Baixo: suba o volume da guitarra ou da interface', off: 'Sem sinal' }[state]
   return (
     <div className="meter">
       <div className="row-between">
@@ -46,7 +46,7 @@ export function ChromaBars({ chroma, chord }: { chroma: Chroma | null; chord: Ch
 }
 
 /**
- * Captura da guitarra: escolhe a entrada (acha o Cube Baby sozinho), liga/desliga,
+ * Captura da guitarra: escolhe a entrada (volta à última usada ou acha a interface sozinho), liga/desliga,
  * aplica os ajustes de estabilidade e entrega cada leitura para `onFrame`.
  */
 export function useGuitarInput(onFrame: (f: InputFrame | null) => void) {
@@ -62,7 +62,7 @@ export function useGuitarInput(onFrame: (f: InputFrame | null) => void) {
   useEffect(() => {
     void listInputs().then((d) => {
       setDevices(d)
-      setDeviceId((cur) => cur || guessGuitarInput(d)?.deviceId || '')
+      setDeviceId((cur) => cur || guessGuitarInput(d, useInputSettings.getState().deviceLabel)?.deviceId || '')
     })
     return () => input.current?.close()
   }, [])
@@ -78,14 +78,15 @@ export function useGuitarInput(onFrame: (f: InputFrame | null) => void) {
       input.current ??= new AudioInput()
       input.current.setChordOptions(trackerOptions(useInputSettings.getState()))
       const label = await input.current.start(id || undefined, (f) => cb.current(f))
-      // com a permissão dada, os nomes aparecem: escolhe o Cube Baby se ainda não estava escolhido
+      // com a permissão dada, os nomes aparecem: escolhe a interface se ainda não estava escolhida
       const d = await listInputs()
       setDevices(d)
-      const guitar = guessGuitarInput(d)
+      const guitar = guessGuitarInput(d, useInputSettings.getState().deviceLabel)
       if (!id && guitar && guitar.label !== label) {
         setDeviceId(guitar.deviceId)
         return start(guitar.deviceId)
       }
+      if (label) useInputSettings.getState().set({ deviceLabel: label })
       setActive(label || 'entrada padrão')
     } catch (e) {
       setActive('')
@@ -116,10 +117,10 @@ interface PanelProps {
  * Botão compacto "ouvir a guitarra", para telas em que a entrada é um extra (placar do Improviso,
  * quizzes conferidos pelo áudio): liga/desliga, mostra qual entrada está ouvindo e os erros.
  */
-export function ListenChip({ io, label }: { io: ReturnType<typeof useGuitarInput>; label: string }) {
+export function ListenChip({ io, label, hint }: { io: ReturnType<typeof useGuitarInput>; label: string; hint?: string }) {
   return (
     <span className="listen">
-      <button type="button" className="chip" aria-pressed={!!io.active} onClick={() => (io.active ? io.stop() : void io.start())}>
+      <button type="button" className="chip" aria-pressed={!!io.active} title={hint} onClick={() => (io.active ? io.stop() : void io.start())}>
         {io.active ? `● ${label}` : label}
       </button>
       {io.active && <span className="muted hint">ouvindo: {io.active}</span>}
@@ -168,8 +169,9 @@ export function InputPanel({ io, peak, children }: PanelProps) {
           <p className="muted hint">Ouvindo: {io.active}</p>
         ) : (
           <p className="muted hint">
-            Ligue a guitarra no Cube Baby e o Cube Baby no PC pelo cabo USB. Ao ativar, o navegador pede acesso ao "microfone": é o Cube Baby.
-            Use o som limpo, sem distorção.
+            Ligue a guitarra numa interface de áudio ou pedaleira com USB e conecte no PC ou no celular. Ao ativar, o navegador pede
+            acesso ao "microfone": escolha a interface. Use som limpo, sem distorção. Sem interface, o microfone do aparelho também
+            funciona, com fone de ouvido (senão a base entra junto) e menos precisão.
           </p>
         )}
       </div>

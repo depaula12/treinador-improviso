@@ -180,6 +180,7 @@ export function parseCifra(text: string): ParsedCifra {
     }
   }
   close()
-  ;[out.title, out.artist] = [intro[0] ?? '', intro[1] ?? '']
+  // título e artista só quando o texto é mesmo uma cifra (tem acordes); letra pura não ganha nome
+  if (out.sections.length) [out.title, out.artist] = [intro[0] ?? '', intro[1] ?? '']
   return out
 }

@@ -368,7 +368,7 @@ export function ImprovisoPage() {
               </button>
             ))}
           </div>
-          <ListenChip io={io} label="Placar: ouvir minha guitarra" />
+          <ListenChip io={io} label="Placar: ouvir minha guitarra" hint="Liga a entrada de áudio e confere cada nota: alvo, nota do acorde, da escala ou fora, e se você chegou no alvo no tempo 1." />
           <span className="muted mono hide-phone" style={{ marginLeft: 'auto', fontSize: 13 }}>{scaleLabel} · tom {keyShort(s.key, s.keyMinor)}</span>
         </div>
         <Fretboard
@@ -559,6 +559,7 @@ export function ImprovisoPage() {
                 ))}
               </select>
               {restriction.id !== 'nenhuma' && <p className="rule">{restriction.text}</p>}
+              {restriction.id !== 'nenhuma' && <p className="muted hint">A restrição é um exercício para você seguir; o placar ainda não confere se ela foi cumprida.</p>}
               <span className="tag">Compassos</span>
               <div className="bars-grid" role="list" aria-label="Compassos">
                 {chords.map((c, idx) => (

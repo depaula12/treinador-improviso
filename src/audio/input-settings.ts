@@ -6,7 +6,9 @@ interface InputSettings {
   stability: Stability
   /** segundos mínimos entre duas trocas de acorde */
   minHoldSec: number
-  set: (patch: Partial<Pick<InputSettings, 'stability' | 'minHoldSec'>>) => void
+  /** nome da última entrada escolhida (o app volta a ela sozinho) */
+  deviceLabel: string
+  set: (patch: Partial<Pick<InputSettings, 'stability' | 'minHoldSec' | 'deviceLabel'>>) => void
 }
 
 /** Ajustes da leitura de acordes, compartilhados pelo Afinador e pela Jam livre. */
@@ -15,6 +17,7 @@ export const useInputSettings = create<InputSettings>()(
     (set) => ({
       stability: 'equilibrada',
       minHoldSec: TRACKER_DEFAULTS.minHoldMs / 1000,
+      deviceLabel: '',
       set: (patch) => set(patch),
     }),
     { name: 'entrada-v1' },

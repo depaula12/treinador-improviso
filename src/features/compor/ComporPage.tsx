@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { confirmDialog, promptDialog } from '../../ui/Dialog'
+import { toast } from '../../ui/toast'
 import { engine, STYLES } from '../../audio/engine'
 import { STRUMS, strumById } from '../../audio/styles/strums'
 
@@ -261,11 +263,12 @@ export function ComporPage({ go }: Props) {
 
   async function saveAsSong() {
     if (!all.length) return
-    const title = prompt('Nome da música:', 'Minha composição')
-    if (!title?.trim()) return
-    const song = compositionSong({ title: title.trim(), key: keyName(root, minor), bpm, styleId, sections })
+    const title = await promptDialog({ title: 'Salvar como música', label: 'Nome da música', value: 'Minha composição', body: 'Ela entra no seu repertório, na área Músicas.' })
+    if (!title) return
+    const song = compositionSong({ title, key: keyName(root, minor), bpm, styleId, sections })
     await useSongs.getState().save(song)
     useSongs.getState().open(song.id)
+    toast(`"${title}" salva no repertório`)
     go('musicas')
   }
 
@@ -311,8 +314,8 @@ export function ComporPage({ go }: Props) {
           <button
             type="button"
             className="link"
-            onClick={() => {
-              if (!confirm('Começar uma composição nova? A atual será apagada.')) return
+            onClick={async () => {
+              if (!(await confirmDialog({ title: 'Começar uma composição nova?', body: 'A atual será apagada (se quiser guardar, salve como música antes).', ok: 'Começar de novo', danger: true }))) return
               set({ sections: [newSection('Verso')], cur: 0 })
               setSel(null)
             }}
