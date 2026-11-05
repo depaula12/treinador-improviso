@@ -53,7 +53,8 @@ export const PROGRESSIONS: ProgressionDef[] = [
   },
   { id: 'minorIivv', name: 'Menor i–iv–v', romans: ['im', 'ivm', 'vm', 'im'], defaultKey: 'A', defaultStyle: 'rock', defaultScale: 'pentMin', minor: true },
   { id: 'minorPop', name: 'Menor i–bVI–bIII–bVII', romans: ['im', 'bVI', 'bIII', 'bVII'], defaultKey: 'A', defaultStyle: 'ballad', defaultScale: 'pentMin', minor: true },
-  { id: 'andalusian', name: 'Menor i–bVII–bVI–V (andaluza)', romans: ['im', 'bVII', 'bVI', 'V7'], defaultKey: 'A', defaultStyle: 'rock', defaultScale: 'minor', minor: true },
+  // andaluza: a escala acompanha o acorde (no V7 entra o frígio dominante, com a sensível)
+  { id: 'andalusian', name: 'Menor i–bVII–bVI–V (andaluza)', romans: ['im', 'bVII', 'bVI', 'V7'], defaultKey: 'A', defaultStyle: 'rock', defaultScale: 'auto', minor: true },
 ]
 
 /** A versão no outro modo de cada progressão: escolher um tom menor troca a base para a menor. */

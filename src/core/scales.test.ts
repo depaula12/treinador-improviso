@@ -74,8 +74,41 @@ describe('escalas novas', () => {
     expect(chordScale(c('Bm7'), Amaj).id).toBe('dorian')
     expect(chordScale(c('Am'), Amin).id).toBe('minor')
     expect(chordScale(c('Dm'), Amin).id).toBe('dorian')
-    expect(chordScale(c('D'), Amaj).id).toBe('major')
+    expect(chordScale(c('D'), Amaj).id).toBe('lydian') // IV de Lá maior: lídio (G# do tom, não G)
     expect(chordScale(c('A5'), Amaj).id).toBe('pentMin')
+  })
+
+  it('escala pela função no tom (auditoria 5.7 e 5.8)', () => {
+    const c = (s: string) => parseChord(s)!
+    const C = { root: 0, minor: false }
+    const Am = { root: 9, minor: true }
+    const id = (ch: string, k: { root: number; minor: boolean }) => chordScale(c(ch), k).id
+    // Dó maior: I jônio, ii dórico, iii frígio, IV lídio, V mixolídio, vi eólio, viiø lócrio
+    expect(['C7M', 'Dm7', 'Em7', 'F7M', 'G7', 'Am7', 'Bm7(b5)'].map((x) => id(x, C))).toEqual(['major', 'dorian', 'phrygian', 'lydian', 'mixo', 'minor', 'locrian'])
+    // Lá menor: i eólio, iiø lócrio, bIII jônio, iv dórico, v frígio, V7 frígio dominante, bVI lídio, bVII mixolídio
+    expect(['Am7', 'Bm7(b5)', 'C7M', 'Dm7', 'Em7', 'E7', 'F7M', 'G7'].map((x) => id(x, Am))).toEqual(['minor', 'locrian', 'major', 'dorian', 'phrygian', 'phrygDom', 'lydian', 'mixo'])
+    // blues: os três dominantes em mixolídio
+    expect(['A7', 'D7', 'E7'].map((x) => id(x, { root: 9, minor: false }))).toEqual(['mixo', 'mixo', 'mixo'])
+    // fora do tom, pela qualidade: A7 em Dó (dominante secundário) e Bb (empréstimo)
+    expect(id('A7', C)).toBe('mixo')
+    expect(id('Bb', C)).toBe('major')
+  })
+
+  it('cada modo escolhido contém todas as notas do acorde e só notas do tom quando o acorde é do tom', () => {
+    const c = (s: string) => parseChord(s)!
+    const C = { root: 0, minor: false }
+    const diat = [0, 2, 4, 5, 7, 9, 11]
+    for (const ch of ['C7M', 'Dm7', 'Em7', 'F7M', 'G7', 'Am7', 'Bm7(b5)']) {
+      const x = c(ch)
+      const pcs = scalePcs(chordScale(x, C), x.root)
+      for (const s of x.semitones) expect(pcs, ch).toContain((x.root + s) % 12)
+      for (const p of pcs) expect(diat, `${ch}: ${p}`).toContain(p)
+    }
+    // V7 de Lá menor: E G# B D cabem no frígio dominante de Mi
+    const e7 = c('E7')
+    const pcs = scalePcs(chordScale(e7, { root: 9, minor: true }), 4)
+    for (const s of e7.semitones) expect(pcs).toContain((4 + s) % 12)
+    expect(pcs).toContain(8) // G#, a sensível de Lá
   })
 })
 

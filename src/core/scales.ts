@@ -19,6 +19,11 @@ export const SCALES: ScaleDef[] = [
   { id: 'mixo', name: 'Mixolídio (maior com b7)', semitones: [0, 2, 4, 5, 7, 9, 10], pent: 'major' },
   { id: 'harmMin', name: 'Menor harmônica', semitones: [0, 2, 3, 5, 7, 8, 11], pent: 'minor' },
   { id: 'bluesMaj', name: 'Blues maior', semitones: [0, 2, 3, 4, 7, 9], pent: 'major' },
+  // modos que a "escala acompanha o acorde" usa conforme a função do acorde no tom
+  { id: 'lydian', name: 'Lídio (maior com #4)', semitones: [0, 2, 4, 6, 7, 9, 11], pent: 'major' },
+  { id: 'phrygian', name: 'Frígio (menor com b2)', semitones: [0, 1, 3, 5, 7, 8, 10], pent: 'minor' },
+  { id: 'locrian', name: 'Lócrio (meio-diminuto)', semitones: [0, 1, 3, 5, 6, 8, 10], pent: 'minor' },
+  { id: 'phrygDom', name: 'Frígio dominante (V7 do tom menor)', semitones: [0, 1, 4, 5, 7, 8, 10], pent: 'minor' },
   // arpejos: só as notas do acorde, no mesmo desenho da pentatônica
   { id: 'arpMaj', name: 'Arpejo maior (1 3 5)', semitones: [0, 4, 7], pent: 'major' },
   { id: 'arpMin', name: 'Arpejo menor (1 b3 5)', semitones: [0, 3, 7], pent: 'minor' },
@@ -31,16 +36,36 @@ export const SCALES: ScaleDef[] = [
 export const AUTO_SCALE = 'auto'
 
 /**
- * Escala que soa bem sobre o acorde, a partir da fundamental dele. No tom menor, o acorde da
- * tônica usa a menor natural; os outros menores, o dórico.
+ * Escala que soa bem sobre o acorde, pela função dele no tom (é o que a teoria ensina):
+ * tom maior: I jônio, ii dórico, iii frígio, IV lídio, V mixolídio, vi eólio, viiø lócrio;
+ * tom menor: i eólio, iiø lócrio, bIII jônio, iv dórico, v frígio, V7 frígio dominante (5º modo da
+ * menor harmônica: tem a 3ª do acorde, que é a sensível do tom), bVI lídio, bVII mixolídio.
+ * Acorde com 3ª e b7 (dominante, como no blues) usa mixolídio em qualquer grau do tom maior.
+ * Fora do tom: regra pela qualidade (7 mixolídio, menor dórico, maior jônio, meio-diminuto lócrio).
  */
 export function chordScale(chord: { root: number; semitones: number[]; minor: boolean }, key: { root: number; minor: boolean }): ScaleDef {
   const has = (s: number) => chord.semitones.some((x) => x % 12 === s)
-  const id = has(4) && has(10)
-    ? 'mixo'
-    : chord.minor
-      ? has(6) ? 'minor' : key.minor && chord.root === key.root ? 'minor' : 'dorian'
-      : has(4) ? 'major' : 'pentMin'
+  const r = (((chord.root - key.root) % 12) + 12) % 12
+  const dom = has(4) && has(10)
+  const halfDim = has(3) && has(6) && !has(7)
+  const maj = has(4) && !has(10)
+  const min = chord.minor && !halfDim
+  let id: string | null = null
+  if (!has(3) && !has(4)) id = 'pentMin' // power chord / sus: a pentatônica não erra
+  else if (!key.minor) {
+    if (dom) id = 'mixo'
+    else if (maj) id = r === 0 ? 'major' : r === 5 ? 'lydian' : r === 7 ? 'mixo' : null
+    else if (min) id = r === 2 ? 'dorian' : r === 4 ? 'phrygian' : r === 9 ? 'minor' : null
+    else if (halfDim && r === 11) id = 'locrian'
+  } else {
+    if (min) id = r === 0 ? 'minor' : r === 5 ? 'dorian' : r === 7 ? 'phrygian' : null
+    else if (halfDim && r === 2) id = 'locrian'
+    else if (r === 7 && has(4)) id = 'phrygDom'
+    else if (maj) id = r === 3 ? 'major' : r === 8 ? 'lydian' : r === 10 ? 'mixo' : null
+    else if (dom && r === 10) id = 'mixo'
+  }
+  // fora do tom: pela qualidade
+  id ??= dom ? 'mixo' : halfDim ? 'locrian' : chord.minor ? 'dorian' : 'major'
   return SCALES.find((s) => s.id === id)!
 }
 
