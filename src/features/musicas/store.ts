@@ -24,6 +24,7 @@ export const useSongs = create<SongsState>((set, get) => ({
     try {
       const songs = await db.songs.orderBy('updatedAt').reverse().toArray()
       set({ songs, loaded: true })
+      reconcileImproviso(songs)
     } catch {
       // navegador sem IndexedDB (aba anônima antiga): funciona, só não guarda
       set({ loaded: true })
@@ -66,11 +67,24 @@ export function loadIntoImproviso(song: Song) {
   })
 }
 
+/**
+ * O Improviso guarda a música carregada entre visitas. Ao abrir o app: se ela foi apagada, volta ao
+ * blues sem erro; se foi editada, usa a versão atual. A composição (id 'compor') vive na área Compor.
+ */
+export function reconcileImproviso(songs: Song[]) {
+  const imp = useImproviso.getState()
+  if (!imp.song || imp.song.id === 'compor') return
+  const cur = songs.find((x) => x.id === imp.song!.id)
+  if (cur) syncImproviso(cur, false)
+  else imp.set({ song: null, ...(imp.progId === 'song' ? { progId: 'blues12' } : {}) })
+}
+
 /** Editou a música que está carregada no Improviso: atualiza a base sem trocar o resto. */
-function syncImproviso(song: Song) {
+function syncImproviso(song: Song, settings = true) {
   const imp = useImproviso.getState()
   if (imp.song?.id !== song.id) return
-  imp.set({ song: { id: song.id, title: song.title, bars: toPlayBars(timedChords(song)) }, bpm: song.bpm, styleId: song.styleId })
+  const loaded = { id: song.id, title: song.title, bars: toPlayBars(timedChords(song)) }
+  imp.set(settings ? { song: loaded, bpm: song.bpm, styleId: song.styleId } : { song: loaded })
 }
 
 const PCS: Record<string, number> = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 }

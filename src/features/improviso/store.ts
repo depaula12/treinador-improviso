@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import { engine, type Instrument, type MixState, type Position } from '../../audio/engine'
 import type { Segment } from '../../core/song'
 import type { LabelMode } from '../../ui/Fretboard'
@@ -45,7 +46,9 @@ interface ImprovisoState {
   setChannel: (inst: Instrument, patch: Partial<MixState[Instrument]>) => void
 }
 
-export const useImproviso = create<ImprovisoState>((set) => ({
+export const useImproviso = create<ImprovisoState>()(
+  persist(
+    (set) => ({
   progId: 'blues12',
   customText: 'Am*2 G F E7',
   song: null,
@@ -75,7 +78,20 @@ export const useImproviso = create<ImprovisoState>((set) => ({
   pos: null,
   set: (patch) => set(patch),
   setChannel: (inst, patch) => set((s) => ({ mix: { ...s.mix, [inst]: { ...s.mix[inst], ...patch } } })),
-}))
+    }),
+    {
+      name: 'improviso-v1',
+      version: 1,
+      // estado da sessão (tocando, posição, acorde da vez) não vai para o armazenamento
+      partialize: ({ status: _s, pos: _p, now: _n, set: _set, setChannel: _c, ...keep }) => keep,
+      // vindo de uma versão sem algum campo novo: completa com o padrão
+      merge: (saved, current) => {
+        const s = (saved ?? {}) as Partial<ImprovisoState>
+        return { ...current, ...s, mix: { ...current.mix, ...(s.mix ?? {}) }, status: 'idle', pos: null, now: '' }
+      },
+    },
+  ),
+)
 
 /** Tocar/Parar da base, usado pelo Improviso e pela cifra rolando da área Músicas. */
 export async function togglePlay() {

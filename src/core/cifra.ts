@@ -20,6 +20,10 @@ export interface ParsedCifra {
   sections: ParsedSection[]
   /** seções que só tinham tablatura ou letra e ficaram de fora */
   skipped: string[]
+  /** cifras que pareciam acorde mas não foram reconhecidas (bar = compasso, a partir de 1) */
+  unknown: { section: string; bar: number; token: string }[]
+  /** onde a cifra tinha N.C. (sem acorde): a base ainda não tem compasso de silêncio */
+  noChord: { section: string; bar: number }[]
 }
 
 const IGNORE = /^(\||\|\||-+|\/|:|\.|–|\(|\)|\[|\])$/
@@ -43,40 +47,60 @@ export function chordToken(token: string): string | null {
   return parseChord(t) ? t : null
 }
 
+/** parece cifra (fundamental + algo típico de acorde), mesmo que não seja reconhecida */
+const CHORD_LIKE = /^[A-G][#b]?(?:[\d()°º+\-/ø]|m(?!a)|maj|dim|aug|sus|add)/
+
+/** item de uma linha de acordes, na ordem em que aparece */
+type Item = { kind: 'chord'; c: string } | { kind: 'unknown'; t: string } | { kind: 'nc' }
+
 type Line =
   | { kind: 'blank' }
   | { kind: 'header'; name: string; rest: string }
   | { kind: 'tab' }
   | { kind: 'key'; key: string }
   | { kind: 'capo'; fret: number }
-  | { kind: 'chords'; chords: string[]; repeat: number }
+  | { kind: 'chords'; items: Item[]; repeat: number }
   | { kind: 'text'; text: string }
 
-function chordLine(text: string): { chords: string[]; repeat: number } | null {
+function chordLine(text: string): { items: Item[]; repeat: number } | null {
   const tokens = text.split(/\s+/).filter(Boolean)
   let repeat = 1
-  const chords: string[] = []
+  const items: Item[] = []
+  let chords = 0
   let words = 0
+  const last = () => [...items].reverse().find((x) => x.kind === 'chord') as { c: string } | undefined
   for (const raw of tokens) {
-    if (IGNORE.test(raw) || NO_CHORD.test(raw)) continue
+    if (NO_CHORD.test(raw)) {
+      items.push({ kind: 'nc' })
+      continue
+    }
+    if (IGNORE.test(raw)) continue
     const rep = raw.match(REPEAT)
     if (rep) {
       repeat = Math.min(8, Number(rep[1] ?? rep[2]) || 1)
       continue
     }
-    if (raw === '%' && chords.length) {
-      chords.push(chords[chords.length - 1])
+    if (raw === '%' && last()) {
+      items.push({ kind: 'chord', c: last()!.c })
+      chords++
       continue
     }
     // "G|D" ou "G-D": separadores colados
     const parts = raw.split(/[|]/).filter(Boolean)
     const ok = parts.map(chordToken)
-    if (ok.every(Boolean)) chords.push(...(ok as string[]))
-    else words++
+    if (ok.every(Boolean)) {
+      items.push(...(ok as string[]).map((c) => ({ kind: 'chord' as const, c })))
+      chords += ok.length
+    } else {
+      words++
+      const t = trimParens(raw)
+      if (CHORD_LIKE.test(t)) items.push({ kind: 'unknown', t })
+    }
   }
   // linha de acordes: quase tudo é cifra (sobra espaço para um "riff" ou "2ª vez")
-  if (!chords.length || chords.length < (chords.length + words) * 0.75) return null
-  return { chords, repeat }
+  const unknown = items.filter((x) => x.kind === 'unknown').length
+  if (!chords || chords + unknown < (chords + words) * 0.75) return null
+  return { items, repeat }
 }
 
 function classify(line: string): Line {
@@ -101,7 +125,7 @@ function classify(line: string): Line {
 const TAB_SECTION = /^(tab|tablatura|dedilhado|riff)\b/i
 
 export function parseCifra(text: string): ParsedCifra {
-  const out: ParsedCifra = { title: '', artist: '', key: null, capo: 0, sections: [], skipped: [] }
+  const out: ParsedCifra = { title: '', artist: '', key: null, capo: 0, sections: [], skipped: [], unknown: [], noChord: [] }
   const lines = text.replace(/\r/g, '').split('\n').map(classify)
   let current: ParsedSection | null = null
   let seenMusic = false
@@ -117,9 +141,17 @@ export function parseCifra(text: string): ParsedCifra {
     else out.skipped.push(current.name)
     current = null
   }
-  const add = (chords: string[], repeat: number) => {
+  const add = (items: Item[], repeat: number) => {
     if (!current) current = { name: 'Música', bars: [] }
-    for (let r = 0; r < repeat; r++) current.bars.push(...chords.map((c) => [c]))
+    const sec = current
+    for (let r = 0; r < repeat; r++)
+      for (const it of items) {
+        if (it.kind === 'chord') sec.bars.push([it.c])
+        // avisos só na primeira passada de uma repetição
+        else if (r > 0) continue
+        else if (it.kind === 'unknown') out.unknown.push({ section: sec.name, bar: sec.bars.length + 1, token: it.t })
+        else out.noChord.push({ section: sec.name, bar: sec.bars.length + 1 })
+      }
   }
 
   for (const l of lines) {
@@ -129,7 +161,7 @@ export function parseCifra(text: string): ParsedCifra {
         const name = l.name.replace(/^tab\s*-\s*/i, '')
         open(TAB_SECTION.test(l.name) ? `${name} (tab)` : name)
         const ch = l.rest ? chordLine(l.rest) : null
-        if (ch) add(ch.chords, ch.repeat)
+        if (ch) add(ch.items, ch.repeat)
         break
       }
       case 'key':
@@ -140,7 +172,7 @@ export function parseCifra(text: string): ParsedCifra {
         break
       case 'chords':
         seenMusic = true
-        add(l.chords, l.repeat)
+        add(l.items, l.repeat)
         break
       case 'text':
         if (l.text && !seenMusic && intro.length < 2 && !/cifra club/i.test(l.text)) intro.push(l.text)

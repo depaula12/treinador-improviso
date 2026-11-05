@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { findShapes, mainShapes, type Shape } from '../../core/chord-shapes'
 import { posKey } from '../../core/scales'
-import { parseChord, KEYS, type ChordInfo } from '../../core/theory'
+import { chordWarning, parseChord, KEYS, type ChordInfo } from '../../core/theory'
 import { FORM_LABEL, formulaName, matchQuality, QUALITIES, symbolOf, voicingsFor } from '../../core/voicings'
 import { ChordDiagram } from '../../ui/ChordDiagram'
 import { Fretboard } from '../../ui/Fretboard'
@@ -77,12 +77,13 @@ export function Decoder() {
           <div className="chord-big accent">{chord.symbol}</div>
           <dl>
             <dt>Tipo</dt>
-            <dd style={{ fontFamily: 'var(--f-body)' }}>{quality?.name ?? 'Fora do banco do quiz'}{chord.bass !== undefined ? ` · baixo em ${KEYS[chord.bass]}` : ''}</dd>
+            <dd style={{ fontFamily: 'var(--f-body)' }}>{quality?.name ?? 'Fora do banco do quiz'}{chord.bass !== undefined ? ` · baixo em ${chord.symbol.match(/\/([A-G][#b]?)$/)?.[1] ?? KEYS[chord.bass]}` : ''}</dd>
             <dt>Fórmula</dt>
             <dd>{chord.semitones.map((s) => formulaName(s, quality?.id)).join('  ')}</dd>
             <dt>Notas</dt>
             <dd>{chord.notes.join('  ')}</dd>
           </dl>
+          {chordWarning(chord.symbol) && <p className="hint muted">{chordWarning(chord.symbol)}</p>}
         </section>
       )}
       </div>

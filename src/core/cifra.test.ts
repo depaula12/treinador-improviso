@@ -109,7 +109,8 @@ describe('chordToken + cifra brasileira', () => {
     ['C(9)', [0, 4, 7, 14]],
     ['Am7M', [0, 3, 7, 11]],
     ['F6(9)', [0, 4, 7, 9, 14]],
-    ['G7(13)', [0, 4, 7, 10, 14, 21]],
+    // 7(13) na cifra brasileira = 1 3 5 b7 13: só entra o que está escrito (sem a 9ª implícita)
+    ['G7(13)', [0, 4, 7, 10, 21]],
   ])('%s', (sym, semis) => {
     expect(chordToken(sym)).toBe(sym)
     expect(parseChord(sym)!.semitones).toEqual(semis)

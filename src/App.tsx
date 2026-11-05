@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { AcordesPage } from './features/acordes/AcordesPage'
 import { AfinadorPage } from './features/afinador/AfinadorPage'
 import { ComporPage } from './features/compor/ComporPage'
@@ -9,6 +9,7 @@ import { useTimerWatch } from './features/hoje/timer'
 import { ImprovisoPage } from './features/improviso/ImprovisoPage'
 import { JamPage } from './features/jam/JamPage'
 import { MusicasPage } from './features/musicas/MusicasPage'
+import { useSongs } from './features/musicas/store'
 import { OuvidoPage } from './features/ouvido/OuvidoPage'
 import { TeoriaPage } from './features/teoria/TeoriaPage'
 import { useNav, type Area } from './ui/nav'
@@ -48,6 +49,8 @@ export function App() {
   const go = useNav((s) => s.go)
   const [more, setMore] = useState(false)
   useTimerWatch()
+  // o repertório carrega já na abertura (o Improviso pode ter uma música salva como base)
+  useEffect(() => void useSongs.getState().load(), [])
   const pick = (a: Area) => {
     setMore(false)
     go(a)

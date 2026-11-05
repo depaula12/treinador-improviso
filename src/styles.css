@@ -884,3 +884,5 @@ textarea.text { font: 400 15px var(--f-body); color: var(--fg); background: var(
   .lesson-body { padding: 14px; }
   .lesson-head h1 { font-size: 22px; }
 }
+.import-warn { border-left: 3px solid var(--hit-near); background: color-mix(in srgb, var(--hit-near) 10%, var(--panel)); border-radius: 8px; padding: 8px 12px; font-size: .92rem; }
+.import-warn ul { margin: 4px 0 0; padding-left: 18px; }

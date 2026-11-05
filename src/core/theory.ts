@@ -1,4 +1,5 @@
 import { Chord, Interval, Note } from 'tonal'
+import { needsBr, parseBody } from './cifra-br'
 
 export interface ChordInfo {
   symbol: string
@@ -50,19 +51,41 @@ function normalize(symbol: string): string {
 export function parseChord(symbol: string): ChordInfo | null {
   // baixo invertido: "D/F#" -> acorde D com F# no baixo (o tonal mede os intervalos a partir do baixo)
   const slash = symbol.trim().match(/^(.+)\/([A-G][#b]?)$/)
-  const c = Chord.get(normalize(slash ? slash[1] : symbol))
-  if (c.empty || !c.tonic) return null
-  const semitones = c.intervals.map((i) => Interval.semitones(i) ?? 0)
+  const main = (slash ? slash[1] : symbol).trim()
+  const m = main.match(/^([A-G][#b]?)(.*)$/)
+  if (!m) return null
+  const [, root, body] = m
   const bass = slash ? Note.chroma(slash[2]) : undefined
-  return {
-    symbol,
-    tonic: c.tonic,
-    root: Note.chroma(c.tonic) ?? 0,
-    semitones,
-    notes: c.notes,
-    minor: semitones.includes(3) && !semitones.includes(4),
-    ...(bass !== undefined ? { bass } : {}),
+  const make = (tonic: string, intervals: string[], notes?: string[]): ChordInfo => {
+    const semitones = intervals.map((i) => Interval.semitones(i) ?? 0)
+    return {
+      symbol,
+      tonic,
+      root: Note.chroma(tonic) ?? 0,
+      semitones,
+      // dobrados (C##, Bbb) ficam simples para ler: a fórmula continua certa em `semitones`
+      notes: (notes ?? intervals.map((i) => Note.pitchClass(Note.transpose(tonic, i)))).map((n) => (/##|bb/.test(n) ? Note.simplify(n) : n)),
+      minor: semitones.includes(3) && !semitones.includes(4),
+      ...(bass !== undefined ? { bass } : {}),
+    }
   }
+  // cifra brasileira com parênteses, "+", "-", extensão com barra: leitura estruturada
+  const br = () => {
+    const r = parseBody(body)
+    return r ? make(root, r.intervals) : null
+  }
+  if (needsBr(body)) return br()
+  const c = Chord.get(normalize(main))
+  // o tonal não conhece ou trocou a fundamental: tenta a leitura estruturada
+  if (c.empty || !c.tonic || Note.chroma(c.tonic) !== Note.chroma(root)) return br()
+  return make(c.tonic, c.intervals, c.notes)
+}
+
+/** Aviso de leitura ambígua (ex.: "7+" pode ser 7(#5) ou 7M) ou null */
+export function chordWarning(symbol: string): string | null {
+  const m = symbol.trim().replace(/\/[A-G][#b]?$/, '').match(/^([A-G][#b]?)(.*)$/)
+  if (!m || !needsBr(m[2])) return null
+  return parseBody(m[2])?.warn ?? null
 }
 
 export const KEYS = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']

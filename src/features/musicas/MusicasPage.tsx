@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Panel } from '../../ui/Panel'
+import { chordWarning } from '../../core/theory'
 import { STYLES } from '../../audio/engine'
 import { parseCifra } from '../../core/cifra'
 import {
@@ -125,6 +126,21 @@ function Importer({ onDone, canCancel }: { onDone: (id: string | null) => void; 
             </div>
           ))}
           {parsed.skipped.length > 0 && <p className="hint muted">Ficaram de fora (só tablatura ou letra): {parsed.skipped.join(', ')}.</p>}
+          {parsed.unknown.length > 0 && (
+            <div className="import-warn" role="status">
+              <b>Não reconheci {parsed.unknown.length === 1 ? 'este acorde' : `estes ${parsed.unknown.length} acordes`}</b> (ficaram fora da grade; dá para acrescentar depois na edição):
+              <ul>{parsed.unknown.map((u, i) => <li key={i}>{u.section}, compasso {u.bar}: <span className="mono">{u.token}</span></li>)}</ul>
+            </div>
+          )}
+          {parsed.noChord.length > 0 && (
+            <p className="hint muted">
+              A cifra tem N.C. (sem acorde) em {parsed.noChord.map((n) => `${n.section} ${n.bar}`).join(', ')}. A base ainda não toca compasso de silêncio: esse trecho ficou de fora.
+            </p>
+          )}
+          {(() => {
+            const warns = [...new Set(parsed.sections.flatMap((x) => x.bars.flat()))].map((c) => [c, chordWarning(c)] as const).filter(([, w]) => w)
+            return warns.length ? <p className="hint muted">{warns.map(([c, w]) => `${c}: ${w}`).join(' ')}</p> : null
+          })()}
           {!bars && <p className="error">Não achei acordes nesse texto.</p>}
           <div>
             <button type="button" className="play" disabled={!bars} onClick={confirm}>Salvar música</button>
