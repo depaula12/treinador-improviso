@@ -155,7 +155,7 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
   "Conferir o que eu toco", modos No metrônomo | Espera por você (`pace`), speed trainer (`autoBpm`),
   DETECT_LAG 45 ms descontado no tempo. `engine.previewNote`. `npm run e2e:escalas` (MODE=metronomo).
   Falta validar com a guitarra: ajustar jumpDb/DETECT_LAG/janela se contar notas a mais ou a menos.
-- **Branch treino-do-dia** (aguardando aprovação; ver `docs/treino-do-dia.md`): área Hoje (padrão)
+- **Treino do dia** (na main desde 5 nov 2026, aprovado pelo usuário; ver `docs/treino-do-dia.md`): área Hoje (padrão)
   com roteiro do dia, timer, "Abrir" que configura a área, faixa de treino (`TrainBanner`), Plano com
   testes de saída e Progresso; área Ouvido; menu em grupos e "Mais" no celular; "Mais ajustes"
   recolhido em Improviso e Escalas. Store `hoje-v1`, área em `ui/nav.ts`.
