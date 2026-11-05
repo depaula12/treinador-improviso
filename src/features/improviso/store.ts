@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { toast } from '../../ui/toast'
 import { engine, type Instrument, type MixState, type Position } from '../../audio/engine'
 import type { Segment } from '../../core/song'
 import type { LabelMode } from '../../ui/Fretboard'
@@ -103,7 +104,14 @@ export async function togglePlay() {
   }
   if (s.status === 'loading') return
   s.set({ status: 'loading' })
-  await engine.start(s.mix)
+  try {
+    // só bateria e baixo precisam estar prontos: piano e violão entram assim que chegarem
+    await engine.start(s.mix, 'base')
+  } catch (e) {
+    useImproviso.getState().set({ status: 'idle' })
+    toast((e as Error).message, 'error')
+    return
+  }
   engine.setMix(useImproviso.getState().mix)
   engine.setHumanize(useImproviso.getState().humanize)
   engine.play()

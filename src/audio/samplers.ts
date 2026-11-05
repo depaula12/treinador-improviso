@@ -25,3 +25,30 @@ export function createSampler(kind: keyof typeof DEFS, base: string) {
 export function createSamplers(base: string) {
   return { piano: createSampler('piano', base), bass: createSampler('bass', base), guitar: createSampler('guitar', base) }
 }
+
+export const SAMPLE_COUNT = { piano: PIANO.length, bass: BASS.length, guitar: GUITAR.length }
+
+/**
+ * Baixa os samples de um instrumento uma vez só. Os samplers são montados depois, com os buffers já
+ * prontos (o violão da base e o violão dos exercícios dividem os mesmos arquivos).
+ */
+export function loadBuffers(kind: keyof typeof DEFS, base: string): Promise<Tone.ToneAudioBuffers> {
+  return new Promise((resolve, reject) => {
+    const b: Tone.ToneAudioBuffers = new Tone.ToneAudioBuffers({
+      urls: mapUrls(DEFS[kind].files),
+      baseUrl: `${base}/${kind}/`,
+      onload: () => resolve(b),
+      onerror: (e) => reject(e),
+    })
+  })
+}
+
+/** sampler a partir de buffers já baixados */
+export function samplerFrom(kind: keyof typeof DEFS, buffers: Tone.ToneAudioBuffers) {
+  const urls: Record<string, Tone.ToneAudioBuffer> = {}
+  for (const f of DEFS[kind].files) {
+    const name = f.replace('s', '#')
+    urls[name] = buffers.get(name)
+  }
+  return new Tone.Sampler({ urls, release: DEFS[kind].release })
+}

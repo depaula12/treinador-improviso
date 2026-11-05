@@ -29,12 +29,22 @@ export class DrumKit {
   private lastFile = new Map<DrumPiece, string>()
   private active = new Set<Tone.ToneBufferSource>()
 
+  /** resolve quando todas as camadas da bateria estiverem baixadas */
+  readonly ready: Promise<void>
+
   constructor(private out: Tone.InputNode, baseUrl: string) {
     const urls: Record<string, string> = {}
     for (const { layers, alt } of Object.values(KIT)) {
       for (const f of [...layers, ...(alt ?? [])]) urls[f] = `${f}.mp3`
     }
-    this.buffers = new Tone.ToneAudioBuffers({ urls, baseUrl })
+    let ok: () => void = () => {}
+    let fail: (e: Error) => void = () => {}
+    this.ready = new Promise((res, rej) => ((ok = res), (fail = rej)))
+    this.buffers = new Tone.ToneAudioBuffers({ urls, baseUrl, onload: () => ok(), onerror: (e) => fail(e) })
+  }
+
+  get loaded() {
+    return this.buffers.loaded
   }
 
   private choose(piece: DrumPiece, vel: number): string {
@@ -87,3 +97,6 @@ export class DrumKit {
     this.openHat = null
   }
 }
+
+/** quantos arquivos a bateria baixa */
+export const DRUM_FILES = Object.values(KIT).reduce((n, { layers, alt }) => n + layers.length + (alt?.length ?? 0), 0)

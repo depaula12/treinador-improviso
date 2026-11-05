@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { STYLES } from '../audio/engine'
+import { engine, STYLES } from '../audio/engine'
 import { keyShort, parseProgression, PROGRESSIONS } from '../core/progressions'
 import { SCALES } from '../core/scales'
 import { togglePlay, useImproviso } from '../features/improviso/store'
@@ -82,7 +82,7 @@ export function Player() {
           <button type="button" onClick={() => changeBpm(5)} aria-label="Mais rápido">+</button>
         </div>
         <button type="button" className="play-btn" aria-label={isPlaying ? 'Parar' : 'Tocar'} aria-pressed={isPlaying} disabled={!canPlay} onClick={toggle}>
-          {!slot && s.status === 'loading' ? <span className="spin" aria-hidden /> : <PlayIcon playing={isPlaying} />}
+          {!slot && s.status === 'loading' ? <LoadRing /> : <PlayIcon playing={isPlaying} />}
         </button>
         {!slot && (
           <button type="button" className="icon-btn opt-hide" aria-pressed={s.loop} title="Loop" aria-label="Loop" onClick={() => s.set({ loop: !s.loop })}>
@@ -109,5 +109,29 @@ export function Player() {
         )}
       </div>
     </footer>
+  )
+}
+
+/** anel de progresso dos samples no botão de tocar (primeiro play) */
+function LoadRing() {
+  const [p, setP] = useState(engine.progress)
+  useEffect(() => {
+    engine.onProgress = setP
+    setP(engine.progress)
+    return () => {
+      engine.onProgress = null
+    }
+  }, [])
+  // a base começa quando bateria e baixo chegam: o anel mede até aí
+  const frac = p.base ? Math.min(1, p.done / p.base) : 0
+  const C = 2 * Math.PI * 20
+  return (
+    <span className="load-ring" role="progressbar" aria-label="Carregando os sons da banda" aria-valuemin={0} aria-valuemax={p.total} aria-valuenow={p.done}>
+      <svg viewBox="0 0 48 48" aria-hidden>
+        <circle cx="24" cy="24" r="20" className="lr-bg" />
+        <circle cx="24" cy="24" r="20" className="lr-fg" strokeDasharray={C} strokeDashoffset={C * (1 - frac)} />
+      </svg>
+      <small>{Math.round(frac * 100)}%</small>
+    </span>
   )
 }

@@ -1,8 +1,8 @@
 import * as Tone from 'tone'
 import type { ChordInfo } from '../core/theory'
-import { DrumKit } from './drums'
+import { DRUM_FILES, DrumKit } from './drums'
 import { setHumanize, strumGap, timing, velocity } from './humanize'
-import { createSampler, createSamplers } from './samplers'
+import { loadBuffers, SAMPLE_COUNT, samplerFrom } from './samplers'
 import { ballad } from './styles/ballad'
 import { bossa } from './styles/bossa'
 import { rock } from './styles/rock'
@@ -88,7 +88,15 @@ const FEEL: Record<Instrument | DrumPiece, [number, number]> = {
 type Pitched = Exclude<Instrument, 'drums'>
 
 class Engine {
+  /** bateria + baixo + reverb: o bastante para a base começar */
   private ready: Promise<void> | null = null
+  /** piano + violão (da base e dos exercícios) */
+  private full: Promise<void> | null = null
+  /** arquivos baixados / total, para a barra de progresso */
+  progress = { done: 0, total: DRUM_FILES + SAMPLE_COUNT.bass + SAMPLE_COUNT.piano + SAMPLE_COUNT.guitar, base: DRUM_FILES + SAMPLE_COUNT.bass }
+  /** aviso para o usuário quando o som não carrega (o App mostra como toast) */
+  onError: ((msg: string) => void) | null = null
+  onProgress: ((p: { done: number; total: number; base: number }) => void) | null = null
   private channels!: Record<Instrument, Tone.Channel>
   private samplers!: Record<Pitched, Tone.Sampler>
   private kit!: DrumKit
@@ -114,47 +122,81 @@ class Engine {
    */
   load(mix: MixState): Promise<void> {
     if (this.ready) return this.ready
+    countDownloads(this)
+    const base = `${import.meta.env.BASE_URL}samples`
+    const limiter = new Tone.Limiter(-1).toDestination()
+    const comp = new Tone.Compressor({ threshold: -16, ratio: 3, attack: 0.01, release: 0.2 }).connect(limiter)
+    this.gate = new Tone.Gain(0).connect(comp)
+    const bus = new Tone.Gain(0.8).connect(this.gate)
+
+    const reverb = new Tone.Reverb({ decay: 1.8, preDelay: 0.01, wet: 1 }).connect(bus)
+    new Tone.Channel({ volume: 0 }).connect(reverb).receive('reverb')
+
+    const mk = (send: number) => {
+      const ch = new Tone.Channel().connect(bus)
+      ch.send('reverb', send)
+      return ch
+    }
+    this.channels = { drums: mk(-20), bass: mk(-40), piano: mk(-14), guitar: mk(-16) }
+    this.setMix(mix)
+    const ex = new Tone.Channel({ volume: 0 }).connect(bus)
+    this.click = new Tone.Synth({
+      oscillator: { type: 'triangle' },
+      envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 },
+      volume: -8,
+    }).connect(ex)
+
+    // 1º bateria e baixo (a contagem pode começar), depois piano e violão
+    this.kit = new DrumKit(this.channels.drums, `${base}/drums/`)
     this.ready = (async () => {
-      const limiter = new Tone.Limiter(-1).toDestination()
-      const comp = new Tone.Compressor({ threshold: -16, ratio: 3, attack: 0.01, release: 0.2 }).connect(limiter)
-      this.gate = new Tone.Gain(0).connect(comp)
-      const bus = new Tone.Gain(0.8).connect(this.gate)
-
-      const reverb = new Tone.Reverb({ decay: 1.8, preDelay: 0.01, wet: 1 }).connect(bus)
-      new Tone.Channel({ volume: 0 }).connect(reverb).receive('reverb')
-
-      const mk = (send: number) => {
-        const ch = new Tone.Channel().connect(bus)
-        ch.send('reverb', send)
-        return ch
-      }
-      this.channels = { drums: mk(-20), bass: mk(-40), piano: mk(-14), guitar: mk(-16) }
-      this.setMix(mix)
-
-      const base = `${import.meta.env.BASE_URL}samples`
-      const s = createSamplers(base)
-      s.piano.connect(this.channels.piano)
-      s.bass.connect(this.channels.bass)
-      s.guitar.connect(this.channels.guitar)
-      this.samplers = s
-      this.kit = new DrumKit(this.channels.drums, `${base}/drums/`)
-
-      const ex = new Tone.Channel({ volume: 0 }).connect(bus)
-      this.click = new Tone.Synth({
-        oscillator: { type: 'triangle' },
-        envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 },
-        volume: -8,
-      }).connect(ex)
-      this.exSampler = createSampler('guitar', base).connect(ex)
-
-      await Promise.all([Tone.loaded(), reverb.ready])
+      const [bass] = await Promise.all([loadBuffers('bass', base), this.kit.ready, reverb.ready])
+      this.samplers = { bass: samplerFrom('bass', bass).connect(this.channels.bass) } as Record<Pitched, Tone.Sampler>
     })()
+    this.full = this.ready.then(async () => {
+      const [piano, guitar] = await Promise.all([loadBuffers('piano', base), loadBuffers('guitar', base)])
+      this.samplers.piano = samplerFrom('piano', piano).connect(this.channels.piano)
+      this.samplers.guitar = samplerFrom('guitar', guitar).connect(this.channels.guitar)
+      this.exSampler = samplerFrom('guitar', guitar).connect(ex)
+    })
+    // falhou (sem internet, arquivo faltando): libera para tentar de novo no próximo clique
+    const reset = () => {
+      this.ready = null
+      this.full = null
+    }
+    this.ready.catch(reset)
+    this.full.catch(reset)
     return this.ready
   }
 
-  /** Precisa ser chamado a partir de um gesto do usuário (clique). */
-  async start(mix: MixState) {
-    await Promise.all([Tone.start(), this.load(mix)])
+  /**
+   * Precisa ser chamado a partir de um gesto do usuário (clique). `need`: 'base' espera só bateria e
+   * baixo (piano e violão entram assim que chegarem); 'all' espera tudo (exercícios, ouvido, prévias).
+   */
+  async start(mix: MixState, need: 'base' | 'all' = 'all') {
+    try {
+      await Tone.start()
+      await this.load(mix)
+      if (need === 'all') await this.full
+    } catch {
+      const msg = 'Não consegui carregar os sons da banda. Confira a internet e tente de novo.'
+      this.onError?.(msg)
+      throw new Error(msg)
+    }
+  }
+
+  /** start que não lança: false se o som não carregou (o aviso já foi mostrado) */
+  private async tryStart(mix: MixState) {
+    try {
+      await this.start(mix)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  /** tudo baixado? (piano e violão inclusive) */
+  get fullyLoaded() {
+    return this.progress.done >= this.progress.total
   }
 
   setMix(mix: MixState) {
@@ -180,7 +222,7 @@ class Engine {
    * Para a base ou o exercício que estiver tocando. Devolve a duração em segundos.
    */
   async previewChords(items: { chord: ChordInfo; sec?: number; midi?: number[] | null }[], mix: MixState): Promise<number> {
-    await this.start(mix)
+    if (!(await this.tryStart(mix))) return 0
     if (this.mode) this.stop()
     this.exSampler.releaseAll()
     const now = Tone.now() + 0.08
@@ -206,7 +248,7 @@ class Engine {
    * Devolve a duração em segundos.
    */
   async playShapes(groups: number[][], mix: MixState): Promise<number> {
-    await this.start(mix)
+    if (!(await this.tryStart(mix))) return 0
     if (this.mode) this.stop()
     this.exSampler.releaseAll()
     const now = Tone.now() + 0.08
@@ -229,7 +271,7 @@ class Engine {
    * fora do Transport. Para a base ou o exercício. Devolve a duração em segundos.
    */
   async playEar(events: { midi: number; t: number; dur: number; vel: number }[], mix: MixState): Promise<number> {
-    await this.start(mix)
+    if (!(await this.tryStart(mix))) return 0
     if (this.mode) this.stop()
     this.exSampler.releaseAll()
     const now = Tone.now() + 0.08
@@ -245,7 +287,7 @@ class Engine {
 
   /** Uma nota curta no violão (confirma o acerto no modo "espera por você"). Não para nada. */
   async previewNote(midi: number, mix: MixState, sec = 0.6) {
-    await this.start(mix)
+    if (!(await this.tryStart(mix))) return
     const now = Tone.now() + 0.02
     if (!this.mode) {
       this.gate.gain.cancelScheduledValues(now)
@@ -456,7 +498,9 @@ class Engine {
   }
 
   private playNote(inst: Pitched, n: PitchedNote, start: number) {
-    const sampler = this.samplers[inst]
+    const sampler = this.samplers?.[inst]
+    // piano e violão ainda baixando: a base segue com bateria e baixo e eles entram quando chegarem
+    if (!sampler || !sampler.loaded) return
     const spb = 60 / Tone.getTransport().bpm.value
     const dur = n.dur * spb
     const v = velocity(n.vel)
@@ -482,3 +526,21 @@ class Engine {
 }
 
 export const engine = new Engine()
+
+/**
+ * Conta os arquivos baixados pelo Tone (todo sample passa por ToneAudioBuffer.load) para a barra
+ * de progresso do botão de tocar. Instalado uma vez.
+ */
+let counting = false
+function countDownloads(e: Engine) {
+  if (counting) return
+  counting = true
+  const B = Tone.ToneAudioBuffer as unknown as { load: (url: string) => Promise<AudioBuffer> }
+  const orig = B.load.bind(B)
+  B.load = async (url: string) => {
+    const buf = await orig(url)
+    e.progress = { ...e.progress, done: Math.min(e.progress.total, e.progress.done + 1) }
+    e.onProgress?.(e.progress)
+    return buf
+  }
+}

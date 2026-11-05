@@ -15,6 +15,9 @@ import { TeoriaPage } from './features/teoria/TeoriaPage'
 import { useNav, type Area } from './ui/nav'
 import { Player } from './ui/Player'
 import { DialogHost } from './ui/Dialog'
+import { ErrorBoundary } from './ui/errors'
+import { toast, ToastHost } from './ui/toast'
+import { engine } from './audio/engine'
 import { DadosPanel } from './features/dados/DadosPanel'
 import { useDados } from './features/dados/dados'
 
@@ -54,6 +57,9 @@ export function App() {
   useTimerWatch()
   // o repertório carrega já na abertura (o Improviso pode ter uma música salva como base)
   useEffect(() => void useSongs.getState().load(), [])
+  useEffect(() => {
+    engine.onError = (msg) => toast(msg, 'error')
+  }, [])
   const pick = (a: Area) => {
     setMore(false)
     go(a)
@@ -115,24 +121,26 @@ export function App() {
 
       <main className="main">
         <TrainBanner />
-        {area === 'hoje' && <HojePage />}
+        {/* cada área tem a própria rede de segurança: um erro numa não derruba as outras */}
+        {area === 'hoje' && <ErrorBoundary key="hoje" area="hoje"><HojePage /></ErrorBoundary>}
         {/* o Improviso fica montado: a base continua tocando enquanto você treina em outra área */}
         <div hidden={area !== 'improviso'}>
-          <ImprovisoPage />
+          <ErrorBoundary area="improviso"><ImprovisoPage /></ErrorBoundary>
         </div>
-        {area === 'musicas' && <MusicasPage go={go} />}
-        {area === 'compor' && <ComporPage go={go} />}
-        {area === 'acordes' && <AcordesPage />}
-        {area === 'escalas' && <EscalasPage />}
-        {area === 'ouvido' && <OuvidoPage />}
-        {area === 'teoria' && <TeoriaPage />}
-        {area === 'jam' && <JamPage />}
-        {area === 'afinador' && <AfinadorPage />}
+        {area === 'musicas' && <ErrorBoundary key="musicas" area="musicas"><MusicasPage go={go} /></ErrorBoundary>}
+        {area === 'compor' && <ErrorBoundary key="compor" area="compor"><ComporPage go={go} /></ErrorBoundary>}
+        {area === 'acordes' && <ErrorBoundary key="acordes" area="acordes"><AcordesPage /></ErrorBoundary>}
+        {area === 'escalas' && <ErrorBoundary key="escalas" area="escalas"><EscalasPage /></ErrorBoundary>}
+        {area === 'ouvido' && <ErrorBoundary key="ouvido" area="ouvido"><OuvidoPage /></ErrorBoundary>}
+        {area === 'teoria' && <ErrorBoundary key="teoria" area="teoria"><TeoriaPage /></ErrorBoundary>}
+        {area === 'jam' && <ErrorBoundary key="jam" area="jam"><JamPage /></ErrorBoundary>}
+        {area === 'afinador' && <ErrorBoundary key="afinador" area="afinador"><AfinadorPage /></ErrorBoundary>}
       </main>
 
       <Player />
       <DadosPanel />
       <DialogHost />
+      <ToastHost />
     </div>
   )
 }

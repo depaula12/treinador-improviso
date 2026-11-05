@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { chooseDialog } from '../../ui/Dialog'
+import { clearLog, errorDetails, readLog } from '../../ui/errors'
 import { applyImport, exportAll, lastBackupAt, previewImport, readBackupFile, useDados } from './dados'
 
 const fmt = (ms: number) => new Date(ms).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -79,8 +80,30 @@ export function DadosPanel() {
         </div>
         {msg && <p className={`dados-msg ${msg.ok ? 'ok' : 'no'}`} role="status">{msg.text}</p>}
         <p className="muted hint">Também serve para levar tudo para outro computador ou para o celular: exporte num, importe no outro.</p>
+        <ErrorLog />
         <div className="dlg-actions"><button type="button" className="btn" onClick={() => set(false)}>Fechar</button></div>
       </div>
     </div>
+  )
+}
+
+/** os últimos erros registrados neste navegador (para mandar ao desenvolvedor) */
+function ErrorLog() {
+  const [log, setLog] = useState(readLog)
+  const [copied, setCopied] = useState(false)
+  if (!log.length) return null
+  return (
+    <details className="more err-log">
+      <summary>Registro de erros <span className="muted">{log.length} {log.length === 1 ? 'registro' : 'registros'}</span></summary>
+      <ul>
+        {log.slice(-8).reverse().map((e, i) => (
+          <li key={i}><span className="muted mono">{new Date(e.at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span> {e.area ? `${e.area}: ` : ''}{e.msg}</li>
+        ))}
+      </ul>
+      <div className="row">
+        <button type="button" className="btn" onClick={() => void navigator.clipboard.writeText(errorDetails(log)).then(() => setCopied(true), () => {})}>{copied ? 'Copiado' : 'Copiar tudo'}</button>
+        <button type="button" className="link" onClick={() => { clearLog(); setLog([]) }}>limpar</button>
+      </div>
+    </details>
   )
 }

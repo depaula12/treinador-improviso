@@ -248,7 +248,11 @@ export function Exercises() {
     }
     resetCheck()
     setLast(null)
-    await engine.start(useImproviso.getState().mix)
+    try {
+      await engine.start(useImproviso.getState().mix)
+    } catch {
+      return // o aviso já apareceu (engine.onError)
+    }
     engine.playExercise(cfg)
     setPlaying(true)
   }
