@@ -31,7 +31,7 @@ Pop/Rock, Blues ou Bossa/Jazz) e treinar acordes num quiz com centenas de pergun
 ## O problema
 
 Quem está aprendendo a improvisar costuma ficar preso em "tocar a pentatônica inteira, aleatória"
-por cima de uma base genérica do YouTube. Faltam três coisas:
+por cima de uma base genérica do YouTube. Faltam quatro coisas:
 
 1. **Uma base que soe como banda** e não como metrônomo, no tom, andamento e estilo que você quiser.
 2. **Saber para onde mirar** em cada acorde, e não só que escala usar.
@@ -324,7 +324,7 @@ npm run e2e:escalas # Escalas conferidas, modo "espera por você" (MODE=metronom
 - [x] **Entrada de áudio** (interface USB ou microfone): afinador, detecção de nota e de acorde
 - [x] **Jam livre** (primeira versão): acorde e tom detectados, próximos acordes e notas-alvo em tempo real
 - [x] **Músicas** (v0.2): colar uma cifra e virar base de treino, grade editável, cifra rolando
-- [ ] **Treino do dia + progresso**: sessão montada automaticamente e histórico de acertos
+- [x] **Treino do dia + progresso**: roteiro diário do plano de 12 meses, timer, lições de teoria e histórico
 - [x] Jam livre pelo contexto, aprendendo com as músicas do repertório
 - [x] **Compor**: progressões pelo efeito em Pop/Rock, Blues ou Bossa/Jazz, edição livre, desenho de cada acorde e levada por seção
 - [x] O app confere o que você toca: placar de notas-alvo, quiz de acordes e de notas pelo áudio
@@ -339,3 +339,7 @@ Samples gratuitos com licença Creative Commons, detalhados em
 [`public/samples/LICENSES.md`](public/samples/LICENSES.md):
 Salamander Grand Piano (Alexander Holm, CC BY 3.0), FluidR3_GM (Frank Wen, CC BY 3.0) e
 MuldjordKit (Lars Muldjord, CC BY 4.0).
+
+## Licença
+
+Código sob a licença [MIT](LICENSE). Os samples seguem as próprias licenças (ver Créditos) e a fonte Fraunces está sob a [OFL](public/fonts/OFL.txt).

@@ -254,7 +254,7 @@ Cada fase deve terminar com o app rodando e utilizável para praticar.
 - O usuário quer rapidez e objetividade. Construir em incrementos que rodem.
 - Ser honesto quando algo for exagero; cortar o supérfluo.
 - Idioma da UI e das conversas: português.
-- Git: repositório privado github.com/depaula12/treinador-improviso (branch main). Ao fim de cada
+- Git: repositório **público** github.com/depaula12/treinador-improviso (desde 23 nov 2026; nada de dados pessoais, caminhos locais ou chaves no código) (branch main). Ao fim de cada
   etapa que roda, fazer commit com mensagem em português descrevendo a etapa e `git push`, para o
   histórico mostrar a evolução do projeto. Autor usa o e-mail noreply do GitHub.
 - Teste ponta a ponta da Jam: `npm run e2e` (com `npm run preview` rodando, ou passando a URL de

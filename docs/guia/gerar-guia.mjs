@@ -3,10 +3,10 @@
 // Uso: node docs/guia/gerar-guia.mjs  (depois o PDF é impresso pelo Chrome/Edge headless)
 import { writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const shots = (name) => pathToFileURL(join(here, '..', 'screenshots', name)).href
+const shots = (name) => `../screenshots/${name}` // relativo: funciona no GitHub e na impressão do PDF
 
 // ---------- teoria mínima para os diagramas ----------
 const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
